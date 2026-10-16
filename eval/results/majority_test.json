@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-16T18:45:37.606852+00:00",
+  "generated_at": "2026-10-16T20:02:39.685092+00:00",
   "dataset": {
     "path": "eval/Data/test.csv",
     "input_rows": 45,
@@ -28,6 +28,7 @@
     "Class CONTRADICTS has 0 evaluated examples.",
     "Class SUPPORTS has 0 evaluated examples."
   ],
+  "predictor_diagnostics": null,
   "metrics": {
     "n": 10,
     "accuracy": 1.0,

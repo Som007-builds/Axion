@@ -1,0 +1,2674 @@
+{
+  "generated_at": "2026-10-16T19:58:28.677360+00:00",
+  "dataset": {
+    "path": "eval/Data/axion_pairs.csv",
+    "input_rows": 286,
+    "evaluated_rows": 286,
+    "excluded_same_paper": 0,
+    "excluded_same_claim": 0,
+    "limit": null,
+    "composition_before_exclusion": {
+      "total": 286,
+      "counts": {
+        "CONTRADICTS": 4,
+        "SUPPORTS": 11,
+        "UNRELATED": 271
+      },
+      "fractions": {
+        "CONTRADICTS": 0.014,
+        "SUPPORTS": 0.0385,
+        "UNRELATED": 0.9476
+      }
+    }
+  },
+  "predictor": "llm",
+  "seed": null,
+  "warnings": [],
+  "predictor_diagnostics": {
+    "parse_failures": 0,
+    "statuses": {
+      "UNRELATED": 237,
+      "SUPPORTS": 36,
+      "CONTRADICTS": 13
+    }
+  },
+  "metrics": {
+    "n": 286,
+    "accuracy": 0.8427,
+    "precision_macro": 0.4424,
+    "recall_macro": 0.6642,
+    "f1_macro": 0.4822,
+    "f1_weighted": 0.8802,
+    "per_class": {
+      "CONTRADICTS": {
+        "precision": 0.1538,
+        "recall": 0.5,
+        "f1": 0.2353,
+        "support": 4
+      },
+      "SUPPORTS": {
+        "precision": 0.1944,
+        "recall": 0.6364,
+        "f1": 0.2979,
+        "support": 11
+      },
+      "UNRELATED": {
+        "precision": 0.9789,
+        "recall": 0.8561,
+        "f1": 0.9134,
+        "support": 271
+      }
+    },
+    "confusion_matrix": {
+      "CONTRADICTS": {
+        "CONTRADICTS": 2,
+        "SUPPORTS": 0,
+        "UNRELATED": 2
+      },
+      "SUPPORTS": {
+        "CONTRADICTS": 1,
+        "SUPPORTS": 7,
+        "UNRELATED": 3
+      },
+      "UNRELATED": {
+        "CONTRADICTS": 10,
+        "SUPPORTS": 29,
+        "UNRELATED": 232
+      }
+    },
+    "label_distribution": {
+      "true": {
+        "CONTRADICTS": 4,
+        "UNRELATED": 271,
+        "SUPPORTS": 11
+      },
+      "predicted": {
+        "UNRELATED": 237,
+        "SUPPORTS": 36,
+        "CONTRADICTS": 13
+      }
+    },
+    "latency_ms": {
+      "avg": 3111.37,
+      "p50": 3138.21,
+      "p95": 4160.65,
+      "max": 5529.22
+    }
+  },
+  "predictions": [
+    {
+      "pair_id": "0",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:15",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:207",
+      "true_label": "CONTRADICTS",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2814.06,
+      "matched": false
+    },
+    {
+      "pair_id": "1",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:27",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:124",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2056.01,
+      "matched": true
+    },
+    {
+      "pair_id": "2",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:44",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:207",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 1401.07,
+      "matched": true
+    },
+    {
+      "pair_id": "3",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:58",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:214",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 1748.28,
+      "matched": true
+    },
+    {
+      "pair_id": "4",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:75",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:8",
+      "true_label": "SUPPORTS",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 1547.99,
+      "matched": true
+    },
+    {
+      "pair_id": "5",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:76",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:18",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 1894.71,
+      "matched": true
+    },
+    {
+      "pair_id": "6",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:110",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:129",
+      "true_label": "UNRELATED",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 1801.21,
+      "matched": false
+    },
+    {
+      "pair_id": "7",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:181",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:209",
+      "true_label": "UNRELATED",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 1739.84,
+      "matched": false
+    },
+    {
+      "pair_id": "8",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:196",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:10",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2068.91,
+      "matched": true
+    },
+    {
+      "pair_id": "9",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:203",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:14",
+      "true_label": "UNRELATED",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 1887.35,
+      "matched": false
+    },
+    {
+      "pair_id": "10",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:204",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:45",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 1801.48,
+      "matched": true
+    },
+    {
+      "pair_id": "11",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:208",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:45",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2399.35,
+      "matched": true
+    },
+    {
+      "pair_id": "12",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:62",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:884",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 1503.57,
+      "matched": true
+    },
+    {
+      "pair_id": "13",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:44",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:981",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 1837.55,
+      "matched": true
+    },
+    {
+      "pair_id": "14",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:67",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:455",
+      "true_label": "UNRELATED",
+      "predicted_label": "CONTRADICTS",
+      "latency_ms": 1594.7,
+      "matched": false
+    },
+    {
+      "pair_id": "15",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:67",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1120",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 1619.64,
+      "matched": true
+    },
+    {
+      "pair_id": "16",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:67",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:587",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 1443.91,
+      "matched": true
+    },
+    {
+      "pair_id": "17",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:114",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1181",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 1980.07,
+      "matched": true
+    },
+    {
+      "pair_id": "18",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:112",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:592",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 1819.58,
+      "matched": true
+    },
+    {
+      "pair_id": "19",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:99",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1067",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 1391.02,
+      "matched": true
+    },
+    {
+      "pair_id": "20",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:97",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1180",
+      "true_label": "UNRELATED",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 1515.49,
+      "matched": false
+    },
+    {
+      "pair_id": "21",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:74",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:473",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 1368.08,
+      "matched": true
+    },
+    {
+      "pair_id": "22",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:125",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:972",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 1559.04,
+      "matched": true
+    },
+    {
+      "pair_id": "23",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:119",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:981",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3547.02,
+      "matched": true
+    },
+    {
+      "pair_id": "24",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:256",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1180",
+      "true_label": "UNRELATED",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 3806.97,
+      "matched": false
+    },
+    {
+      "pair_id": "25",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1175",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1120",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3582.37,
+      "matched": true
+    },
+    {
+      "pair_id": "26",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1175",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:587",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3591.13,
+      "matched": true
+    },
+    {
+      "pair_id": "27",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1175",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:638",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3586.71,
+      "matched": true
+    },
+    {
+      "pair_id": "28",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:455",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1120",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3637.95,
+      "matched": true
+    },
+    {
+      "pair_id": "29",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1266",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:884",
+      "true_label": "UNRELATED",
+      "predicted_label": "CONTRADICTS",
+      "latency_ms": 3758.41,
+      "matched": false
+    },
+    {
+      "pair_id": "30",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1266",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1292",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3552.3,
+      "matched": true
+    },
+    {
+      "pair_id": "31",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1264",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:589",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2403.15,
+      "matched": true
+    },
+    {
+      "pair_id": "32",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1261",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1175",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2230.82,
+      "matched": true
+    },
+    {
+      "pair_id": "33",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:852",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:605",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3807.87,
+      "matched": true
+    },
+    {
+      "pair_id": "34",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:852",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1090",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 1655.6,
+      "matched": true
+    },
+    {
+      "pair_id": "35",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:847",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:783",
+      "true_label": "UNRELATED",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 3832.62,
+      "matched": false
+    },
+    {
+      "pair_id": "36",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:743",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:981",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3740.47,
+      "matched": true
+    },
+    {
+      "pair_id": "37",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:536",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:605",
+      "true_label": "UNRELATED",
+      "predicted_label": "CONTRADICTS",
+      "latency_ms": 3604.79,
+      "matched": false
+    },
+    {
+      "pair_id": "38",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1293",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:455",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3288.1,
+      "matched": true
+    },
+    {
+      "pair_id": "39",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1292",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:605",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3052.61,
+      "matched": true
+    },
+    {
+      "pair_id": "40",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1292",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:536",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2973.77,
+      "matched": true
+    },
+    {
+      "pair_id": "41",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:884",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:605",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3002.5,
+      "matched": true
+    },
+    {
+      "pair_id": "42",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:884",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:593",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3028.69,
+      "matched": true
+    },
+    {
+      "pair_id": "43",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:62",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1292",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3196.44,
+      "matched": true
+    },
+    {
+      "pair_id": "44",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:62",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:2056",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3085.05,
+      "matched": true
+    },
+    {
+      "pair_id": "45",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:59",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1378",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3198.55,
+      "matched": true
+    },
+    {
+      "pair_id": "46",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:59",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1996",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2037.83,
+      "matched": true
+    },
+    {
+      "pair_id": "47",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:67",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:332",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 4111.13,
+      "matched": true
+    },
+    {
+      "pair_id": "48",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:110",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1174",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3944.49,
+      "matched": true
+    },
+    {
+      "pair_id": "49",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:110",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:969",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2747.07,
+      "matched": true
+    },
+    {
+      "pair_id": "50",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:194",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1997",
+      "true_label": "UNRELATED",
+      "predicted_label": "CONTRADICTS",
+      "latency_ms": 1846.1,
+      "matched": false
+    },
+    {
+      "pair_id": "51",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:189",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:2087",
+      "true_label": "UNRELATED",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 3983.14,
+      "matched": false
+    },
+    {
+      "pair_id": "52",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:259",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:987",
+      "true_label": "UNRELATED",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 1507.79,
+      "matched": false
+    },
+    {
+      "pair_id": "53",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:256",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1164",
+      "true_label": "UNRELATED",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 3466.28,
+      "matched": false
+    },
+    {
+      "pair_id": "54",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:256",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1795",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3569.54,
+      "matched": true
+    },
+    {
+      "pair_id": "55",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1180",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:2035",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3855.95,
+      "matched": true
+    },
+    {
+      "pair_id": "56",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1180",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1425",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3761.46,
+      "matched": true
+    },
+    {
+      "pair_id": "57",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1175",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1795",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2207.69,
+      "matched": true
+    },
+    {
+      "pair_id": "58",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1163",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1448",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3714.75,
+      "matched": true
+    },
+    {
+      "pair_id": "59",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:973",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:2088",
+      "true_label": "UNRELATED",
+      "predicted_label": "CONTRADICTS",
+      "latency_ms": 2158.44,
+      "matched": false
+    },
+    {
+      "pair_id": "60",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:970",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:2061",
+      "true_label": "UNRELATED",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 3621.39,
+      "matched": false
+    },
+    {
+      "pair_id": "61",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:970",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1997",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3412.03,
+      "matched": true
+    },
+    {
+      "pair_id": "62",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:689",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1408",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 4012.02,
+      "matched": true
+    },
+    {
+      "pair_id": "63",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:689",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:2054",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 1820.52,
+      "matched": true
+    },
+    {
+      "pair_id": "64",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:456",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1585",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 4897.86,
+      "matched": true
+    },
+    {
+      "pair_id": "65",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:455",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1795",
+      "true_label": "UNRELATED",
+      "predicted_label": "CONTRADICTS",
+      "latency_ms": 3729.88,
+      "matched": false
+    },
+    {
+      "pair_id": "66",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:455",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1378",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2047.27,
+      "matched": true
+    },
+    {
+      "pair_id": "67",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:447",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1802",
+      "true_label": "SUPPORTS",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 3566.65,
+      "matched": true
+    },
+    {
+      "pair_id": "68",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1261",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1556",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 1933.74,
+      "matched": true
+    },
+    {
+      "pair_id": "69",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:852",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1675",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3906.05,
+      "matched": true
+    },
+    {
+      "pair_id": "70",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:848",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1176",
+      "true_label": "UNRELATED",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 3559.09,
+      "matched": false
+    },
+    {
+      "pair_id": "71",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1120",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1795",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3192.58,
+      "matched": true
+    },
+    {
+      "pair_id": "72",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1104",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1675",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3626.16,
+      "matched": true
+    },
+    {
+      "pair_id": "73",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1100",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1264",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3614.17,
+      "matched": true
+    },
+    {
+      "pair_id": "74",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:795",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1586",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3461.0,
+      "matched": true
+    },
+    {
+      "pair_id": "75",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:795",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1675",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 4734.64,
+      "matched": true
+    },
+    {
+      "pair_id": "76",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:792",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:544",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 1425.85,
+      "matched": true
+    },
+    {
+      "pair_id": "77",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:588",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1454",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3854.47,
+      "matched": true
+    },
+    {
+      "pair_id": "78",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:593",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1675",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 4127.85,
+      "matched": true
+    },
+    {
+      "pair_id": "79",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:593",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1991",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2027.18,
+      "matched": true
+    },
+    {
+      "pair_id": "80",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:593",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1454",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 1728.94,
+      "matched": true
+    },
+    {
+      "pair_id": "81",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:601",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1429",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3743.53,
+      "matched": true
+    },
+    {
+      "pair_id": "82",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:601",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1377",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3628.4,
+      "matched": true
+    },
+    {
+      "pair_id": "83",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:605",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1675",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3805.98,
+      "matched": true
+    },
+    {
+      "pair_id": "84",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:605",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1991",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3681.11,
+      "matched": true
+    },
+    {
+      "pair_id": "85",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:619",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1436",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3416.32,
+      "matched": true
+    },
+    {
+      "pair_id": "86",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:818",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1406",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3735.82,
+      "matched": true
+    },
+    {
+      "pair_id": "87",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1131",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:597",
+      "true_label": "UNRELATED",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 3795.6,
+      "matched": false
+    },
+    {
+      "pair_id": "88",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1294",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1178",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 4034.63,
+      "matched": true
+    },
+    {
+      "pair_id": "89",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1292",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:2056",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3488.31,
+      "matched": true
+    },
+    {
+      "pair_id": "90",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1292",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:593",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 1433.57,
+      "matched": true
+    },
+    {
+      "pair_id": "91",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:995",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:674",
+      "true_label": "SUPPORTS",
+      "predicted_label": "CONTRADICTS",
+      "latency_ms": 3655.18,
+      "matched": false
+    },
+    {
+      "pair_id": "92",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:991",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1060",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2386.77,
+      "matched": true
+    },
+    {
+      "pair_id": "93",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:702",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1555",
+      "true_label": "SUPPORTS",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 4065.09,
+      "matched": true
+    },
+    {
+      "pair_id": "94",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:153",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:973",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3717.54,
+      "matched": true
+    },
+    {
+      "pair_id": "95",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1296",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:795",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 4160.65,
+      "matched": true
+    },
+    {
+      "pair_id": "96",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:11",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:198",
+      "true_label": "CONTRADICTS",
+      "predicted_label": "CONTRADICTS",
+      "latency_ms": 1808.59,
+      "matched": true
+    },
+    {
+      "pair_id": "97",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:66",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:26",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 1534.04,
+      "matched": true
+    },
+    {
+      "pair_id": "98",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:86",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:47",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3621.23,
+      "matched": true
+    },
+    {
+      "pair_id": "99",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:93",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:120",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3734.14,
+      "matched": true
+    },
+    {
+      "pair_id": "100",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:97",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:189",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3751.36,
+      "matched": true
+    },
+    {
+      "pair_id": "101",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:109",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:125",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3575.02,
+      "matched": true
+    },
+    {
+      "pair_id": "102",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:190",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:207",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 4073.97,
+      "matched": true
+    },
+    {
+      "pair_id": "103",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:193",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:45",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 1765.6,
+      "matched": true
+    },
+    {
+      "pair_id": "104",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:212",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:45",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3394.4,
+      "matched": true
+    },
+    {
+      "pair_id": "105",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:67",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:638",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 4831.82,
+      "matched": true
+    },
+    {
+      "pair_id": "106",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:98",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1082",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2772.41,
+      "matched": true
+    },
+    {
+      "pair_id": "107",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:153",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1181",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2779.93,
+      "matched": true
+    },
+    {
+      "pair_id": "108",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:261",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1164",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2900.71,
+      "matched": true
+    },
+    {
+      "pair_id": "109",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:258",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1178",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 4247.24,
+      "matched": true
+    },
+    {
+      "pair_id": "110",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:255",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1027",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2015.28,
+      "matched": true
+    },
+    {
+      "pair_id": "111",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1164",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:587",
+      "true_label": "UNRELATED",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 3105.61,
+      "matched": false
+    },
+    {
+      "pair_id": "112",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1256",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:376",
+      "true_label": "SUPPORTS",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 4102.69,
+      "matched": true
+    },
+    {
+      "pair_id": "113",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:531",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:605",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2176.9,
+      "matched": true
+    },
+    {
+      "pair_id": "114",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:536",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:815",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2986.22,
+      "matched": true
+    },
+    {
+      "pair_id": "115",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1296",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:813",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 4054.64,
+      "matched": true
+    },
+    {
+      "pair_id": "116",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:113",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1453",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 1690.7,
+      "matched": true
+    },
+    {
+      "pair_id": "117",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:99",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1428",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3121.04,
+      "matched": true
+    },
+    {
+      "pair_id": "118",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:93",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1429",
+      "true_label": "UNRELATED",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 5529.22,
+      "matched": false
+    },
+    {
+      "pair_id": "119",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:132",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1429",
+      "true_label": "UNRELATED",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 1847.45,
+      "matched": false
+    },
+    {
+      "pair_id": "120",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:194",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1535",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 1669.61,
+      "matched": true
+    },
+    {
+      "pair_id": "121",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:189",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:2061",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3951.24,
+      "matched": true
+    },
+    {
+      "pair_id": "122",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1178",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1956",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3692.39,
+      "matched": true
+    },
+    {
+      "pair_id": "123",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1164",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1425",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3922.81,
+      "matched": true
+    },
+    {
+      "pair_id": "124",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:702",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1802",
+      "true_label": "CONTRADICTS",
+      "predicted_label": "CONTRADICTS",
+      "latency_ms": 3014.56,
+      "matched": true
+    },
+    {
+      "pair_id": "125",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:698",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:2083",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 4088.49,
+      "matched": true
+    },
+    {
+      "pair_id": "126",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:848",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1992",
+      "true_label": "UNRELATED",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 1831.58,
+      "matched": false
+    },
+    {
+      "pair_id": "127",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:531",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1991",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3580.77,
+      "matched": true
+    },
+    {
+      "pair_id": "128",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1113",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1049",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3529.17,
+      "matched": true
+    },
+    {
+      "pair_id": "129",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1104",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1991",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3880.62,
+      "matched": true
+    },
+    {
+      "pair_id": "130",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1102",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:544",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2659.33,
+      "matched": true
+    },
+    {
+      "pair_id": "131",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:804",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1558",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3642.92,
+      "matched": true
+    },
+    {
+      "pair_id": "132",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:592",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:544",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3654.82,
+      "matched": true
+    },
+    {
+      "pair_id": "133",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:815",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1266",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3534.75,
+      "matched": true
+    },
+    {
+      "pair_id": "134",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:818",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1593",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2566.37,
+      "matched": true
+    },
+    {
+      "pair_id": "135",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1127",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:794",
+      "true_label": "UNRELATED",
+      "predicted_label": "CONTRADICTS",
+      "latency_ms": 3456.33,
+      "matched": false
+    },
+    {
+      "pair_id": "136",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1139",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1669",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 4656.53,
+      "matched": true
+    },
+    {
+      "pair_id": "137",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1293",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1795",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2521.05,
+      "matched": true
+    },
+    {
+      "pair_id": "138",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1292",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:588",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3798.98,
+      "matched": true
+    },
+    {
+      "pair_id": "139",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:884",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:2056",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2431.63,
+      "matched": true
+    },
+    {
+      "pair_id": "140",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1006",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:559",
+      "true_label": "SUPPORTS",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 3082.36,
+      "matched": true
+    },
+    {
+      "pair_id": "141",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:11",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:207",
+      "true_label": "UNRELATED",
+      "predicted_label": "CONTRADICTS",
+      "latency_ms": 3447.98,
+      "matched": false
+    },
+    {
+      "pair_id": "142",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:11",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:217",
+      "true_label": "UNRELATED",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 2489.78,
+      "matched": false
+    },
+    {
+      "pair_id": "143",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:15",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:217",
+      "true_label": "UNRELATED",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 5514.12,
+      "matched": false
+    },
+    {
+      "pair_id": "144",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:39",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:75",
+      "true_label": "UNRELATED",
+      "predicted_label": "CONTRADICTS",
+      "latency_ms": 2407.06,
+      "matched": false
+    },
+    {
+      "pair_id": "145",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:41",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:75",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3576.95,
+      "matched": true
+    },
+    {
+      "pair_id": "146",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:45",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:224",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3670.03,
+      "matched": true
+    },
+    {
+      "pair_id": "147",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:60",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:214",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3589.74,
+      "matched": true
+    },
+    {
+      "pair_id": "148",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:61",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:258",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2610.43,
+      "matched": true
+    },
+    {
+      "pair_id": "149",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:63",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:198",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3301.08,
+      "matched": true
+    },
+    {
+      "pair_id": "150",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:66",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:124",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 1470.1,
+      "matched": true
+    },
+    {
+      "pair_id": "151",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:76",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:41",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 4518.5,
+      "matched": true
+    },
+    {
+      "pair_id": "152",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:93",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:129",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3653.12,
+      "matched": true
+    },
+    {
+      "pair_id": "153",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:93",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:126",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3622.67,
+      "matched": true
+    },
+    {
+      "pair_id": "154",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:95",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:128",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3040.78,
+      "matched": true
+    },
+    {
+      "pair_id": "155",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:97",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:148",
+      "true_label": "UNRELATED",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 3024.17,
+      "matched": false
+    },
+    {
+      "pair_id": "156",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:97",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:240",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2041.5,
+      "matched": true
+    },
+    {
+      "pair_id": "157",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:126",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:57",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3990.33,
+      "matched": true
+    },
+    {
+      "pair_id": "158",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:135",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:197",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3019.18,
+      "matched": true
+    },
+    {
+      "pair_id": "159",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:161",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:26",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3994.49,
+      "matched": true
+    },
+    {
+      "pair_id": "160",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:194",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:229",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 1974.54,
+      "matched": true
+    },
+    {
+      "pair_id": "161",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:214",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:10",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 4109.83,
+      "matched": true
+    },
+    {
+      "pair_id": "162",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:229",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:10",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3062.42,
+      "matched": true
+    },
+    {
+      "pair_id": "163",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:241",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:45",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3045.42,
+      "matched": true
+    },
+    {
+      "pair_id": "164",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:113",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:277",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 4013.58,
+      "matched": true
+    },
+    {
+      "pair_id": "165",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:62",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:970",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3165.71,
+      "matched": true
+    },
+    {
+      "pair_id": "166",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:67",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:683",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2104.07,
+      "matched": true
+    },
+    {
+      "pair_id": "167",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:73",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:473",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3643.4,
+      "matched": true
+    },
+    {
+      "pair_id": "168",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:129",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:683",
+      "true_label": "UNRELATED",
+      "predicted_label": "CONTRADICTS",
+      "latency_ms": 3026.59,
+      "matched": false
+    },
+    {
+      "pair_id": "169",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:127",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:985",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 4070.16,
+      "matched": true
+    },
+    {
+      "pair_id": "170",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:194",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1045",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3158.34,
+      "matched": true
+    },
+    {
+      "pair_id": "171",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:188",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1178",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 4110.11,
+      "matched": true
+    },
+    {
+      "pair_id": "172",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:240",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1180",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2819.78,
+      "matched": true
+    },
+    {
+      "pair_id": "173",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:349",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:983",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2887.5,
+      "matched": true
+    },
+    {
+      "pair_id": "174",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:696",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:991",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 4029.75,
+      "matched": true
+    },
+    {
+      "pair_id": "175",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:455",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:332",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3050.18,
+      "matched": true
+    },
+    {
+      "pair_id": "176",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:848",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1129",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2123.23,
+      "matched": true
+    },
+    {
+      "pair_id": "177",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1293",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1120",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3849.32,
+      "matched": true
+    },
+    {
+      "pair_id": "178",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:884",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:588",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3138.21,
+      "matched": true
+    },
+    {
+      "pair_id": "179",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:884",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:536",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3858.39,
+      "matched": true
+    },
+    {
+      "pair_id": "180",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:65",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1934",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 1976.5,
+      "matched": true
+    },
+    {
+      "pair_id": "181",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:116",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1174",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2831.72,
+      "matched": true
+    },
+    {
+      "pair_id": "182",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:101",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:472",
+      "true_label": "UNRELATED",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 4041.75,
+      "matched": false
+    },
+    {
+      "pair_id": "183",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:98",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:701",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3030.87,
+      "matched": true
+    },
+    {
+      "pair_id": "184",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:96",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1906",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 4004.26,
+      "matched": true
+    },
+    {
+      "pair_id": "185",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:95",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:686",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2178.82,
+      "matched": true
+    },
+    {
+      "pair_id": "186",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:153",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:2088",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3111.25,
+      "matched": true
+    },
+    {
+      "pair_id": "187",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:136",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1027",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3086.21,
+      "matched": true
+    },
+    {
+      "pair_id": "188",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:194",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:970",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3182.13,
+      "matched": true
+    },
+    {
+      "pair_id": "189",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:186",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:2080",
+      "true_label": "UNRELATED",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 3079.81,
+      "matched": false
+    },
+    {
+      "pair_id": "190",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:237",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:985",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 4085.3,
+      "matched": true
+    },
+    {
+      "pair_id": "191",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:419",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1006",
+      "true_label": "SUPPORTS",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 3113.94,
+      "matched": true
+    },
+    {
+      "pair_id": "192",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:310",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1454",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3082.17,
+      "matched": true
+    },
+    {
+      "pair_id": "193",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1176",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:2035",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2121.37,
+      "matched": true
+    },
+    {
+      "pair_id": "194",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1175",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1556",
+      "true_label": "UNRELATED",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 4131.26,
+      "matched": false
+    },
+    {
+      "pair_id": "195",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:970",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1932",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3014.39,
+      "matched": true
+    },
+    {
+      "pair_id": "196",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1261",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1120",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3728.97,
+      "matched": true
+    },
+    {
+      "pair_id": "197",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1256",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:946",
+      "true_label": "SUPPORTS",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 2991.86,
+      "matched": true
+    },
+    {
+      "pair_id": "198",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1103",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:544",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2937.97,
+      "matched": true
+    },
+    {
+      "pair_id": "199",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1095",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1238",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3168.65,
+      "matched": true
+    },
+    {
+      "pair_id": "200",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:587",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:674",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3107.81,
+      "matched": true
+    },
+    {
+      "pair_id": "201",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:593",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1586",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3044.45,
+      "matched": true
+    },
+    {
+      "pair_id": "202",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:608",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1139",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2997.24,
+      "matched": true
+    },
+    {
+      "pair_id": "203",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:618",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1589",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3107.28,
+      "matched": true
+    },
+    {
+      "pair_id": "204",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:813",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:804",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2868.99,
+      "matched": true
+    },
+    {
+      "pair_id": "205",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1131",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:581",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 4325.98,
+      "matched": true
+    },
+    {
+      "pair_id": "206",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:924",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1762",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2320.54,
+      "matched": true
+    },
+    {
+      "pair_id": "207",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1002",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:318",
+      "true_label": "SUPPORTS",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 4188.04,
+      "matched": false
+    },
+    {
+      "pair_id": "208",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:998",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:762",
+      "true_label": "SUPPORTS",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3470.91,
+      "matched": false
+    },
+    {
+      "pair_id": "209",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:991",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:756",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3142.9,
+      "matched": true
+    },
+    {
+      "pair_id": "210",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:991",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:334",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3242.42,
+      "matched": true
+    },
+    {
+      "pair_id": "211",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:989",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1106",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3147.3,
+      "matched": true
+    },
+    {
+      "pair_id": "212",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:93",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:601",
+      "true_label": "UNRELATED",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 1954.26,
+      "matched": false
+    },
+    {
+      "pair_id": "213",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:261",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1180",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 4045.26,
+      "matched": true
+    },
+    {
+      "pair_id": "214",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:125",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:238",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3055.37,
+      "matched": true
+    },
+    {
+      "pair_id": "215",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:200",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:11",
+      "true_label": "CONTRADICTS",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2250.01,
+      "matched": false
+    },
+    {
+      "pair_id": "216",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:970",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1045",
+      "true_label": "SUPPORTS",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 4853.5,
+      "matched": false
+    },
+    {
+      "pair_id": "217",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:112",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1672",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 4068.04,
+      "matched": true
+    },
+    {
+      "pair_id": "218",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:111",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1708",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2251.09,
+      "matched": true
+    },
+    {
+      "pair_id": "219",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:256",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:148",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 4266.39,
+      "matched": true
+    },
+    {
+      "pair_id": "220",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:93",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1555",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 4099.12,
+      "matched": true
+    },
+    {
+      "pair_id": "221",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:689",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1956",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3050.88,
+      "matched": true
+    },
+    {
+      "pair_id": "222",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:101",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:473",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2823.86,
+      "matched": true
+    },
+    {
+      "pair_id": "223",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:98",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1969",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2733.1,
+      "matched": true
+    },
+    {
+      "pair_id": "224",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:974",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1026",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3061.72,
+      "matched": true
+    },
+    {
+      "pair_id": "225",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1670",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1991",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 4157.71,
+      "matched": true
+    },
+    {
+      "pair_id": "226",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:2067",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:790",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2849.03,
+      "matched": true
+    },
+    {
+      "pair_id": "227",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1439",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:850",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3070.82,
+      "matched": true
+    },
+    {
+      "pair_id": "228",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1748",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:845",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3715.84,
+      "matched": true
+    },
+    {
+      "pair_id": "229",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:821",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1564",
+      "true_label": "UNRELATED",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 3165.55,
+      "matched": false
+    },
+    {
+      "pair_id": "230",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1049",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1477",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2927.18,
+      "matched": true
+    },
+    {
+      "pair_id": "231",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:238",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1995",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2907.36,
+      "matched": true
+    },
+    {
+      "pair_id": "232",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1796",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:404",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3024.78,
+      "matched": true
+    },
+    {
+      "pair_id": "233",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:70",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1953",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 1739.33,
+      "matched": true
+    },
+    {
+      "pair_id": "234",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1704",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:588",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 4044.41,
+      "matched": true
+    },
+    {
+      "pair_id": "235",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1179",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1120",
+      "true_label": "UNRELATED",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 3151.51,
+      "matched": false
+    },
+    {
+      "pair_id": "236",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1589",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1143",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 4303.43,
+      "matched": true
+    },
+    {
+      "pair_id": "237",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1557",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1993",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2425.75,
+      "matched": true
+    },
+    {
+      "pair_id": "238",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:119",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:2144",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3809.84,
+      "matched": true
+    },
+    {
+      "pair_id": "239",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:130",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:705",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2485.96,
+      "matched": true
+    },
+    {
+      "pair_id": "240",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:699",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:2083",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2943.54,
+      "matched": true
+    },
+    {
+      "pair_id": "241",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1587",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:399",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3742.24,
+      "matched": true
+    },
+    {
+      "pair_id": "242",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1584",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:882",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3537.25,
+      "matched": true
+    },
+    {
+      "pair_id": "243",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:527",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:803",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3621.81,
+      "matched": true
+    },
+    {
+      "pair_id": "244",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1137",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1608",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2692.61,
+      "matched": true
+    },
+    {
+      "pair_id": "245",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1885",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:474",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3620.94,
+      "matched": true
+    },
+    {
+      "pair_id": "246",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1531",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1110",
+      "true_label": "UNRELATED",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 3151.7,
+      "matched": false
+    },
+    {
+      "pair_id": "247",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1454",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:352",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3014.13,
+      "matched": true
+    },
+    {
+      "pair_id": "248",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1889",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:2041",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3077.85,
+      "matched": true
+    },
+    {
+      "pair_id": "249",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:698",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1708",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2941.49,
+      "matched": true
+    },
+    {
+      "pair_id": "250",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:996",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:762",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3021.94,
+      "matched": true
+    },
+    {
+      "pair_id": "251",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1599",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1478",
+      "true_label": "UNRELATED",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 4086.68,
+      "matched": false
+    },
+    {
+      "pair_id": "252",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1041",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:2154",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2006.92,
+      "matched": true
+    },
+    {
+      "pair_id": "253",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:111",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:2083",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2945.3,
+      "matched": true
+    },
+    {
+      "pair_id": "254",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:922",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1003",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 4159.83,
+      "matched": true
+    },
+    {
+      "pair_id": "255",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:119",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1893",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3046.8,
+      "matched": true
+    },
+    {
+      "pair_id": "256",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1191",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1446",
+      "true_label": "UNRELATED",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 2947.97,
+      "matched": false
+    },
+    {
+      "pair_id": "257",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1191",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:392",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3021.96,
+      "matched": true
+    },
+    {
+      "pair_id": "258",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:112",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:587",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3068.06,
+      "matched": true
+    },
+    {
+      "pair_id": "259",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:914",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:455",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3108.36,
+      "matched": true
+    },
+    {
+      "pair_id": "260",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1599",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1061",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3000.93,
+      "matched": true
+    },
+    {
+      "pair_id": "261",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:794",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1965",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2174.8,
+      "matched": true
+    },
+    {
+      "pair_id": "262",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:857",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:901",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3387.91,
+      "matched": true
+    },
+    {
+      "pair_id": "263",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:127",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:792",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2852.69,
+      "matched": true
+    },
+    {
+      "pair_id": "264",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1555",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1176",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3410.63,
+      "matched": true
+    },
+    {
+      "pair_id": "265",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:57",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1476",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3002.6,
+      "matched": true
+    },
+    {
+      "pair_id": "266",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1453",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:313",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3435.62,
+      "matched": true
+    },
+    {
+      "pair_id": "267",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1581",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1736",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3848.06,
+      "matched": true
+    },
+    {
+      "pair_id": "268",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:480",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1347",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3598.22,
+      "matched": true
+    },
+    {
+      "pair_id": "269",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:988",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1230",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2312.6,
+      "matched": true
+    },
+    {
+      "pair_id": "270",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:2145",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1723",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3652.9,
+      "matched": true
+    },
+    {
+      "pair_id": "271",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:2202",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1087",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3676.18,
+      "matched": true
+    },
+    {
+      "pair_id": "272",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1581",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1318",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3178.76,
+      "matched": true
+    },
+    {
+      "pair_id": "273",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:95",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:537",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3382.79,
+      "matched": true
+    },
+    {
+      "pair_id": "274",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1592",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1150",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2626.5,
+      "matched": true
+    },
+    {
+      "pair_id": "275",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1048",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1448",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 4499.62,
+      "matched": true
+    },
+    {
+      "pair_id": "276",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1890",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:548",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2284.61,
+      "matched": true
+    },
+    {
+      "pair_id": "277",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1432",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:862",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2270.39,
+      "matched": true
+    },
+    {
+      "pair_id": "278",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1127",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1652",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3572.82,
+      "matched": true
+    },
+    {
+      "pair_id": "279",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:113",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1708",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3210.07,
+      "matched": true
+    },
+    {
+      "pair_id": "280",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:2155",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1263",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2736.44,
+      "matched": true
+    },
+    {
+      "pair_id": "281",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:69",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:2165",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3330.48,
+      "matched": true
+    },
+    {
+      "pair_id": "282",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:531",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1558",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3332.06,
+      "matched": true
+    },
+    {
+      "pair_id": "283",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:591",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1019",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 2399.93,
+      "matched": true
+    },
+    {
+      "pair_id": "284",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:97",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1164",
+      "true_label": "UNRELATED",
+      "predicted_label": "SUPPORTS",
+      "latency_ms": 2642.61,
+      "matched": false
+    },
+    {
+      "pair_id": "285",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:605",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:2056",
+      "true_label": "UNRELATED",
+      "predicted_label": "UNRELATED",
+      "latency_ms": 3395.99,
+      "matched": true
+    }
+  ]
+}

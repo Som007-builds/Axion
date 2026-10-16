@@ -10,6 +10,7 @@ Covers:
     single-class warnings that make the dataset limitation explicit
 """
 import json
+from unittest.mock import patch
 
 import pandas as pd
 import pytest
@@ -127,7 +128,40 @@ class TestRunEval:
         with pytest.raises(ValueError):
             run(dataset=str(csv), predictor="does-not-exist", verbose=False)
 
-    def test_dataset_relative_to_eval_data(self):
+    def test_dataset_relative_to_eval_data(self, tmp_path):
         # 'test.csv' resolves inside eval/Data regardless of CWD
-        results = run(dataset="test.csv", predictor="majority", verbose=False)
+        results = run(dataset="test.csv", predictor="majority", verbose=False,
+                      output=str(tmp_path / "out.json"))
         assert results["dataset"]["path"] == "eval/Data/test.csv"
+
+
+class TestPredictorDiagnostics:
+    """check_pair must report *why* it returned None so parse failures are not
+    silently counted as correct UNRELATED predictions."""
+
+    def _write_csv(self, tmp_path):
+        path = tmp_path / "pairs.csv"
+        _frame([
+            {"claim_a_id": "1", "claim_b_id": "2", "claim_a_text": "A", "claim_b_text": "B",
+             "claim_a_arxiv_id": "1111", "claim_b_arxiv_id": "2222", "label": "UNRELATED"},
+            {"claim_a_id": "3", "claim_b_id": "4", "claim_a_text": "C", "claim_b_text": "D",
+             "claim_a_arxiv_id": "3333", "claim_b_arxiv_id": "4444", "label": "UNRELATED"},
+        ]).to_csv(path, index=False)
+        return path
+
+    def test_parse_failures_counted_separately_from_unrelated(self, tmp_path):
+        csv = self._write_csv(tmp_path)
+        responses = iter([
+            json.dumps({"relationship": "UNRELATED", "confidence": 0.9, "explanation": "x"}),
+            "totally not json",
+        ])
+        with patch("agents.contradiction.call_llm", side_effect=lambda *a, **k: next(responses)):
+            results = run(dataset=str(csv), predictor="llm", verbose=False,
+                          output=str(tmp_path / "out.json"))
+
+        diag = results["predictor_diagnostics"]
+        assert diag["parse_failures"] == 1
+        assert diag["statuses"]["UNRELATED"] == 1
+        assert diag["statuses"]["PARSE_FAILURE"] == 1
+        assert any("parse" in w.lower() for w in results["warnings"])
+

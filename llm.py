@@ -51,12 +51,17 @@ def _is_rate_limit(exc: Exception) -> bool:
 def _call_groq(prompt: str, max_tokens: int) -> str:
     from groq import Groq
     client = Groq(api_key=GROQ_API_KEY)
-    response = client.chat.completions.create(
-        model=GROQ_MODEL,
-        max_tokens=max_tokens,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    return response.choices[0].message.content.strip()
+    kwargs = {
+        "model": GROQ_MODEL,
+        "max_tokens": max_tokens,
+        "messages": [{"role": "user", "content": prompt}],
+    }
+    # Reasoning models (openai/gpt-oss-*, qwen3-*) otherwise spend the whole
+    # max_tokens budget on hidden reasoning and can return empty content.
+    if "gpt-oss" in GROQ_MODEL or "qwen3" in GROQ_MODEL:
+        kwargs["reasoning_effort"] = "low"
+    response = client.chat.completions.create(**kwargs)
+    return (response.choices[0].message.content or "").strip()
 
 
 def _call_gemini(prompt: str, max_tokens: int) -> str:
@@ -132,6 +137,8 @@ def call_llm(
     if primary not in chain:
         chain.insert(0, primary)
 
+    last_error: Exception | None = None
+
     # ── Provider fallback loop ────────────────────────────────────────────────
     for provider in chain:
         caller = _PROVIDERS.get(provider)
@@ -143,6 +150,10 @@ def call_llm(
             t0 = time.perf_counter()
             try:
                 result = caller(prompt, max_tokens)
+                if not result or not result.strip():
+                    # An empty completion is a provider failure, not a valid
+                    # answer — surface it so the fallback chain can proceed.
+                    raise ValueError(f"[{provider}] returned an empty response")
                 elapsed_ms = (time.perf_counter() - t0) * 1000
 
                 logger.debug(
@@ -194,7 +205,11 @@ def call_llm(
                         break   # move to next provider
 
                 else:
-                    # Non-rate-limit error: fail fast (don't retry with same provider)
+                    # Non-rate-limit error (dead model name, bad key, malformed
+                    # request…): this provider is unusable right now, so fall
+                    # through to the next provider instead of failing the whole
+                    # chain — one stale model name must not take down every
+                    # LLM call in the application.
                     logger.error(
                         f"{tag} [{provider}] Non-retriable error: {exc}"
                     )
@@ -204,10 +219,11 @@ def call_llm(
                             duration_ms=elapsed_ms,
                             success=False,
                         )
-                    raise
+                    last_error = exc
+                    break   # move to next provider
 
     raise Exception(
         f"All LLM providers exhausted after retries. "
         f"Chain tried: {chain}. "
         f"Consider checking API keys or rate limit quotas."
-    )
+    ) from last_error

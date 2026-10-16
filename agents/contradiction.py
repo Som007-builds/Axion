@@ -45,10 +45,72 @@ Return ONLY valid JSON, no other text:
 """
 
 
-def check_pair(claim_a: dict, claim_b: dict) -> dict | None:
-    if claim_a["id"] == claim_b["id"]:
+# Statuses reported through the optional ``diagnostics`` out-param of
+# ``check_pair``. Without them, SAME_CLAIM, SAME_PAPER, UNRELATED and a JSON
+# parse failure all collapse to ``None`` — which made it impossible to tell a
+# model failure apart from a genuine "no relationship" verdict during eval.
+STATUS_SAME_CLAIM = "SAME_CLAIM"
+STATUS_SAME_PAPER = "SAME_PAPER"
+STATUS_UNRELATED = "UNRELATED"
+STATUS_PARSE_FAILURE = "PARSE_FAILURE"
+
+
+def _parse_json_object(raw: str) -> dict | None:
+    """Best-effort extraction of a JSON object from a raw LLM response.
+
+    Tolerates markdown fences and leading/trailing prose. Returns ``None``
+    (never raises) when no usable object is present.
+    """
+    if not raw:
         return None
-    if claim_a["arxiv_id"] == claim_b["arxiv_id"]:
+
+    # Strip markdown fences if present
+    if "```" in raw:
+        raw = raw.split("```")[1]
+        if raw.startswith("json"):
+            raw = raw[4:]
+
+    candidates = [raw]
+    start = raw.find("{")
+    if start > 0:
+        candidates.append(raw[start:])
+
+    for candidate in candidates:
+        try:
+            data = json.loads(candidate)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(data, dict):
+            return data
+    return None
+
+
+def check_pair(claim_a: dict, claim_b: dict, diagnostics: dict | None = None) -> dict | None:
+    """Classify the relationship between two claims.
+
+    Returns the parsed verdict dict for CONTRADICTS/SUPPORTS and ``None`` for
+    every other outcome. When ``diagnostics`` is passed, ``diagnostics["status"]``
+    is set to one of ``SAME_CLAIM``, ``SAME_PAPER``, ``UNRELATED``,
+    ``PARSE_FAILURE`` or the relationship label — so callers (notably the eval
+    harness) can distinguish a JSON parse failure from a genuine UNRELATED
+    verdict.
+    """
+    def _mark(status: str) -> None:
+        if diagnostics is not None:
+            diagnostics["status"] = status
+
+    id_a = str(claim_a.get("id", "") or "").strip()
+    id_b = str(claim_b.get("id", "") or "").strip()
+    if id_a and id_a == id_b:
+        _mark(STATUS_SAME_CLAIM)
+        return None
+
+    arxiv_a = str(claim_a.get("arxiv_id", "") or "").strip()
+    arxiv_b = str(claim_b.get("arxiv_id", "") or "").strip()
+    # Only a *shared, known* paper qualifies: two claims whose arxiv id is
+    # missing are not from the same paper merely because both are empty.
+    if arxiv_a and arxiv_a == arxiv_b:
+        _mark(STATUS_SAME_PAPER)
         return None
 
     prompt = CONTRADICTION_PROMPT.format(
@@ -58,30 +120,20 @@ def check_pair(claim_a: dict, claim_b: dict) -> dict | None:
         paper_b=claim_b["paper_title"],
     )
 
-    raw = call_llm(prompt, max_tokens=500)
+    raw = call_llm(prompt, max_tokens=1024)
 
-    # Strip markdown fences if present
-    if "```" in raw:
-        raw = raw.split("```")[1]
-        if raw.startswith("json"):
-            raw = raw[4:]
-
-    try:
-        data = json.loads(raw)
-        if data["relationship"] == "UNRELATED":
-            return None
-        return data
-    except json.JSONDecodeError:
-        start = raw.find("{")
-        if start != -1:
-            try:
-                data = json.loads(raw[start:])
-                if data["relationship"] == "UNRELATED":
-                    return None
-                return data
-            except json.JSONDecodeError:
-                pass
+    data = _parse_json_object(raw)
+    if not isinstance(data, dict) or "relationship" not in data:
+        _mark(STATUS_PARSE_FAILURE)
         return None
+
+    relationship = str(data["relationship"]).strip().upper()
+    if relationship == STATUS_UNRELATED:
+        _mark(STATUS_UNRELATED)
+        return None
+
+    _mark(relationship)
+    return data
 
 
 def run_contradiction_detection(limit_to_claim_ids: list[str] = None) -> int:

@@ -18,7 +18,7 @@ python eval/run_eval.py --predictor majority
 python eval/run_eval.py --predictor random --seed 7
 
 # Real LLM baseline (needs GROQ_API_KEY / GEMINI_API_KEY and network)
-python eval/run_eval.py --predictor llm --dataset test.csv
+python eval/run_eval.py --predictor llm --dataset axion_pairs.csv
 
 # Legacy entry point still works (delegates to run_eval.py)
 python eval/baseline_llm_eval.py
@@ -43,69 +43,103 @@ metric set, per-pair predictions, dataset composition, and any warnings.
 `f1_macro` is averaged over all three classes even when one never appears, so a
 single-class run is penalised rather than scoring a misleading 1.0.
 
-## ⚠️ Known dataset problems (read before trusting any number)
+## The reference set: `axion_pairs.csv`
 
-1. **The labelled splits cannot measure production behaviour.**
-   In `train.csv`, `val.csv` and `test.csv`, **every** `SUPPORTS` and
-   `CONTRADICTS` pair is a *same-paper* pair (same `arxiv_id`), but
-   `check_pair()` deliberately refuses to compare two claims from the same
-   paper. After the harness excludes same-paper pairs (the production-aligned
-   default), the test split is **100% UNRELATED**:
+The dataset to report on is **`eval/Data/axion_pairs.csv`** — 286 cross-paper
+pairs with reviewed labels. Rebuild it with:
 
-   | split | CONTRADICTS | SUPPORTS | UNRELATED | cross-paper rows |
-   | :--- | ---: | ---: | ---: | ---: |
-   | train | 3 | 83 | 124 | 48 (all UNRELATED) |
-   | val | 1 | 17 | 27 | 10 (all UNRELATED) |
-   | test | 1 | 18 | 26 | 10 (all UNRELATED) |
+```bash
+python eval/Data/build_reference_set.py
+```
 
-   Consequence: the majority baseline scores **accuracy 1.0 / macro F1 0.33**
-   on the default run. Any accuracy close to 1.0 here is an artifact.
+Provenance (the only genuinely reviewed labels in the repo):
 
-   Use `--include-same-paper` to see the other view (majority baseline:
-   accuracy 0.578 / macro F1 0.244) — but note that view includes pairs the
-   production agent never scores.
+- **`contradicts_review_labeled.csv` (224 pairs).** The production agent
+  auto-detected these as CONTRADICTS; a reviewer then audited each one against
+  the 3-question rubric in `label_contradicts.py` (same topic? agree? genuinely
+  conflict?). The audit found only **4 true CONTRADICTS**, 11 SUPPORTS and
+  209 UNRELATED — i.e. the detector's precision on this sample is **~1.8%**.
+  These reviewed labels are treated as ground truth.
+- **`labeled_pairs_cleaned.csv` (62 pairs after de-duplication).** Cross-paper,
+  all UNRELATED, unverified provenance — included as extra negatives and tagged
+  `source=labeled_pairs_cleaned` so they can be filtered out.
 
-2. **Class imbalance.** Test set is 26 UNRELATED / 18 SUPPORTS / 1 CONTRADICTS.
-   Macro F1 for CONTRADICTS rests on a single example; treat it as anecdotal.
+Composition: **4 CONTRADICTS / 11 SUPPORTS / 271 UNRELATED** (0 same-paper).
+Recorded baselines (`eval/results/*_axion_pairs.json`):
 
-3. **`eval/Data/Labeled_pairs.csv` is 0 bytes** (this is the same file as
-   lowercase `labeled_pairs.csv` on case-insensitive filesystems). The source
-   dataset that produced the train/val/test splits is therefore missing;
-   `eval/Data/split_dataset.py` cannot regenerate the splits. The splits
-   themselves are still present.
+| predictor | accuracy | macro F1 | CONTRADICTS P / R / F1 |
+| :--- | ---: | ---: | :--- |
+| majority (all UNRELATED) | 0.9476 | 0.3244 | 0.00 / 0.00 / 0.00 |
+| random (seed 0) | 0.3706 | 0.2191 | — |
+| llm (groq `openai/gpt-oss-20b`) | 0.8427 | 0.4822 | 0.154 / 0.500 / 0.235 |
 
-4. **`eval/Data/labeled_pairs_cleaned.csv` is 100% UNRELATED** (68 rows) — it
-   contains no positive examples and must not be used as an eval set.
+The LLM run made 0 parse failures and predicted 13 CONTRADICTS for 4 real ones —
+i.e. it reproduces the low precision the human audit found (~1.8% on the
+original 224 auto-detections; 15.4% here, since the eval model differs from the
+one that originally wrote the graph edges). Accuracy looks healthy only because
+271/286 pairs are negatives.
 
-5. **`check_pair()` collapses UNRELATED, same-paper and JSON-parse failures
-   into a single `None`.** The harness works around same-paper pairs up front,
-   so a `None` is read as UNRELATED, but a silent parse failure is still
-   indistinguishable from a genuine negative. Instrumenting `check_pair` to
-   expose this is tracked in `progress.md` (Track D).
+### Why the old splits are unusable
 
-### Implications
+`train.csv` / `val.csv` / `test.csv` label almost every SUPPORTS/CONTRADICTS
+pair as **same-paper**, which `check_pair()` refuses to compare. After the
+harness's same-paper exclusion they are 100% UNRELATED:
 
-- A meaningful eval **must** use cross-paper pairs with real CONTRADICTS /
-  SUPPORTS labels. The current labelled data does not contain enough of them.
-- Until the dataset is rebuilt, report `f1_macro` (not accuracy), always print
-  the class mix and `warnings`, and never cite a single run as proof of quality.
+| split | CONTRADICTS | SUPPORTS | UNRELATED | cross-paper rows |
+| :--- | ---: | ---: | ---: | ---: |
+| train | 3 | 83 | 124 | 48 (all UNRELATED) |
+| val | 1 | 17 | 27 | 10 (all UNRELATED) |
+| test | 1 | 18 | 26 | 10 (all UNRELATED) |
+
+On `test.csv` the majority baseline scores accuracy 1.0 / macro F1 0.33 — pure
+artifact. `eval/Data/Labeled_pairs.csv` (the split source) is 0 bytes.
+`--include-same-paper` shows the other view, but those pairs are never scored in
+production.
+
+### Reading the numbers
+
+- Report `f1_macro` (not accuracy): with 271/286 negatives, accuracy is driven
+  entirely by the majority class.
+- **CONTRADICTS has only 4 examples**, so its per-class F1 is noisy — treat the
+  audited precision (~1.8%) as the headline quality signal, not a single F1.
+- The `warnings` array and `predictor_diagnostics` (below) are part of the
+  result — print them alongside any metric.
+
+### Parse-failure instrumentation
+
+`check_pair()` used to collapse SAME_CLAIM, SAME_PAPER, UNRELATED and JSON parse
+failures into a single `None`. It now accepts an optional `diagnostics` dict and
+records `diagnostics["status"]`; the LLM predictor tallies these and the JSON
+result carries a `predictor_diagnostics` block, e.g.:
+
+```json
+"predictor_diagnostics": {"parse_failures": 2, "statuses": {"UNRELATED": 250, "SUPPORTS": 20, "CONTRADICTS": 12, "PARSE_FAILURE": 2}}
+```
+
+A parse failure is a *model failure*, not a negative — the harness emits a
+warning whenever any occur.
 
 ## Stale results
 
 `eval/results/baseline_llm.json` (generated 2026-08-02, self-labelled
 "OLD CONTAMINATED"; accuracy 0.489 / macro F1 0.219) was produced by the old
 script that conflated same-paper pairs, UNRELATED verdicts and parse failures,
-so its denominator is wrong. It is kept only for history — regenerate with
-`python eval/run_eval.py --predictor llm` after the dataset is fixed.
+so its denominator is wrong. It is kept only for history — the current LLM
+baseline is `eval/results/llm_axion_pairs.json`.
 
-`eval/results/majority_test.json` is a deterministic offline reference baseline
-for regression comparisons.
+`eval/results/majority_test.json` / `random_test.json` are old, same-paper-
+collapsed baselines for the old `test.csv`. The current reference baselines are
+`eval/results/{majority,random,llm}_axion_pairs.json`.
 
-## Proposed metric targets (not yet met — no valid data to verify against)
+## Metric targets
+
+Now measurable on `axion_pairs.csv` (not yet met — the audited precision is
+~1.8%, so there is real headroom):
 
 | Metric | Target | Notes |
 | :--- | :--- | :--- |
 | `f1_macro` | ≥ 0.55 | Over all three classes, cross-paper pairs |
+| CONTRADICTS precision | ≥ 0.60 | Audited production precision is ~0.018 |
 | CONTRADICTS recall | ≥ 0.60 | Recall matters more than precision here |
 | `latency_ms.p95` | ≤ 4000 | Per pair, single LLM call |
 
@@ -119,6 +153,9 @@ eval/
   dataset.py             # loading, validation, same-paper exclusion, composition
   predictors.py          # majority / random / llm predictors
   results/               # generated JSON results
-  Data/                  # labelled pair CSVs and data-prep scripts (ad-hoc)
+  Data/
+    axion_pairs.csv          # reference set (286 reviewed cross-paper pairs)
+    build_reference_set.py   # rebuilds axion_pairs.csv from reviewed labels
+    ...                      # raw exports / prep scripts
   models/                # empty (planned, unused)
 ```

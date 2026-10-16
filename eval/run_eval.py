@@ -70,6 +70,7 @@ def run(
         prepared = prepared.head(limit)
 
     model = build_predictor(predictor, **({"seed": seed} if predictor == "random" else {}))
+    predictor_diagnostics = getattr(model, "diagnostics", None)
 
     y_true: list[str] = []
     y_pred: list[str] = []
@@ -105,7 +106,7 @@ def run(
 
     metrics = compute_metrics(y_true, y_pred, latencies)
 
-    warnings = _diagnose(metrics, prep_report)
+    warnings = _diagnose(metrics, prep_report, predictor_diagnostics)
 
     results = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -121,6 +122,7 @@ def run(
         "predictor": model.name,
         "seed": seed if predictor == "random" else None,
         "warnings": warnings,
+        "predictor_diagnostics": predictor_diagnostics,
         "metrics": metrics,
         "predictions": predictions,
     }
@@ -136,7 +138,7 @@ def run(
     return results
 
 
-def _diagnose(metrics: dict, prep_report: dict) -> list[str]:
+def _diagnose(metrics: dict, prep_report: dict, predictor_diagnostics: dict | None = None) -> list[str]:
     """
     Surface conditions that make the headline numbers misleading, instead of
     letting a single accuracy value stand on its own.
@@ -165,6 +167,14 @@ def _diagnose(metrics: dict, prep_report: dict) -> list[str]:
         )
     for label in missing_support:
         warnings.append(f"Class {label} has 0 evaluated examples.")
+
+    if predictor_diagnostics:
+        parse_failures = int(predictor_diagnostics.get("parse_failures", 0))
+        if parse_failures:
+            warnings.append(
+                f"{parse_failures} prediction(s) were JSON parse failures and scored as "
+                "UNRELATED — treat those as model errors, not genuine negatives."
+            )
 
     return warnings
 
@@ -198,6 +208,8 @@ def _print_summary(results: dict, out_path: str) -> None:
             )
         lat = m["latency_ms"]
         print(f"Latency ms  : avg={lat['avg']} p50={lat['p50']} p95={lat['p95']} max={lat['max']}")
+    if results.get("predictor_diagnostics"):
+        print(f"Diagnostics : {results['predictor_diagnostics']}")
     if results.get("warnings"):
         print("\nWARNINGS:")
         for w in results["warnings"]:

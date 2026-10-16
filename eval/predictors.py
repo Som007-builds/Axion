@@ -66,15 +66,23 @@ class LLMPredictor:
     Real predictor: delegates to ``agents.contradiction.check_pair``.
 
     ``check_pair`` returns ``None`` for UNRELATED, same-paper pairs and JSON
-    parse failures alike. Same-paper pairs are excluded up front by the dataset
-    layer, so here ``None`` is interpreted as the model's UNRELATED decision.
-
-    KNOWN LIMITATION: a parse failure is therefore indistinguishable from a
-    genuine UNRELATED verdict. Instrumenting ``check_pair`` to expose that
-    distinction is tracked separately (see progress.md, Track D).
+    parse failures alike, so it is called with a ``diagnostics`` dict and the
+    resulting status is tallied. This lets the harness report how many
+    predictions were parse failures (i.e. model failures mislabelled as
+    UNRELATED) rather than silently counting them as correct negatives.
     """
 
     name = "llm"
+
+    def __init__(self):
+        self.diagnostics = {"parse_failures": 0, "statuses": {}}
+
+    def _record(self, status: str) -> None:
+        self.diagnostics["statuses"][status] = (
+            self.diagnostics["statuses"].get(status, 0) + 1
+        )
+        if status == "PARSE_FAILURE":
+            self.diagnostics["parse_failures"] += 1
 
     def predict(self, row) -> tuple[str, float, Any]:
         from agents.contradiction import check_pair
@@ -92,9 +100,12 @@ class LLMPredictor:
             "paper_title": str(_row_value(row, "claim_b_paper_title", default="Unknown Title B")),
         }
 
+        diag: dict = {}
         start = time.perf_counter()
-        raw_result = check_pair(claim_a, claim_b)
+        raw_result = check_pair(claim_a, claim_b, diagnostics=diag)
         elapsed_ms = (time.perf_counter() - start) * 1000.0
+
+        self._record(str(diag.get("status", "UNKNOWN")))
 
         if not isinstance(raw_result, dict) or "relationship" not in raw_result:
             return "UNRELATED", elapsed_ms, raw_result

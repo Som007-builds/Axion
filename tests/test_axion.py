@@ -118,17 +118,41 @@ class TestLLM:
         # retries=2 with a single-provider chain => one back-off sleep
         assert mock_sleep.call_count == 1
 
-    @patch("config.LLM_PROVIDER", "groq")
-    def test_non_rate_limit_error_raises_immediately(self):
-        """Non-rate-limit exceptions should propagate without retry."""
-        mock_client = MagicMock()
-        mock_client.chat.completions.create.side_effect = ValueError("bad input")
-        mock_groq_module = MagicMock()
-        mock_groq_module.Groq.return_value = mock_client
-        import sys, importlib, llm as llm_mod
-        with patch.dict(sys.modules, {"groq": mock_groq_module}):
-            importlib.reload(llm_mod)
-            with pytest.raises(ValueError, match="bad input"):
+    def test_non_rate_limit_error_falls_back_to_next_provider(self):
+        """A dead model / auth error on the primary must not kill the chain.
+
+        Regression: a decommissioned Groq model used to raise out of
+        ``call_llm`` even though Gemini was configured as a fallback.
+        """
+        import llm as llm_mod
+        calls = []
+
+        def dead(prompt, max_tokens):
+            calls.append("groq")
+            raise Exception("model `llama-3.1-8b-instant` does not exist")
+
+        def alive(prompt, max_tokens):
+            calls.append("gemini")
+            return "gemini answer"
+
+        with patch.object(llm_mod.config, "LLM_PROVIDER", "groq"), \
+             patch.object(llm_mod, "LLM_PROVIDER_CHAIN", ["groq", "gemini"]), \
+             patch.dict(llm_mod._PROVIDERS, {"groq": dead, "gemini": alive}):
+            result = llm_mod.call_llm("test")
+
+        assert result == "gemini answer"
+        assert calls == ["groq", "gemini"]
+
+    def test_all_providers_dead_raises_chain_exhausted(self):
+        import llm as llm_mod
+
+        def dead(prompt, max_tokens):
+            raise Exception("model not found")
+
+        with patch.object(llm_mod.config, "LLM_PROVIDER", "groq"), \
+             patch.object(llm_mod, "LLM_PROVIDER_CHAIN", ["groq"]), \
+             patch.dict(llm_mod._PROVIDERS, {"groq": dead}):
+            with pytest.raises(Exception, match="All LLM providers exhausted"):
                 llm_mod.call_llm("test")
 
 
@@ -539,6 +563,68 @@ class TestContradiction:
             a = self._make_claim("1", "2301.00001", "Paper A", "Claim A")
             b = self._make_claim("2", "2302.00002", "Paper B", "Claim B")
             assert check_pair(a, b) is None
+
+    def test_diagnostics_distinguish_parse_failure(self):
+        from agents.contradiction import STATUS_PARSE_FAILURE, check_pair
+        with patch("agents.contradiction.call_llm", return_value="not json %%%"):
+            a = self._make_claim("1", "2301.00001", "Paper A", "Claim A")
+            b = self._make_claim("2", "2302.00002", "Paper B", "Claim B")
+            diag = {}
+            assert check_pair(a, b, diagnostics=diag) is None
+        assert diag["status"] == STATUS_PARSE_FAILURE
+
+    def test_diagnostics_distinguish_unrelated(self):
+        from agents.contradiction import STATUS_UNRELATED, check_pair
+        resp = json.dumps({"relationship": "UNRELATED", "confidence": 0.9,
+                           "explanation": "different topics"})
+        with patch("agents.contradiction.call_llm", return_value=resp):
+            a = self._make_claim("1", "2301.00001", "Paper A", "Claim A")
+            b = self._make_claim("2", "2302.00002", "Paper B", "Claim B")
+            diag = {}
+            assert check_pair(a, b, diagnostics=diag) is None
+        assert diag["status"] == STATUS_UNRELATED
+
+    def test_diagnostics_same_paper_and_same_claim(self):
+        from agents.contradiction import STATUS_SAME_CLAIM, STATUS_SAME_PAPER, check_pair
+        a = self._make_claim("1", "2301.00001", "Paper A", "Claim A")
+        b = self._make_claim("2", "2301.00001", "Paper A", "Claim B")
+        d1 = {}
+        assert check_pair(a, b, diagnostics=d1) is None
+        assert d1["status"] == STATUS_SAME_PAPER
+        d2 = {}
+        assert check_pair(a, a, diagnostics=d2) is None
+        assert d2["status"] == STATUS_SAME_CLAIM
+
+    def test_diagnostics_labels_real_verdict(self):
+        from agents.contradiction import check_pair
+        resp = json.dumps({"relationship": "SUPPORTS", "confidence": 0.7,
+                           "explanation": "aligned"})
+        with patch("agents.contradiction.call_llm", return_value=resp):
+            a = self._make_claim("1", "2301.00001", "Paper A", "Claim A")
+            b = self._make_claim("2", "2302.00002", "Paper B", "Claim B")
+            diag = {}
+            result = check_pair(a, b, diagnostics=diag)
+        assert result["relationship"] == "SUPPORTS"
+        assert diag["status"] == "SUPPORTS"
+
+    def test_non_dict_json_does_not_raise(self):
+        # A JSON array previously raised TypeError on data["relationship"].
+        from agents.contradiction import STATUS_PARSE_FAILURE, check_pair
+        with patch("agents.contradiction.call_llm", return_value='["CONTRADICTS"]'):
+            a = self._make_claim("1", "2301.00001", "Paper A", "Claim A")
+            b = self._make_claim("2", "2302.00002", "Paper B", "Claim B")
+            diag = {}
+            assert check_pair(a, b, diagnostics=diag) is None
+        assert diag["status"] == STATUS_PARSE_FAILURE
+
+    def test_dict_without_relationship_is_parse_failure(self):
+        from agents.contradiction import STATUS_PARSE_FAILURE, check_pair
+        with patch("agents.contradiction.call_llm", return_value=json.dumps({"confidence": 0.5})):
+            a = self._make_claim("1", "2301.00001", "Paper A", "Claim A")
+            b = self._make_claim("2", "2302.00002", "Paper B", "Claim B")
+            diag = {}
+            assert check_pair(a, b, diagnostics=diag) is None
+        assert diag["status"] == STATUS_PARSE_FAILURE
 
 
 # ═══════════════════════════════════════════════════════════════

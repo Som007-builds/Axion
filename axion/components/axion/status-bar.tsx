@@ -1,15 +1,19 @@
 'use client'
 
 import useSWR from 'swr'
-import { getStats } from '@/lib/api-client'
+import { getStats, getHealth } from '@/lib/api-client'
 import type { GraphStats } from '@/types/axion'
 
 export function StatusBar() {
   const { data, error } = useSWR<GraphStats>('stats', getStats, {
     refreshInterval: 60000,
   })
+  // Real health probe (Neo4j + ChromaDB). /api/health returns 503 when a
+  // datastore is down, which surfaces here as an error.
+  const { data: health } = useSWR('health', getHealth, { refreshInterval: 60000 })
 
-  const isConnected = !error && !!data
+  const isConnected = !error && !!data && !!health
+  const statusLabel = isConnected ? 'System online' : 'Degraded / offline'
 
   return (
     <footer className="flex h-7 shrink-0 items-center justify-between border-t border-[var(--axion-border-subtle)] bg-[var(--axion-surface-1)] px-4">
@@ -22,7 +26,7 @@ export function StatusBar() {
             )}
           </div>
           <span className="font-mono text-[10px] text-[#334155]">
-            {isConnected ? 'Neo4j Connected' : 'Disconnected'}
+            {statusLabel}
           </span>
         </div>
 
@@ -47,7 +51,7 @@ export function StatusBar() {
 
       <div className="flex items-center gap-3">
         <span className="font-mono text-[10px] text-[#1e293b]">
-          AXION v7.1
+          AXION v2.30
         </span>
       </div>
     </footer>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import useSWR from 'swr'
 import {
   Search,
   Network,
@@ -19,6 +20,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { getHealth } from '@/lib/api-client'
 
 export type AxionView =
   | 'query'
@@ -52,6 +54,14 @@ interface NavRailProps {
 
 export function NavRail({ activeView, onViewChange, onIngestionClick }: NavRailProps) {
   const [expanded, setExpanded] = useState(false)
+
+  // Real health signal instead of a hardcoded "System Online" indicator.
+  const { data: health, error: healthError } = useSWR('health', getHealth, {
+    refreshInterval: 60000,
+  })
+  const online = !!health && !healthError
+  const healthColor = online ? '#10b981' : '#f43f5e'
+  const healthLabel = online ? 'System Online' : 'System Offline'
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -146,13 +156,13 @@ export function NavRail({ activeView, onViewChange, onIngestionClick }: NavRailP
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="group flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-sm text-[#475569]">
-                <Activity className="h-4 w-4 shrink-0 text-[#10b981]" />
-                {expanded && <span className="whitespace-nowrap text-[#475569]">System Online</span>}
+                <Activity className="h-4 w-4 shrink-0" style={{ color: healthColor }} />
+                {expanded && <span className="whitespace-nowrap text-[#475569]">{healthLabel}</span>}
               </div>
             </TooltipTrigger>
             {!expanded && (
               <TooltipContent side="right" sideOffset={8} className="bg-[#0f1318] border-[var(--axion-border-subtle)] text-[#f0f6ff]">
-                <p className="text-xs">System Online</p>
+                <p className="text-xs">{healthLabel}</p>
               </TooltipContent>
             )}
           </Tooltip>

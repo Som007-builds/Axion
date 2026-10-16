@@ -1,7 +1,7 @@
 'use client'
 
 import useSWR from 'swr'
-import { FileText, MessageSquare, AlertTriangle, Lightbulb } from 'lucide-react'
+import { FileText, MessageSquare, AlertTriangle, Lightbulb, FlaskConical } from 'lucide-react'
 import { getStats } from '@/lib/api-client'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { GraphStats } from '@/types/axion'
@@ -30,6 +30,12 @@ const statItems = [
     label: 'Gaps',
     icon: Lightbulb,
     color: 'text-[#8b5cf6]',
+  },
+  {
+    key: 'experiments' as const,
+    label: 'Experiments',
+    icon: FlaskConical,
+    color: 'text-[#10b981]',
   },
 ]
 

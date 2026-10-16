@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Loader2, FlaskConical, AlertTriangle, Clock, DollarSign, Database, Target } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -20,24 +20,34 @@ interface ExperimentCardProps {
 
 export function ExperimentCard({ contradictionId, hasExperiment }: ExperimentCardProps) {
   const [experiment, setExperiment] = useState<Experiment | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  // Start in the loading state when the caller already knows an experiment
+  // exists, so the effect below does not need to set state synchronously.
+  const [isLoading, setIsLoading] = useState(!!hasExperiment)
   const [isDesigning, setIsDesigning] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [hasFetched, setHasFetched] = useState(false)
 
-  const fetchExperiment = async () => {
-    if (hasFetched) return
-    setIsLoading(true)
-    try {
-      const exp = await getExperiment(contradictionId)
-      setExperiment(exp)
-      setHasFetched(true)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load experiment')
-    } finally {
-      setIsLoading(false)
+  // Auto-fetch the stored experiment when the caller knows one exists.
+  // NOTE: this used to run in the render body, firing a request on every render.
+  useEffect(() => {
+    if (!hasExperiment || hasFetched) return
+    let cancelled = false
+    getExperiment(contradictionId)
+      .then((exp) => {
+        if (cancelled) return
+        setExperiment(exp)
+        setHasFetched(true)
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load experiment')
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false)
+      })
+    return () => {
+      cancelled = true
     }
-  }
+  }, [hasExperiment, hasFetched, contradictionId])
 
   const handleDesign = async () => {
     setIsDesigning(true)
@@ -50,11 +60,6 @@ export function ExperimentCard({ contradictionId, hasExperiment }: ExperimentCar
     } finally {
       setIsDesigning(false)
     }
-  }
-
-  // Auto-fetch if we know there's an experiment
-  if (hasExperiment && !hasFetched && !isLoading) {
-    fetchExperiment()
   }
 
   if (isLoading) {

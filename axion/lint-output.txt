@@ -1,0 +1,165 @@
+﻿
+D:\AI-Projects\schimesh\axion\app\page.tsx
+  43:5   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\AI-Projects\schimesh\axion\app\page.tsx:43:5
+  41 |
+  42 |   useEffect(() => {
+> 43 |     setMounted(true)
+     |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  44 |   }, [])
+  45 |
+  46 |   // Load recent queries from local storage                                                                                                                                                                                   react-hooks/set-state-in-effect
+  54:11  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\AI-Projects\schimesh\axion\app\page.tsx:54:11
+  52 |         const parsed = JSON.parse(stored)
+  53 |         if (Array.isArray(parsed)) {
+> 54 |           setRecentQueries(
+     |           ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  55 |             parsed
+  56 |               .map((item: { question?: string }) => item.question)
+  57 |               .filter((q): q is string => typeof q === 'string')  react-hooks/set-state-in-effect
+
+D:\AI-Projects\schimesh\axion\components\axion\contradiction-list.tsx
+  8:10  warning  'Skeleton' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\AI-Projects\schimesh\axion\components\axion\experiment-card.tsx
+  33:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\AI-Projects\schimesh\axion\components\axion\experiment-card.tsx:33:5
+  31 |     if (!hasExperiment || hasFetched) return
+  32 |     let cancelled = false
+> 33 |     setIsLoading(true)
+     |     ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  34 |     getExperiment(contradictionId)
+  35 |       .then((exp) => {
+  36 |         if (cancelled) return  react-hooks/set-state-in-effect
+
+D:\AI-Projects\schimesh\axion\components\axion\gap-list.tsx
+  8:10  warning  'Skeleton' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\AI-Projects\schimesh\axion\components\axion\graph-evolution.tsx
+  15:3  warning  'color' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\AI-Projects\schimesh\axion\components\axion\ingestion-status.tsx
+   8:3   warning  'FileText' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unused-vars
+   9:3   warning  'MessageSquare' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+  17:3   warning  'X' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+  38:10  warning  'formatRelativeTime' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+  83:7   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\AI-Projects\schimesh\axion\components\axion\ingestion-status.tsx:83:7
+  81 |   useEffect(() => {
+  82 |     if (externalOpen !== undefined) {
+> 83 |       setIsOpen(externalOpen)
+     |       ^^^^^^^^^ Avoid calling setState() directly within an effect
+  84 |     }
+  85 |   }, [externalOpen])
+  86 |  react-hooks/set-state-in-effect
+
+D:\AI-Projects\schimesh\axion\components\axion\knowledge-graph.tsx
+  10:37  warning  'GraphEdge' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\AI-Projects\schimesh\axion\components\axion\query-panel.tsx
+   35:10  warning  'Skeleton' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+  410:19  warning  'node' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+  411:19  warning  'node' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+  412:19  warning  'node' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+  413:18  warning  'node' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+  414:19  warning  'node' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+  415:19  warning  'node' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+  416:19  warning  'node' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+  417:23  warning  'node' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+  418:21  warning  'node' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+  419:18  warning  'node' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+  459:5   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\AI-Projects\schimesh\axion\components\axion\query-panel.tsx:459:5
+  457 |   // Load history from localStorage on client-side mount
+  458 |   useEffect(() => {
+> 459 |     setMounted(true)
+      |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  460 |     const saved = localStorage.getItem('axion_query_history')
+  461 |     if (saved) {
+  462 |       try {                             react-hooks/set-state-in-effect
+  488:7   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\AI-Projects\schimesh\axion\components\axion\query-panel.tsx:488:7
+  486 |   useEffect(() => {
+  487 |     if (externalQuery && mounted) {
+> 488 |       setQuestion(externalQuery)
+      |       ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  489 |       onQueryClear?.()
+  490 |       // Auto-submit
+  491 |       executeQuery(externalQuery)                                                react-hooks/set-state-in-effect
+  491:7   error    Error: Cannot access variable before it is declared
+
+`executeQuery` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+D:\AI-Projects\schimesh\axion\components\axion\query-panel.tsx:491:7
+  489 |       onQueryClear?.()
+  490 |       // Auto-submit
+> 491 |       executeQuery(externalQuery)
+      |       ^^^^^^^^^^^^ `executeQuery` accessed before it is declared
+  492 |     }
+  493 |   }, [externalQuery, mounted])
+  494 |
+
+D:\AI-Projects\schimesh\axion\components\axion\query-panel.tsx:500:3
+  498 |   }, [isLoading, onLoadingChange])
+  499 |
+> 500 |   const executeQuery = async (q: string) => {
+      |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 501 |     if (!q.trim() || isLoading) return
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 502 |
+      ΓÇª
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 530 |     }
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 531 |   }
+      | ^^^^ `executeQuery` is declared here
+  532 |
+  533 |   const handleSubmit = async (e: React.FormEvent) => {
+  534 |     e.preventDefault()  react-hooks/immutability
+  493:6   warning  React Hook useEffect has missing dependencies: 'executeQuery' and 'onQueryClear'. Either include them or remove the dependency array. If 'onQueryClear' changes too often, find the parent component that defines it and wrap that definition in useCallback                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               react-hooks/exhaustive-deps
+
+Γ£û 27 problems (7 errors, 20 warnings)
+

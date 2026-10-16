@@ -12,6 +12,7 @@ import { TimelineView } from '@/components/axion/timeline-view'
 import { GraphEvolution } from '@/components/axion/graph-evolution'
 import { KnowledgeGraph } from '@/components/axion/knowledge-graph'
 import { IngestionStatus } from '@/components/axion/ingestion-status'
+import { useIsClient } from '@/lib/use-is-client'
 
 const VIEW_TITLES: Record<AxionView, string> = {
   'query': 'Research Intelligence',
@@ -32,20 +33,16 @@ const VIEW_DESCRIPTIONS: Record<AxionView, string> = {
 }
 
 export default function AxionWorkspace() {
-  const [mounted, setMounted] = useState(false)
+  const isClient = useIsClient()
   const [activeView, setActiveView] = useState<AxionView>('query')
   const [ingestionOpen, setIngestionOpen] = useState(false)
   const [commandQuery, setCommandQuery] = useState<string | null>(null)
   const [recentQueries, setRecentQueries] = useState<string[]>([])
   const [queryPanelLoading, setQueryPanelLoading] = useState(false)
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
   // Load recent queries from local storage
   useEffect(() => {
-    if (!mounted) return
+    if (!isClient) return
     try {
       const stored = localStorage.getItem('axion-query-history')
       if (stored) {
@@ -60,7 +57,7 @@ export default function AxionWorkspace() {
         }
       }
     } catch {}
-  }, [mounted])
+  }, [isClient])
 
   const handleCommandSubmit = useCallback((query: string) => {
     setActiveView('query')
@@ -69,7 +66,7 @@ export default function AxionWorkspace() {
 
   // Keyboard shortcuts for nav
   useEffect(() => {
-    if (!mounted) return
+    if (!isClient) return
     function handleKeyDown(e: KeyboardEvent) {
       // Don't trigger shortcuts when typing in inputs
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
@@ -82,9 +79,9 @@ export default function AxionWorkspace() {
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [mounted])
+  }, [isClient])
 
-  if (!mounted) {
+  if (!isClient) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-black">
         <div className="flex flex-col items-center gap-4 animate-fade-up">

@@ -5,8 +5,6 @@ import useSWR from 'swr'
 import {
   RefreshCw,
   Clock,
-  FileText,
-  MessageSquare,
   Play,
   CheckCircle,
   AlertCircle,
@@ -14,7 +12,6 @@ import {
   ArrowRight,
   Database,
   Search,
-  X,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -35,22 +32,6 @@ import {
 } from '@/lib/api-client'
 import type { IngestionStatus as IngestionStatusType, CustomIngestionProgress } from '@/types/axion'
 
-function formatRelativeTime(dateString: string | null): string {
-  if (!dateString) return 'Never'
-  
-  const date = new Date(dateString)
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffMins = Math.floor(diffMs / 60000)
-  const diffHours = Math.floor(diffMins / 60)
-  const diffDays = Math.floor(diffHours / 24)
-
-  if (diffMins < 1) return 'Just now'
-  if (diffMins < 60) return `${diffMins}m ago`
-  if (diffHours < 24) return `${diffHours}h ago`
-  return `${diffDays}d ago`
-}
-
 function formatDuration(seconds: number): string {
   if (seconds <= 0) return 'Calculating...'
   const mins = Math.floor(seconds / 60)
@@ -67,7 +48,10 @@ interface IngestionStatusProps {
 }
 
 export function IngestionStatus({ externalOpen, onExternalClose }: IngestionStatusProps) {
-  const [isOpen, setIsOpen] = useState(false)
+  // The sheet is driven by the parent's `externalOpen` when provided; otherwise
+  // it manages its own open state. Deriving avoids syncing a prop into state.
+  const [internalOpen, setInternalOpen] = useState(false)
+  const isOpen = externalOpen ?? internalOpen
   const [topic, setTopic] = useState('')
   const [limit, setLimit] = useState(5)
   const [customProgress, setCustomProgress] = useState<CustomIngestionProgress | null>(null)
@@ -77,15 +61,8 @@ export function IngestionStatus({ externalOpen, onExternalClose }: IngestionStat
 
   const consoleEndRef = useRef<HTMLDivElement | null>(null)
 
-  // Sync external open state
-  useEffect(() => {
-    if (externalOpen !== undefined) {
-      setIsOpen(externalOpen)
-    }
-  }, [externalOpen])
-
   const handleOpenChange = (open: boolean) => {
-    setIsOpen(open)
+    setInternalOpen(open)
     if (!open && onExternalClose) {
       onExternalClose()
     }

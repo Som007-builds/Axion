@@ -1,357 +1,237 @@
 """
-Phase 5 Smoke Test
-==================
-Tests every Part A fix and Part B feature in one run.
-Run from project root:
-    python tests/test_phase5.py
+Phase 5 regression checks.
 
-Requires: live Neo4j + ChromaDB (same as normal usage).
-Does NOT ingest new papers or call external APIs unless you uncomment B2/B3.
+Historically this was a script-style smoke test (`python tests/test_phase5.py`)
+that pytest collected as **0 tests**. It is now a real pytest module:
+
+* Offline checks (source scans, config, mocked planner, citation formula) run
+  by default.
+* Checks that touch live Neo4j / ChromaDB / the scheduler are marked
+  `integration` and excluded unless you run `pytest -m integration`.
+
+Run:  pytest tests/test_phase5.py                 # offline only
+      pytest -m integration tests/test_phase5.py  # + live services
 """
-import sys, os, json, math
-# (Stdout wrapping moved to __main__ block to prevent pytest import errors)
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+import json
+import math
+import os
+from unittest.mock import patch
 
-PASS = []
-FAIL = []
+import pytest
+
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+# Markers that indicate the retired v1 coordinator is still imported somewhere.
+V1_MARKERS = [
+    "from agents.coordinator import",
+    "from graph.queries import",
+    "from graph.schema import",
+    "run_v1(",
+    "format_v1(",
+    "args.v1",
+    '"--v1"',
+]
+
+# Directories that legitimately hold legacy code, tests, or third-party deps.
+_SKIP_DIRS = {
+    "archive",
+    "venv",
+    ".venv",
+    "__pycache__",
+    ".git",
+    "tests",
+    "node_modules",
+    ".next",
+}
 
 
-def check(name: str, ok: bool, detail: str = ""):
-    if ok:
-        PASS.append(name)
-        print(f"  ✅ {name}")
-    else:
-        FAIL.append(name)
-        print(f"  ❌ {name}" + (f" — {detail}" if detail else ""))
-
-
-def section(title: str):
-    print(f"\n{'─'*55}")
-    print(f"  {title}")
-    print(f"{'─'*55}")
-
-
-def main():
-    # ══════════════════════════════════════════════════════════════
-    # A1 — No v1 imports anywhere outside archive/
-    # ══════════════════════════════════════════════════════════════
-    section("A1 · v1 coordinator fully removed")
-
-    import importlib, pkgutil
-
-    V1_MARKERS = [
-        "from agents.coordinator import",
-        "from graph.queries import",
-        "from graph.schema import",
-        "run_v1(",
-        "format_v1(",
-        "args.v1",
-        '"--v1"',
-    ]
-
-    root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-    leaks = []
-    for dirpath, _, filenames in os.walk(root):
-        # skip archive, venv and tests folders
-        if any(skip in dirpath for skip in ["archive", "venv", ".venv", "__pycache__", ".git", "tests"]):
-            continue
+def _iter_source_files(root):
+    """Yield every .py file under root, pruning vendored/legacy/test dirs."""
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in dirnames if d not in _SKIP_DIRS]
         for fname in filenames:
-            if not fname.endswith(".py"):
-                continue
-            fpath = os.path.join(dirpath, fname)
-            text = open(fpath, encoding="utf-8", errors="ignore").read()
-            for marker in V1_MARKERS:
-                if marker in text:
-                    leaks.append(f"{fpath}: '{marker}'")
-
-    check("No v1 imports outside archive/", len(leaks) == 0,
-          "\n    " + "\n    ".join(leaks) if leaks else "")
+            if fname.endswith(".py"):
+                yield os.path.join(dirpath, fname)
 
 
-    # ══════════════════════════════════════════════════════════════
-    # A1 — main.py has correct modes, no --v1
-    # ══════════════════════════════════════════════════════════════
-    section("A1 · main.py modes")
-
-    main_text = open(os.path.join(root, "main.py"), encoding="utf-8").read()
-    check("main.py has 'backup' mode",   '"backup"' in main_text or "'backup'" in main_text)
-    check("main.py has 'schedule' mode", '"schedule"' in main_text or "'schedule'" in main_text)
-    check("main.py has 'citations' mode","'citations'" in main_text or '"citations"' in main_text)
-    check("main.py has no --v1 flag",    "--v1" not in main_text)
-
-
-    # ══════════════════════════════════════════════════════════════
-    # A2 — All gaps have at least one RELATED_TO edge
-    # ══════════════════════════════════════════════════════════════
-    section("A2 · Gap linking")
-
-    try:
-        from graph.neo4j_client import run_query
-        unlinked = run_query("""
-            MATCH (g:Gap)
-            WHERE NOT (g)-[:RELATED_TO]->()
-            RETURN count(g) AS n
-        """)
-        n_unlinked = unlinked[0]["n"] if unlinked else 0
-        check("Zero unlinked gaps in Neo4j", n_unlinked == 0,
-              f"{n_unlinked} gaps still have no RELATED_TO edge — run: python -m graph.fix_empty_gap_links")
-    except Exception as e:
-        check("Neo4j reachable for gap check", False, str(e))
+# ── A1: v1 coordinator fully removed ─────────────────────────────────
+def test_no_v1_imports_outside_archive():
+    leaks = []
+    for fpath in _iter_source_files(ROOT):
+        with open(fpath, encoding="utf-8", errors="ignore") as f:
+            text = f.read()
+        for marker in V1_MARKERS:
+            if marker in text:
+                leaks.append(f"{fpath}: {marker!r}")
+    assert leaks == [], "v1 coordinator still referenced:\n" + "\n".join(leaks)
 
 
-    # ══════════════════════════════════════════════════════════════
-    # A2 — gap_finder.py calls insert_gap with related_claim_ids
-    # ══════════════════════════════════════════════════════════════
-    section("A2 · gap_finder source check")
-
-    gf_text = open(os.path.join(root, "agents", "gap_finder.py"), encoding="utf-8").read()
-    check("gap_finder calls find_similar_claims for future_work gaps",
-          "find_similar_claims" in gf_text and "related_claim_ids" in gf_text)
-    check("gap_finder no longer passes empty related_claim_ids=[]",
-          "related_claim_ids=[]" not in gf_text)
+def test_main_cli_has_expected_modes_and_no_v1_flag():
+    with open(os.path.join(ROOT, "main.py"), encoding="utf-8") as f:
+        text = f.read()
+    for mode in ("backup", "schedule", "citations"):
+        assert f'"{mode}"' in text, f"main.py is missing the {mode!r} mode"
+    assert "--v1" not in text, "main.py still exposes the retired --v1 flag"
 
 
-    # ══════════════════════════════════════════════════════════════
-    # A3 — ChromaDB paper_year is int
-    # ══════════════════════════════════════════════════════════════
-    section("A3 · ChromaDB paper_year type")
-
-    try:
-        import chromadb
-        from chromadb.utils import embedding_functions
-        from config import CHROMA_DIR, EMBEDDING_MODEL
-
-        client = chromadb.PersistentClient(path=str(CHROMA_DIR))
-        ef = embedding_functions.SentenceTransformerEmbeddingFunction(model_name=EMBEDDING_MODEL)
-        col = client.get_or_create_collection("claims", embedding_function=ef)
-        result = col.get(include=["metadatas"])
-        all_meta = result.get("metadatas", [])
-
-        string_years = [
-            m.get("paper_year") for m in all_meta
-            if isinstance(m.get("paper_year"), str)
-        ]
-        check(
-            f"All paper_year values are int ({len(all_meta)} entries checked)",
-            len(string_years) == 0,
-            f"{len(string_years)} still stored as string — run: python -m graph.fix_chroma_year_type"
-        )
-    except Exception as e:
-        check("ChromaDB reachable for year type check", False, str(e))
+# ── A2: gap_finder links gaps to real claims ─────────────────────────
+def test_gap_finder_links_related_claims():
+    with open(os.path.join(ROOT, "agents", "gap_finder.py"), encoding="utf-8") as f:
+        text = f.read()
+    assert "find_similar_claims" in text
+    assert "related_claim_ids" in text
+    assert "related_claim_ids=[]" not in text, "gap_finder still writes empty link lists"
 
 
-    # ══════════════════════════════════════════════════════════════
-    # A4 — Planner logs warning on dict sub_query
-    # ══════════════════════════════════════════════════════════════
-    section("A4 · Planner observability")
+# ── A4: planner clamps malformed sub_queries (LLM mocked) ────────────
+def test_planner_clamps_dict_sub_queries_and_warns():
+    import agents.planner as planner_module
 
-    try:
-        from unittest.mock import patch
-        import agents.planner as planner_module
+    malformed = {
+        "sub_queries": [{"query": "What is CoT?"}],
+        "fetch_contradictions": True,
+        "fetch_gaps": True,
+        "reasoning": "test",
+    }
+    warnings: list[str] = []
 
-        malformed = {
-            "sub_queries": [{"query": "What is CoT?"}],
-            "fetch_contradictions": True,
-            "fetch_gaps": True,
-            "reasoning": "test"
-        }
+    def _capture(msg, *args, **kwargs):
+        warnings.append(msg % args if args else msg)
 
-        warn_calls = []
-        def mock_warning(msg, *args, **kwargs):
-            warn_calls.append(msg % args if args else msg)
+    with patch.object(planner_module.logger, "warning", side_effect=_capture), patch.object(
+        planner_module, "call_llm", return_value=json.dumps(malformed)
+    ):
+        plan = planner_module.make_plan("test question")
 
-        with patch.object(planner_module.logger, "warning", side_effect=mock_warning):
-            with patch.object(planner_module, "call_llm", return_value=json.dumps(malformed)):
-                plan = planner_module.make_plan("test question")
-
-        all_strings = all(isinstance(q, str) for q in plan["sub_queries"])
-        output = "\n".join(warn_calls)
-        warned = "⚠️" in output or "clamped" in output.lower()
-
-        check("Dict sub_query is clamped to string", all_strings)
-        check("Planner prints warning when clamping", warned, f"logger warnings were: {repr(output)}")
-
-    except Exception as e:
-        check("Planner dict-clamp test runnable", False, str(e))
+    assert all(isinstance(q, str) for q in plan["sub_queries"])
+    assert len(plan["sub_queries"]) <= 3
+    combined = "\n".join(warnings)
+    assert "⚠️" in combined or "clamped" in combined.lower()
 
 
-    # ══════════════════════════════════════════════════════════════
-    # A4 — Planner normal path still works
-    # ══════════════════════════════════════════════════════════════
-    section("A4 · Planner normal operation")
+def test_planner_falls_back_on_unparseable_json():
+    import agents.planner as planner_module
 
-    try:
-        from agents.planner import make_plan
-        plan = make_plan("Does chain-of-thought prompting help small models?")
-        check("Plan has sub_queries list",        isinstance(plan.get("sub_queries"), list))
-        check("Plan sub_queries are all strings", all(isinstance(q, str) for q in plan["sub_queries"]))
-        check("Plan has 1–3 sub_queries",         1 <= len(plan["sub_queries"]) <= 3)
-        check("Plan has fetch_contradictions bool", isinstance(plan.get("fetch_contradictions"), bool))
-        check("Plan has fetch_gaps bool",          isinstance(plan.get("fetch_gaps"), bool))
-    except Exception as e:
-        check("Planner normal path", False, str(e))
+    with patch.object(planner_module, "call_llm", return_value="not json at all"):
+        plan = planner_module.make_plan("what is X?")
+
+    assert plan["sub_queries"] == ["what is X?"]
+    assert isinstance(plan["fetch_contradictions"], bool)
+    assert isinstance(plan["fetch_gaps"], bool)
 
 
-    # ══════════════════════════════════════════════════════════════
-    # A5 — backup.py exists and imports cleanly
-    # ══════════════════════════════════════════════════════════════
-    section("A5 · Backup module")
+# ── A5: backup module + config ───────────────────────────────────────
+def test_backup_module_imports_and_lists():
+    from graph.backup import create_backup, list_backups, prune_old_backups  # noqa: F401
 
-    try:
-        from graph.backup import create_backup, list_backups, prune_old_backups
-        check("graph.backup imports cleanly", True)
-        check("list_backups() returns a list", isinstance(list_backups(), list))
-    except Exception as e:
-        check("graph.backup imports cleanly", False, str(e))
-
-    try:
-        from config import NEO4J_CONTAINER_NAME
-        check("NEO4J_CONTAINER_NAME in config", bool(NEO4J_CONTAINER_NAME))
-    except Exception as e:
-        check("NEO4J_CONTAINER_NAME in config", False, str(e))
+    assert isinstance(list_backups(), list)
 
 
-    # ══════════════════════════════════════════════════════════════
-    # A5 — config.py has scheduler settings
-    # ══════════════════════════════════════════════════════════════
-    section("A5/B1 · Config scheduler vars")
+def test_config_exposes_container_name():
+    from config import NEO4J_CONTAINER_NAME
 
-    try:
-        from config import SCHEDULER_INTERVAL_HOURS, SCHEDULER_PAPERS_PER_RUN, SCHEDULER_TOPICS
-        check("SCHEDULER_INTERVAL_HOURS is int",  isinstance(SCHEDULER_INTERVAL_HOURS, int))
-        check("SCHEDULER_PAPERS_PER_RUN is int",  isinstance(SCHEDULER_PAPERS_PER_RUN, int))
-        check("SCHEDULER_TOPICS is non-empty list", isinstance(SCHEDULER_TOPICS, list) and len(SCHEDULER_TOPICS) > 0)
-    except Exception as e:
-        check("Scheduler config vars present", False, str(e))
+    assert NEO4J_CONTAINER_NAME
 
 
-    # ══════════════════════════════════════════════════════════════
-    # A6 — Neo4j layer returns correct structure
-    # ══════════════════════════════════════════════════════════════
-    section("A6 · Neo4j query layer")
+def test_config_exposes_scheduler_settings():
+    from config import (
+        SCHEDULER_INTERVAL_HOURS,
+        SCHEDULER_PAPERS_PER_RUN,
+        SCHEDULER_TOPICS,
+    )
 
-    try:
-        from graph.neo4j_queries import get_all_claims, get_contradictions, get_gaps
-
-        claims = get_all_claims()
-        check("get_all_claims() returns list", isinstance(claims, list))
-        if claims:
-            c = claims[0]
-            check("Claim has 'text' field",       "text" in c)
-            check("Claim has 'arxiv_id' field",   "arxiv_id" in c)
-            check("Claim paper_year is int/None", isinstance(c.get("paper_year"), (int, type(None))))
-
-        contras = get_contradictions()
-        check("get_contradictions() returns list", isinstance(contras, list))
-        if contras:
-            ct = contras[0]
-            check("Contradiction has claim_a_id", "claim_a_id" in ct)
-            check("Contradiction has claim_b_id", "claim_b_id" in ct)
-            check("Contradiction confidence is float", isinstance(ct.get("confidence"), float))
-
-        gaps = get_gaps()
-        check("get_gaps() returns list", isinstance(gaps, list))
-        for g in gaps:
-            check(
-                f"Gap '{g['text'][:40]}…' has related_claims",
-                len(g.get("related_claims", [])) > 0,
-                "run: python -m graph.fix_empty_gap_links"
-            )
-            break  # one is enough to confirm structure
-
-    except Exception as e:
-        check("Neo4j query layer", False, str(e))
+    assert isinstance(SCHEDULER_INTERVAL_HOURS, int)
+    assert isinstance(SCHEDULER_PAPERS_PER_RUN, int)
+    assert isinstance(SCHEDULER_TOPICS, list) and SCHEDULER_TOPICS
 
 
-    # ══════════════════════════════════════════════════════════════
-    # B1 — Scheduler module
-    # ══════════════════════════════════════════════════════════════
-    section("B1 · Scheduler module")
+# ── B2: citation weighting formula (pure, offline) ───────────────────
+def test_citation_weight_formula_is_monotonic_and_clamped():
+    def formula(base: float, citations: int) -> float:
+        max_boost = math.log2(2 + 10_000)
+        boost = math.log2(2 + citations)
+        return round(min(1.0, max(0.0, base * (0.5 + 0.5 * boost / max_boost))), 4)
 
-    try:
-        from ingestion.scheduler import (
-            start_scheduler, stop_scheduler, trigger_now, get_run_log
-        )
-        check("ingestion.scheduler imports cleanly", True)
-        check("get_run_log() returns list", isinstance(get_run_log(), list))
-
-        s = start_scheduler()
-        check("start_scheduler() returns running scheduler", s is not None and s.running)
-
-        s2 = start_scheduler()
-        check("start_scheduler() is idempotent (no duplicate)", s is s2)
-
-        stop_scheduler()
-        check("stop_scheduler() stops the scheduler", not s.running)
-
-    except Exception as e:
-        check("Scheduler module", False, str(e))
+    s0, s100, s8000 = formula(0.9, 0), formula(0.9, 100), formula(0.9, 8000)
+    assert 0.0 < s0 < s100 < s8000 <= 1.0
 
 
-    # ══════════════════════════════════════════════════════════════
-    # B2 — Citation engine (formula only — no network call)
-    # ══════════════════════════════════════════════════════════════
-    section("B2 · Citation engine — weighted confidence formula")
+# ── Live-service checks (opt-in: `pytest -m integration`) ────────────
+@pytest.mark.integration
+def test_every_gap_has_a_related_to_edge():
+    from graph.neo4j_client import run_query
 
-    try:
-        from agents.citation import (
-            get_weighted_confidence, get_papers_with_citations, fetch_citation_count
-        )
-        check("agents.citation imports cleanly", True)
-
-        # Test the formula directly without hitting the network
-        def _formula(base: float, citations: int) -> float:
-            MAX_BOOST = math.log2(2 + 10_000)
-            boost = math.log2(2 + citations)
-            return round(min(1.0, max(0.0, base * (0.5 + 0.5 * boost / MAX_BOOST))), 4)
-
-        score_0    = _formula(0.9, 0)
-        score_100  = _formula(0.9, 100)
-        score_8000 = _formula(0.9, 8000)
-
-        check("0 citations < 100 citations (score increases)",    score_0 < score_100)
-        check("100 citations < 8000 citations (score increases)", score_100 < score_8000)
-        check("Score clamped to ≤ 1.0",                          score_8000 <= 1.0)
-        check("Score with 0 citations > 0.0",                    score_0 > 0.0)
-
-        papers = get_papers_with_citations()
-        check("get_papers_with_citations() returns list", isinstance(papers, list))
-
-    except Exception as e:
-        check("Citation engine", False, str(e))
+    rows = run_query(
+        "MATCH (g:Gap) WHERE NOT (g)-[:RELATED_TO]->() RETURN count(g) AS n"
+    )
+    n_unlinked = rows[0]["n"] if rows else 0
+    assert n_unlinked == 0, (
+        f"{n_unlinked} gaps have no RELATED_TO edge — run: python -m graph.fix_empty_gap_links"
+    )
 
 
-    # ══════════════════════════════════════════════════════════════
-    # B2 — Live Semantic Scholar fetch (optional — uncomment to run)
-    # ══════════════════════════════════════════════════════════════
-    # section("B2 · Semantic Scholar live fetch")
-    # try:
-    #     count = fetch_citation_count("2201.11903")  # CoT paper
-    #     check("CoT paper has > 100 citations", count is not None and count > 100,
-    #           f"got: {count}")
-    # except Exception as e:
-    #     check("Semantic Scholar fetch", False, str(e))
+@pytest.mark.integration
+def test_chroma_paper_year_is_int():
+    import chromadb
+    from chromadb.utils import embedding_functions
+
+    from config import CHROMA_DIR, EMBEDDING_MODEL
+
+    client = chromadb.PersistentClient(path=str(CHROMA_DIR))
+    ef = embedding_functions.SentenceTransformerEmbeddingFunction(model_name=EMBEDDING_MODEL)
+    col = client.get_or_create_collection("claims", embedding_function=ef)
+    metadatas = col.get(include=["metadatas"]).get("metadatas", [])
+
+    string_years = [
+        m.get("paper_year") for m in metadatas if isinstance(m.get("paper_year"), str)
+    ]
+    assert string_years == [], (
+        f"{len(string_years)} paper_year values stored as string — "
+        "run: python -m graph.fix_chroma_year_type"
+    )
 
 
-    # ══════════════════════════════════════════════════════════════
-    # Summary
-    # ══════════════════════════════════════════════════════════════
-    print(f"\n{'═'*55}")
-    print(f"  Results: {len(PASS)} passed, {len(FAIL)} failed")
-    print(f"{'═'*55}")
-    if FAIL:
-        print("\nFailed checks:")
-        for f in FAIL:
-            print(f"  ❌ {f}")
-        sys.exit(1)
-    else:
-        print("\n  All Phase 5 checks passed. ✅")
-        sys.exit(0)
+@pytest.mark.integration
+def test_neo4j_query_layer_shapes():
+    from graph.neo4j_queries import get_all_claims, get_contradictions, get_gaps
+
+    claims = get_all_claims()
+    assert isinstance(claims, list)
+    if claims:
+        c = claims[0]
+        assert "text" in c
+        assert "arxiv_id" in c
+        assert isinstance(c.get("paper_year"), (int, type(None)))
+
+    contras = get_contradictions()
+    assert isinstance(contras, list)
+    if contras:
+        ct = contras[0]
+        assert "claim_a_id" in ct
+        assert "claim_b_id" in ct
+        assert isinstance(ct.get("confidence"), float)
+
+    gaps = get_gaps()
+    assert isinstance(gaps, list)
+    if gaps:
+        assert len(gaps[0].get("related_claims", [])) > 0
 
 
-if __name__ == "__main__":
-    if sys.platform.startswith("win"):
-        import io
-        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
-        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
-    main()
+@pytest.mark.integration
+def test_citation_papers_list():
+    from agents.citation import get_papers_with_citations
+
+    assert isinstance(get_papers_with_citations(), list)
+
+
+@pytest.mark.integration
+def test_scheduler_start_is_idempotent_and_stops():
+    from ingestion.scheduler import get_run_log, start_scheduler, stop_scheduler
+
+    assert isinstance(get_run_log(), list)
+
+    s = start_scheduler()
+    assert s is not None and s.running
+    assert start_scheduler() is s  # idempotent — no duplicate scheduler
+    stop_scheduler()
+    assert not s.running

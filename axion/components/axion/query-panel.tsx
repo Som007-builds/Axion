@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Search,
   ChevronDown,
@@ -32,7 +32,7 @@ import {
 import { runQuery } from '@/lib/api-client'
 import type { CoordinatorOutput, ReflectionStep } from '@/types/axion'
 import ReactMarkdown from 'react-markdown'
-import { Skeleton } from '@/components/ui/skeleton'
+import { useIsClient } from '@/lib/use-is-client'
 
 // ─── Raw report JSON type from the coordinator ──────────────────────────────
 
@@ -407,16 +407,16 @@ function ExecutiveSummarySection({ report }: { report?: string }) {
       <div className="text-sm text-[#cbd5e1] leading-relaxed space-y-3">
         <ReactMarkdown
           components={{
-            h1: ({node, ...props}) => <h1 className="text-lg font-bold text-[#f0f6ff] mt-4 mb-2" {...props} />,
-            h2: ({node, ...props}) => <h2 className="text-base font-semibold text-[#f0f6ff] mt-3 mb-2" {...props} />,
-            h3: ({node, ...props}) => <h3 className="text-sm font-semibold text-[#f0f6ff] mt-2 mb-1" {...props} />,
-            p: ({node, ...props}) => <p className="mb-3 last:mb-0" {...props} />,
-            ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3 space-y-1" {...props} />,
-            ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-3 space-y-1" {...props} />,
-            li: ({node, ...props}) => <li className="text-sm text-[#94a3b8]" {...props} />,
-            strong: ({node, ...props}) => <strong className="font-semibold text-[#f0f6ff]" {...props} />,
-            code: ({node, ...props}) => <code className="bg-white/5 px-1.5 py-0.5 rounded font-mono text-xs text-[#f0f6ff]" {...props} />,
-            a: ({node, ...props}) => {
+            h1: ({_node, ...props}) => <h1 className="text-lg font-bold text-[#f0f6ff] mt-4 mb-2" {...props} />,
+            h2: ({_node, ...props}) => <h2 className="text-base font-semibold text-[#f0f6ff] mt-3 mb-2" {...props} />,
+            h3: ({_node, ...props}) => <h3 className="text-sm font-semibold text-[#f0f6ff] mt-2 mb-1" {...props} />,
+            p: ({_node, ...props}) => <p className="mb-3 last:mb-0" {...props} />,
+            ul: ({_node, ...props}) => <ul className="list-disc pl-5 mb-3 space-y-1" {...props} />,
+            ol: ({_node, ...props}) => <ol className="list-decimal pl-5 mb-3 space-y-1" {...props} />,
+            li: ({_node, ...props}) => <li className="text-sm text-[#94a3b8]" {...props} />,
+            strong: ({_node, ...props}) => <strong className="font-semibold text-[#f0f6ff]" {...props} />,
+            code: ({_node, ...props}) => <code className="bg-white/5 px-1.5 py-0.5 rounded font-mono text-xs text-[#f0f6ff]" {...props} />,
+            a: ({_node, ...props}) => {
               const text = props.children?.toString() || ''
               if (text.startsWith('arXiv:') || text.match(/^\d{4}\.\d{4,5}$/) || text.startsWith('[arXiv:')) {
                 return <CitationChip id={text} />
@@ -452,11 +452,47 @@ export function QueryPanel({ externalQuery, onQueryClear, onLoadingChange }: Que
   const [error, setError] = useState<string | null>(null)
   const [history, setHistory] = useState<QueryHistoryItem[]>([])
   const [activeHistoryId, setActiveHistoryId] = useState<string | null>(null)
-  const [mounted, setMounted] = useState(false)
+  const isClient = useIsClient()
+  const lastExternalQuery = useRef<string | null>(null)
 
-  // Load history from localStorage on client-side mount
+  const executeQuery = useCallback(
+    async (q: string) => {
+      if (!q.trim() || isLoading) return
+
+      setIsLoading(true)
+      setError(null)
+      setResult(null)
+
+      try {
+        const trimmedQ = q.trim()
+        const output = await runQuery(trimmedQ)
+        setResult(output)
+
+        // Add to history
+        const newItem: QueryHistoryItem = {
+          id: Math.random().toString(36).substring(7),
+          question: trimmedQ,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          result: output,
+        }
+        const updated = [newItem, ...history]
+        setHistory(updated)
+        localStorage.setItem('axion_query_history', JSON.stringify(updated))
+        setActiveHistoryId(newItem.id)
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : 'Failed to get response. Is the API running?'
+        )
+        setResult(null)
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [history, isLoading]
+  )
+
+  // Load history from localStorage after hydration.
   useEffect(() => {
-    setMounted(true)
     const saved = localStorage.getItem('axion_query_history')
     if (saved) {
       try {
@@ -475,60 +511,30 @@ export function QueryPanel({ externalQuery, onQueryClear, onLoadingChange }: Que
     }
   }, [])
 
-  // Also persist to axion-query-history (for command bar recent queries)
+  // Persist history to localStorage for the command bar's recent-query list.
   useEffect(() => {
-    if (mounted && history.length > 0) {
+    if (isClient && history.length > 0) {
       localStorage.setItem('axion-query-history', JSON.stringify(history))
     }
-  }, [history, mounted])
+  }, [history, isClient])
 
-  // Handle external query from Command Bar
+  // Handle a query handed over from the Command Bar (auto-submit once per query).
   useEffect(() => {
-    if (externalQuery && mounted) {
-      setQuestion(externalQuery)
-      onQueryClear?.()
-      // Auto-submit
-      executeQuery(externalQuery)
+    if (!externalQuery) {
+      lastExternalQuery.current = null
+      return
     }
-  }, [externalQuery, mounted])
+    if (!isClient || externalQuery === lastExternalQuery.current) return
+    lastExternalQuery.current = externalQuery
+    setQuestion(externalQuery)
+    onQueryClear?.()
+    executeQuery(externalQuery)
+  }, [externalQuery, isClient, executeQuery, onQueryClear])
 
-  // Propagate loading state
+  // Propagate loading state to the parent.
   useEffect(() => {
     onLoadingChange?.(isLoading)
   }, [isLoading, onLoadingChange])
-
-  const executeQuery = async (q: string) => {
-    if (!q.trim() || isLoading) return
-
-    setIsLoading(true)
-    setError(null)
-    setResult(null)
-
-    try {
-      const trimmedQ = q.trim()
-      const output = await runQuery(trimmedQ)
-      setResult(output)
-
-      // Add to history
-      const newItem: QueryHistoryItem = {
-        id: Math.random().toString(36).substring(7),
-        question: trimmedQ,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        result: output,
-      }
-      const updated = [newItem, ...history]
-      setHistory(updated)
-      localStorage.setItem('axion_query_history', JSON.stringify(updated))
-      setActiveHistoryId(newItem.id)
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Failed to get response. Is the API running?'
-      )
-      setResult(null)
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -676,7 +682,9 @@ export function QueryPanel({ externalQuery, onQueryClear, onLoadingChange }: Que
         {/* Loading state */}
         {isLoading && (
           <div className="rounded-xl border border-[#3b82f6]/15 bg-[#3b82f6]/[0.02] p-6 space-y-6 animate-fade-up">
-            {/* Multi-step progress */}
+            {/* Indeterminate progress. /api/query runs synchronously and reports
+                no per-stage progress, so this lists the pipeline without
+                pretending stages have completed. */}
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#3b82f6]/10">
@@ -687,13 +695,16 @@ export function QueryPanel({ externalQuery, onQueryClear, onLoadingChange }: Que
                 </span>
               </div>
               <div className="ml-9 space-y-2">
-                {['Decomposing query', 'Searching claims database', 'Analyzing contradictions', 'Synthesizing report'].map((step, i) => (
-                  <div key={i} className="flex items-center gap-2 text-xs animate-fade-up" style={{ animationDelay: `${i * 300}ms` }}>
+                {['Plan sub-queries', 'Retrieve claims & contradictions', 'Reflect on sufficiency', 'Synthesize cited report'].map((step) => (
+                  <div key={step} className="flex items-center gap-2 text-xs">
                     <div className="h-1 w-1 rounded-full bg-[#3b82f6]/50" />
                     <span className="text-[#475569]">{step}</span>
                   </div>
                 ))}
               </div>
+              <p className="ml-9 text-[10px] text-[#334155]">
+                This can take up to a minute — the coordinator may iterate a few times.
+              </p>
             </div>
             <div className="space-y-3">
               <div className="animate-shimmer h-4 w-full rounded" />

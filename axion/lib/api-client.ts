@@ -2,7 +2,6 @@
 
 import type {
   GraphStats,
-  ClaimsResponse,
   ContradictionsResponse,
   Experiment,
   GapsResponse,
@@ -55,14 +54,6 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> 
 // Stats
 export async function getStats(): Promise<GraphStats> {
   return fetchApi<GraphStats>('/api/stats')
-}
-
-// Claims - available for future use (claims are currently embedded in other queries)
-export async function getClaims(
-  limit = 50,
-  offset = 0
-): Promise<ClaimsResponse> {
-  return fetchApi<ClaimsResponse>(`/api/claims?limit=${limit}&offset=${offset}`)
 }
 
 // Contradictions

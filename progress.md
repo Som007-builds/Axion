@@ -63,7 +63,7 @@
 - [x] `pytest.ini` gained an `integration` marker; integration tests excluded by default.
 - [x] `tests/test_neo4j.py` marked `integration`.
 - [x] Added `tests/test_api_regressions.py` (8 tests) covering the P0 fixes.
-- [x] **`pytest` now green offline: 111 passed, 6 deselected** (97 at P0, 111 after Tracks A/D added tests).
+- [x] **`pytest` now green offline: 142 passed, 12 deselected** (grew 97 → 111 via Tracks A/D, → 142 via Track C test conversions + new ingestion/HTTP tests).
 
 ---
 
@@ -74,7 +74,7 @@
 - [x] Accurate ingestion running state (`ingestion.scheduler.is_running()`, overlapping-run guard; `/api/ingestion/status` + custom-ingestion 409 now use it)
 - [ ] Make ingestion state cross-process safe (in-memory `IngestionProgressTracker` + `is_running` are per-process → need Redis/DB or a real queue; current design is single-worker only)
 - [ ] Offload blocking work: LLM `time.sleep` backoff up to 300s, citation 1.5s/request sleep, `/api/query` runs the full LLM loop inside the HTTP request
-- [ ] Confirm `get_graph_stats` `COUNT {}` query runs against live Neo4j 5.18 (not yet verified — Docker daemon was down)
+- [x] **Confirmed 2026-10-17 against live Neo4j 5.18** — `COUNT {}` returns papers 48 / claims 2,389 / contradictions 224 with no aggregation pitfalls.
 
 ### B. Security (P0–P1)
 - [ ] Auth layer (none exists) — at minimum for `/api/query`, `/api/confidence/recalculate`, ingestion triggers
@@ -87,9 +87,11 @@
 - [x] Add `requirements-dev.txt` (pytest, pytest-cov, httpx) — keeps prod `requirements.txt` clean
 - [x] Add first CI: `.github/workflows/ci.yml` (backend offline tests + frontend build)
 - [x] Frontend type-checks clean; removed `typescript.ignoreBuildErrors` from `next.config.mjs`; `pnpm build` now enforces types
-- [ ] Convert `test_phase4.py` / `test_phase5.py` into real pytest tests or rename (0 tests collected today — silent no-ops)
-- [ ] Add frontend lint setup (ESLint dep + flat config) and add `pnpm lint` to CI — `pnpm lint` currently fails (no eslint installed)
-- [ ] Broaden coverage: API endpoints, ingestion pipeline, coordinator happy-path (8 regression tests added so far)
+- [x] Converted `test_phase4.py` / `test_phase5.py` into real pytest tests — offline structural/config/mocked-planner checks run by default; live-service checks marked `integration`. (They previously collected **0** tests — silent no-ops.)
+- [x] Frontend lint: added `eslint` + `eslint-config-next` (flat `eslint.config.mjs`) and wired `pnpm lint` into CI. `pnpm lint` is green (0 errors; 2 `react-hooks/set-state-in-effect` warnings for deliberate localStorage hydration). Also fixed the flagged issues: hydration-guard `setMounted` → `useIsClient()` (`useSyncExternalStore`), `executeQuery` accessed-before-declared, unused imports/vars, derived sheet-open state.
+- [x] Broaden coverage: added `tests/test_ingestion.py` (13 tests — `chunk_text`, `extract_sections`, `IngestionProgressTracker`) and `tests/test_api_endpoints.py` (9 HTTP tests via `TestClient` — health/degraded, ingestion status/progress, trigger-secret over HTTP, metrics, lifespan boot). Suite: **142 passed, 12 deselected**.
+- [x] Pruned ~34 orphaned frontend deps left behind by the Track F component deletions (`@hookform/resolvers`, 20 unused Radix packages, `cmdk`, `recharts`, `sonner`, `vaul`, `next-themes`, `zod`, …) and regenerated `pnpm-lock.yaml`.
+- [x] Refactored FastAPI `@app.on_event` startup/shutdown → `lifespan` context manager (removes the deprecation warnings; behaviour unchanged, scheduler still env-gated).
 
 ### D. Evaluation (P1–P2)
 - [x] **Implemented `eval/run_eval.py`** — single entry point (`--predictor majority|random|llm`, `--dataset`, `--limit`, `--seed`, `--include-same-paper`) with shared `eval/metrics.py`, `eval/dataset.py`, `eval/predictors.py`. `baseline_llm_eval.py` is now a delegating shim.
@@ -107,7 +109,7 @@
 
 ### E. Deployment / ops (P2)
 - [x] **Dockerized + full-stack compose — DONE 2026-10-16.** Root `Dockerfile` (python:3.11-slim, CPU-only torch, pinned deps, `/healthz` healthcheck, single worker); `axion/Dockerfile` (multi-stage Node 20 + pnpm, Next.js `output: "standalone"`, non-root, healthcheck); `docker-compose.yml` now `neo4j` + `api` + `web` (health-gated startup, `./data` bind mount, `hf_cache` volume, `.env` interpolation, project name `axion`); `.dockerignore` (root + frontend). Added `GET /healthz` liveness (distinct from readiness `/api/health`). Validated: `docker compose config` parses, frontend standalone bundle builds. `next.config.mjs` gained `output: "standalone"`.
-- [ ] Verify the images actually build/run (`docker compose up --build`) — blocked: Docker daemon was down on this machine
+- [x] **Verified end-to-end 2026-10-17 (Docker 29.4.3).** Both images build; `docker compose up` brings neo4j+api+web to healthy; the containerized API serves the real graph (papers 48 / claims 2,389 / contradictions 224) and web returns 200. Three deployment-breaking defects found and fixed: (1) frontend image failed `ERR_PNPM_LOCKFILE_CONFIG_MISMATCH` — Corepack pulled pnpm 12, which ignores `pnpm.overrides`; pinned `packageManager: pnpm@10.22.0`; (2) `NEO4J_PASSWORD` on the neo4j container was parsed as a config setting → startup crash; the healthcheck now derives the password from `NEO4J_AUTH`; (3) `arxiv` was missing from `requirements.txt` → `/api/ingestion/status` returned 500 in-container. Integration suite: 12 passed against live services.
 - [ ] Durable task queue (README already plans Celery/RQ)
 - [ ] Persistent metrics/tracing/alerting (currently in-memory only)
 - [ ] Data validation + migration discipline (retire ad-hoc `graph/migrate_*.py`, `fix_*.py`)
@@ -115,15 +117,15 @@
 - [ ] Reverse proxy / TLS / domain; automate Neo4j backups in compose (backup util is host-only today)
 
 ### F. Frontend cleanup (P3)
-- [ ] Wire `getClaims` (unused) and `getHealth` (unused) or delete them
+- [ ] Dead API-client helpers: removed unused `getClaims`; `getHealth` still unused — wire it into the status bar or delete it
 - [ ] Surface `/api/claims/{id}/provenance` and `/api/metrics` in UI (Phase 7 / Phase 9, never called)
-- [ ] Render `GraphStats.experiments` (defined, never shown) or remove from types
-- [ ] Replace hardcoded "System Online" green dot (`nav-rail.tsx:149`) and "Neo4j Connected" inference (`status-bar.tsx:25`) with real health checks
-- [ ] Remove fake pipeline animation during query load (`query-panel.tsx:690`) or replace with real progress
-- [ ] Fix `experiment-card.tsx:56-58` — async call in render body (needs effect)
-- [ ] Delete dead code: 51 unused `components/ui/*`, orphaned `styles/globals.css`, duplicate hooks (`use-mobile`, `use-toast`), `theme-provider.tsx`, placeholder assets in `public/`
-- [ ] Add `NEXT_PUBLIC_API_URL` guidance to `.env.example` (frontend env undocumented)
-- [ ] Add app/error, loading, not-found boundaries; rename package `"my-project"` → axion
+- [x] Surface the real `GraphStats.experiments` count in the dashboard stats strip.
+- [x] Replaced hardcoded "System Online" green dot (`nav-rail.tsx`) and "Neo4j Connected" inference (`status-bar.tsx`) with real `/api/health` probes.
+- [x] Honest query loading state — removed the fake pipeline animation; loading is now indeterminate while `/api/query` runs.
+- [x] Fixed `experiment-card.tsx` — the auto-fetch moved from the render body into a `useEffect` (starts in the loading state to avoid setState-in-effect).
+- [x] Deleted dead code: 47 unused `components/ui/*`, orphaned `styles/globals.css`, `theme-provider.tsx`, duplicate hooks, placeholder `public/` assets.
+- [x] Documented `NEXT_PUBLIC_API_URL` (and `NEXT_PUBLIC_TRIGGER_SECRET`) in `.env.example`.
+- [x] Added `app/error.tsx`, `app/loading.tsx`, `app/not-found.tsx`; package renamed to `axion`.
       → package rename ✅ DONE; error/loading boundaries still open
 
 ### G. Docs / branding (P3) — ✅ MOSTLY DONE 2026-10-16
@@ -161,3 +163,4 @@
 - `2026-10-16` — Decision: canonical project name is **Axion** (rename pass pending).
 - `2026-10-16` — **Track E (deployment)**: added `Dockerfile` (API, CPU-only torch, single worker), `axion/Dockerfile` (Next.js standalone), full-stack `docker-compose.yml` (neo4j+api+web, health-gated), `.dockerignore` ×2, `/healthz` liveness endpoint, `output: "standalone"`. `docker compose config` validated; standalone build verified. Image build/run unverified (Docker daemon down).
 - `2026-10-16` — **`PROJECT_INFO.md` written** (repo root, untracked): full technical + product inventory — capabilities, explicit limitations ("what it cannot do"), architecture, data model, 21-endpoint API reference, config reference, security posture, deployment, shipment-readiness, roadmap, glossary.
+- `2026-10-17` — **Docker verification pass (Track E).** Started the daemon, built both images, brought neo4j+api+web up healthy, and confirmed the containerized API returns the real graph (48 / 2,389 / 224). Fixed three deployment-breaking bugs: pnpm version pin, Neo4j `NEO4J_PASSWORD` config collision, missing `arxiv` dependency. Commits: `72319f9` (tests + lint + lifespan), `e5af0a7` (Docker fixes). Open: live `/api/stats` reports gaps 18 / experiments 36 vs docs' 30 / 12 — reconcile.

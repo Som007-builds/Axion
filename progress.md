@@ -1,7 +1,7 @@
 # PROGRESS.md — Axion Shipment Tracker
 
-> Working tracker. NOT pushed to git (keep it untracked — do not `git add`).
-> Created: 2026-10-16. Updated: 2026-10-16.
+> Working tracker. Committed to git on 2026-10-17 (previously kept untracked).
+> Created: 2026-10-16. Updated: 2026-10-17.
 > Audit basis: full backend + frontend + tests/eval/ops/docs review of HEAD `0726da9`.
 
 ---
@@ -12,7 +12,7 @@
 | :--- | :--- | :--- |
 | Research / founder demo | ~1–2 weeks | **~85%** — core loop works, UI looks finished |
 | Public self-hosted MVP | ~4–6 weeks | **~70–75%** — needs hardening, not features |
-| Multi-tenant SaaS | 2–3+ months | **~40%** — auth, queue, observability, eval story missing |
+| Multi-tenant SaaS | 2–3+ months | **~40%** — auth, queue, observability, multi-tenancy missing |
 
 **Bottom line:** ingestion → graph → reasoning → API → UI works end to end. Remaining work is correctness bugs, security, test/CI hygiene, eval, and deployment — not new features.
 
@@ -40,7 +40,7 @@
 - [x] Persistent query history (localStorage), custom ingestion sheet, targeted contradiction checks
 - [x] Logging, in-memory metrics, ingestion progress tracking, Neo4j backup utility
 - [x] Pinned Python deps (all `==`), complete `.env.example`
-- [x] 48 papers / 2,389 claims / 224 contradictions / 132 supports / 93 related / 30 gaps / 12 experiments ingested
+- [x] 48 papers / 2,389 claims / 224 contradictions / 132 supports / 93 related / 18 gaps / 36 experiments ingested (live-verified 2026-10-17)
 - [x] 94 test functions written (~89 properly mocked unit tests)
 
 ---
@@ -63,7 +63,7 @@
 - [x] `pytest.ini` gained an `integration` marker; integration tests excluded by default.
 - [x] `tests/test_neo4j.py` marked `integration`.
 - [x] Added `tests/test_api_regressions.py` (8 tests) covering the P0 fixes.
-- [x] **`pytest` now green offline: 142 passed, 12 deselected** (grew 97 → 111 via Tracks A/D, → 142 via Track C test conversions + new ingestion/HTTP tests).
+- [x] **`pytest` now green offline: 150 passed, 12 deselected** (grew 97 → 111 via Tracks A/D, → 142 via Track C test conversions, → 150 via Track D eval/LLM tests).
 
 ---
 
@@ -99,13 +99,16 @@
 - [x] Added `numpy`/`pandas`/`scikit-learn` to `requirements-dev.txt`; added `eval/README.md` with usage, targets, and dataset caveats.
 - [x] Added `tests/test_eval_metrics.py` (13 hermetic tests) so CI exercises the harness offline.
 - [x] Honest diagnostics: harness now reports class mix, same-paper exclusions, and `warnings` when a class has no support / the run is single-class.
-- [ ] **BLOCKED — dataset is not fit for purpose.** Every SUPPORTS/CONTRADICTS label in train/val/test is a *same-paper* pair, which `check_pair` refuses to score. Production-aligned eval (`--include-same-paper` off) leaves the test split 100% UNRELATED → majority baseline scores acc 1.0 / macro F1 0.33. Needs a rebuilt eval set of **cross-paper** pairs with real positive labels.
-- [ ] **BLOCKED — `eval/Data/Labeled_pairs.csv` is 0 bytes** (collides with lowercase `labeled_pairs.csv` on Windows), so `split_dataset.py` can no longer regenerate train/val/test. Recover or recreate the source labels.
-- [ ] Re-run the real LLM baseline once valid data exists; then retire `eval/results/baseline_llm.json` (2026-08-02, wrong denominator). Reference baseline `eval/results/majority_test.json` recorded instead.
-- [ ] `eval/Data/labeled_pairs_cleaned.csv` is 100% UNRELATED (68 rows) — do not use as an eval set.
+- [x] **Rebuilt the eval set: `eval/Data/axion_pairs.csv`** (286 cross-paper pairs) via `eval/Data/build_reference_set.py`. Labels come from the only reviewed source in the repo — `contradicts_review_labeled.csv` (224 pairs audited against the rubric in `label_contradicts.py`) plus 62 de-duplicated negatives from `labeled_pairs_cleaned.csv`, tagged by `source`. Mix: 4 CONTRADICTS / 11 SUPPORTS / 271 UNRELATED, 0 same-paper.
+- [x] **Headline data finding:** the review found only **4 of 224** auto-detected contradictions are real (11 SUPPORTS, 209 UNRELATED) — production contradiction precision is **~1.8%** on that sample.
+- [x] Recorded reference baselines on `axion_pairs.csv`: majority acc 0.9476 / macro F1 0.3244; random 0.3706 / 0.2191; **llm (groq `openai/gpt-oss-20b`) acc 0.8427 / macro F1 0.4822** (CONTRADICTS P 0.154 / R 0.500). Results in `eval/results/*_axion_pairs.json`.
+- [x] **Instrumented `check_pair`** with an optional `diagnostics` out-param: `SAME_CLAIM` / `SAME_PAPER` / `UNRELATED` / `PARSE_FAILURE` / verdict. The LLM predictor tallies statuses and the JSON result carries `predictor_diagnostics`; the harness warns when parse failures occur. Also fixed a latent crash (non-dict JSON) and the blank-arxiv-ids-count-as-same-paper bug.
+- [x] **Fixed the LLM router (`llm.py`) and models (`config.py`)** — production-blocking: the configured Groq model (`llama-3.1-8b-instant`) is decommissioned, and a non-rate-limit error aborted the whole fallback chain instead of trying the next provider. Now `openai/gpt-oss-20b` + `gemini-2.5-flash`, non-rate-limit errors fall through, empty responses are treated as failures, and reasoning models run with `reasoning_effort="low"`.
+- [x] `eval/Data/labeled_pairs_cleaned.csv` (68 rows, all UNRELATED) — folded into `axion_pairs.csv` as tagged negatives; not used alone.
 - [x] Decision: **drop** the empty `eval/models/` + `eval/classifier/` plan (never populated; documented in `eval/README.md`).
+- [ ] `eval/Data/Labeled_pairs.csv` is still 0 bytes (Windows case collision) so `split_dataset.py` cannot regenerate the old train/val/test; superseded by `axion_pairs.csv`, so this is now historical only.
+- [ ] CONTRADICTS has only 4 examples — expand the reviewed set before trusting per-class F1; the audited precision (~1.8%) is the current headline signal.
 - [ ] Add retrieval-level + agent-level eval (not just pair classification)
-- [ ] Instrument `check_pair` so JSON parse failures are distinguishable from genuine UNRELATED verdicts
 
 ### E. Deployment / ops (P2)
 - [x] **Dockerized + full-stack compose — DONE 2026-10-16.** Root `Dockerfile` (python:3.11-slim, CPU-only torch, pinned deps, `/healthz` healthcheck, single worker); `axion/Dockerfile` (multi-stage Node 20 + pnpm, Next.js `output: "standalone"`, non-root, healthcheck); `docker-compose.yml` now `neo4j` + `api` + `web` (health-gated startup, `./data` bind mount, `hf_cache` volume, `.env` interpolation, project name `axion`); `.dockerignore` (root + frontend). Added `GET /healthz` liveness (distinct from readiness `/api/health`). Validated: `docker compose config` parses, frontend standalone bundle builds. `next.config.mjs` gained `output: "standalone"`.
@@ -126,11 +129,10 @@
 - [x] Deleted dead code: 47 unused `components/ui/*`, orphaned `styles/globals.css`, `theme-provider.tsx`, duplicate hooks, placeholder `public/` assets.
 - [x] Documented `NEXT_PUBLIC_API_URL` (and `NEXT_PUBLIC_TRIGGER_SECRET`) in `.env.example`.
 - [x] Added `app/error.tsx`, `app/loading.tsx`, `app/not-found.tsx`; package renamed to `axion`.
-      → package rename ✅ DONE; error/loading boundaries still open
 
 ### G. Docs / branding (P3) — ✅ MOSTLY DONE 2026-10-16
 - [x] **Pick one name → AXION.** Renamed everywhere: `api/main.py`, `main.py`, `config.py` (DB path + container default), `embeddings/store.py`, `agents/synthesizer.py`, `archive/coordinator_v1.py`, `graph/migrate_to_neo4j.py`, `requirements.txt`, `axion/types/axion.ts`, `.env.example`, `docker-compose.yml` (container `axion_neo4j`), `data/db/scimesh.db`→`axion.db`, `tests/test_aethergraph.py`→`tests/test_axion.py`, README + all side docs.
-- [x] Reconcile stats: README Live Stats now 48 / 2,389 / 224 / 132 / 30 / 12 (matches `PROJECT_INFO.md`). `PROJECT_STATUS_NOW.md` marked **SUPERSEDED**.
+- [x] Reconcile stats: README Live Stats now 48 / 2,389 / 224 / 132 / 18 / 36 (verified live 2026-10-17; matches `PROJECT_INFO.md`). `PROJECT_STATUS_NOW.md` marked **SUPERSEDED**.
 - [x] Docs of non-existent files: fixed `AXION_SPEC.md` tree — removed `ui/` and `graph/queries.py`, added `archive/`, `eval/`, `ingestion/`.
 - [x] README CLI reference no longer lists unimplemented `--mode init/redteam/communities`; lists real modes only (+ `query`, `backup`).
 - [x] Reconcile version labels: `requirements.txt` header now "Axion v2.30" (matches `AXION_SPEC.md`).
@@ -147,7 +149,7 @@
 1. **P0 bugs** — stats, temporal, fail-open secret, error leak (visible wrong data + security)
 2. **Offline-green tests + first CI** — fix `test_claims.py`, provider-chain leak, add markers
 3. **Commit untracked docs + eval**, unify name to Axion, correct README stats
-4. **Re-run eval** on real cleaned data, record honest numbers
+4. ~~**Re-run eval** on real cleaned data, record honest numbers~~ ✅ done 2026-10-17 (rebuilt `axion_pairs.csv`; baselines recorded)
 5. ~~**Dockerize API + frontend**, fix port mismatch, boot degraded~~ ✅ done 2026-10-16
 6. **Auth + task queue** before any multi-user use
 
@@ -164,3 +166,4 @@
 - `2026-10-16` — **Track E (deployment)**: added `Dockerfile` (API, CPU-only torch, single worker), `axion/Dockerfile` (Next.js standalone), full-stack `docker-compose.yml` (neo4j+api+web, health-gated), `.dockerignore` ×2, `/healthz` liveness endpoint, `output: "standalone"`. `docker compose config` validated; standalone build verified. Image build/run unverified (Docker daemon down).
 - `2026-10-16` — **`PROJECT_INFO.md` written** (repo root, untracked): full technical + product inventory — capabilities, explicit limitations ("what it cannot do"), architecture, data model, 21-endpoint API reference, config reference, security posture, deployment, shipment-readiness, roadmap, glossary.
 - `2026-10-17` — **Docker verification pass (Track E).** Started the daemon, built both images, brought neo4j+api+web up healthy, and confirmed the containerized API returns the real graph (48 / 2,389 / 224). Fixed three deployment-breaking bugs: pnpm version pin, Neo4j `NEO4J_PASSWORD` config collision, missing `arxiv` dependency. Commits: `72319f9` (tests + lint + lifespan), `e5af0a7` (Docker fixes). Open: live `/api/stats` reports gaps 18 / experiments 36 vs docs' 30 / 12 — reconcile.
+- `2026-10-17` — **Track D rebuild (eval).** Built `eval/Data/axion_pairs.csv` (286 cross-paper pairs; 4/11/271) from the reviewed `contradicts_review_labeled.csv` + cleaned negatives, via new `eval/Data/build_reference_set.py`. Instrumented `check_pair` with a `diagnostics` out-param (parse failures now distinct from UNRELATED); the LLM predictor tallies statuses into `predictor_diagnostics` and the harness warns on parse failures. **Found ~1.8% production contradiction precision** in the human audit. Recorded real baselines (majority 0.9476/0.3244; llm `openai/gpt-oss-20b` 0.8427 / macro F1 0.4822). Also fixed two production-blocking LLM bugs: decommissioned Groq model + non-rate-limit errors aborting the fallback chain. Tests 149 passed / 12 deselected (+7).

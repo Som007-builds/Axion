@@ -27,7 +27,7 @@
 | **API endpoints** | 21 (20 functional + `/healthz` liveness) |
 | **UI surfaces** | 6 views + dashboard stats + ingestion sheet |
 | **Tests** | 111 passing offline, 6 integration deselected |
-| **Data (last audit)** | 48 papers · 2,389 claims · 224 contradictions · 132 supports · 93 related · 30 gaps · 12 experiments |
+| **Data (verified 2026-10-17)** | 48 papers · 2,389 claims · 224 contradictions · 132 supports · 93 related · 18 gaps · 36 experiments |
 | **Demo readiness** | ~85% |
 | **Product readiness** | ~40% (see §12) |
 | **Licence** | Not specified in repo (⚠️ missing) |
@@ -187,12 +187,12 @@ the honest "what not" list.
 
 ### 4.2 Correctness / data limitations
 
-- **Same-paper claims are never compared.** By design `check_pair()` refuses two claims from the same `arxiv_id`. This is correct for real-world contradictions, but it means the current *labelled eval set is unusable* (see §8.2).
-- **No valid evaluation.** The labelled dataset's positives are all same-paper pairs, so the production-aligned eval is 100% `UNRELATED`. There is currently **no trustworthy accuracy/F1 number** for the core classifier.
-- **Contradiction/relationship detection is LLM-judged**, not verified. False positives and false negatives are expected and unmeasured.
+- **Same-paper claims are never compared.** By design `check_pair()` refuses two claims from the same `arxiv_id` (and, since the rebuild, only when *both* ids are non-empty). This is correct for real-world contradictions; the old same-paper-heavy labelled splits are superseded by `eval/Data/axion_pairs.csv` (see §8.2).
+- **Low and now-measured contradiction precision.** A review of the 224 auto-detected CONTRADICTS edges found only **4 real ones** (11 SUPPORTS, 209 UNRELATED) — ~1.8% precision. On the rebuilt reference set the current LLM baseline reaches macro F1 0.48 and CONTRADICTS precision 0.15.
+- **Contradiction/relationship detection is LLM-judged**, not verified. False positives and false negatives are expected; the reference set now puts a number on them.
 - **Gap confidence is not stored**, so the UI shows no confidence for gaps.
 - **No human-in-the-loop correction.** Users cannot accept/reject/edit a claim, contradiction, or experiment design, and nothing is fed back into the system.
-- **Parse failures are invisible.** `check_pair()` returns `None` for UNRELATED, same-paper, *and* JSON parse failure alike — a silent failure looks like a negative verdict.
+- **Parse failures are now visible.** `check_pair()` accepts a `diagnostics` out-param; the eval harness distinguishes JSON parse failures from genuine `UNRELATED` verdicts and warns on them.
 - **Confidence propagation is heuristic**, not calibrated to any ground truth.
 
 ### 4.3 Platform / engineering limitations
@@ -368,8 +368,8 @@ Global rate limit: `60/minute` per client IP (slowapi).
 
 - **Providers:** `groq` (primary), `gemini` (fallback), `claude` (available).
 - **Chain:** `LLM_PROVIDER_CHAIN = ["groq", "gemini"]`.
-- **Models:** `llama-3.1-8b-instant` (Groq), `gemini-2.0-flash` (Gemini), `claude-sonnet-4-20250514` (Claude).
-- **Resilience:** exponential back-off with jitter (`5, 15, 45, 120, 300` s), provider fallback, optional in-process cache (`LLM_CACHE_ENABLED`), per-call timing and metrics.
+- **Models:** `openai/gpt-oss-20b` (Groq), `gemini-2.5-flash` (Gemini), `claude-sonnet-4-20250514` (Claude).
+- **Resilience:** exponential back-off with jitter (`5, 15, 45, 120, 300` s), provider fallback on **both** rate-limit and hard errors, empty-response guard, optional in-process cache (`LLM_CACHE_ENABLED`), per-call timing and metrics. Reasoning models (`gpt-oss-*`, `qwen3-*`) run with `reasoning_effort="low"`.
 - **Rate-limit detection** covers all three providers' error shapes.
 
 ### 5.9 Configuration reference (environment variables)
@@ -396,8 +396,7 @@ Non-env config (in `config.py`): embedding model, chunk size/overlap, `MAX_CLAIM
 
 ## 6. Data currently in the system
 
-From the last audit (2026-10-16). **Unverifiable right now** because no Neo4j
-instance was running; numbers come from the local Neo4j volume and API.
+Verified live on 2026-10-17 against the containerized stack (`GET /api/stats`).
 
 | Entity | Count |
 | :--- | ---: |
@@ -407,12 +406,12 @@ instance was running; numbers come from the local Neo4j volume and API.
 | Contradictions | 224 |
 | Supports | 132 |
 | Related-claim links | 93 |
-| Gaps | 30 |
-| Experiments designed | 12 |
+| Gaps | 18 |
+| Experiments designed | 36 |
 
 ⚠️ Data-integrity notes:
-- The labelled eval set's positives are all same-paper pairs (see §8.2).
-- `eval/Data/Labeled_pairs.csv` is 0 bytes; the eval source dataset is missing.
+- The old labelled eval set's positives were all same-paper pairs; superseded by `eval/Data/axion_pairs.csv` (see §8.2).
+- `eval/Data/Labeled_pairs.csv` is 0 bytes (Windows case collision); `axion_pairs.csv` is the reference set now.
 - Ad-hoc migration/fix scripts in `graph/` (`migrate_*.py`, `fix_*.py`) have been run against this data; there is no migration log.
 
 ---
@@ -475,23 +474,29 @@ Compose services: `neo4j` (healthchecked, loopback-bound), `api`
 ### 8.2 Evaluation harness (`eval/`)
 
 - Single entry point: `python eval/run_eval.py --predictor majority|random|llm`.
-- Metrics: accuracy, **macro F1** (headline), weighted F1, per-class P/R/F1/support, confusion matrix, latency stats, class composition, and explicit `warnings`.
+- Metrics: accuracy, **macro F1** (headline), weighted F1, per-class P/R/F1/support, confusion matrix, latency stats, class composition, `warnings`, and `predictor_diagnostics`.
 - Offline predictors (majority/random) make CI runnable without LLMs.
 
-**The critical finding — the dataset cannot measure production behaviour:**
+**Reference set (rebuilt 2026-10-17): `eval/Data/axion_pairs.csv`** — 286
+cross-paper pairs (4 CONTRADICTS / 11 SUPPORTS / 271 UNRELATED), built by
+`eval/Data/build_reference_set.py` from the only reviewed labels in the repo
+(`contradicts_review_labeled.csv`, audited against the rubric in
+`label_contradicts.py`) plus tagged negatives from `labeled_pairs_cleaned.csv`.
 
-| split | CONTRADICTS | SUPPORTS | UNRELATED | cross-paper rows |
-| :--- | ---: | ---: | ---: | ---: |
-| train | 3 | 83 | 124 | 48 (all UNRELATED) |
-| val | 1 | 17 | 27 | 10 (all UNRELATED) |
-| test | 1 | 18 | 26 | 10 (all UNRELATED) |
+**Headline finding:** the review found only **4 of 224** auto-detected
+CONTRADICTS are real (11 SUPPORTS, 209 UNRELATED) — production contradiction
+precision is **~1.8%**. Recorded baselines on the reference set:
 
-**Every SUPPORTS and CONTRADICTS label is a same-paper pair**, which the
-production agent refuses to score. Production-aligned eval is therefore 100%
-UNRELATED, and the majority baseline scores **accuracy 1.0 / macro F1 0.33**. A
-valid evaluation **requires rebuilding the dataset with cross-paper pairs that
-carry real positive labels.** Targets (proposed, unverified): macro F1 ≥ 0.55,
-CONTRADICTS recall ≥ 0.60, p95 latency ≤ 4 s.
+| predictor | accuracy | macro F1 | CONTRADICTS P / R |
+| :--- | ---: | ---: | :--- |
+| majority | 0.9476 | 0.3244 | 0.00 / 0.00 |
+| random (seed 0) | 0.3706 | 0.2191 | — |
+| llm (`openai/gpt-oss-20b`) | 0.8427 | 0.4822 | 0.154 / 0.500 |
+
+The old splits remain unusable for the record: every SUPPORTS/CONTRADICTS label
+was a same-paper pair, so the production-aligned eval was 100% UNRELATED and the
+majority baseline scored accuracy 1.0 / macro F1 0.33. Targets still to meet:
+macro F1 ≥ 0.55, CONTRADICTS precision/recall ≥ 0.60, p95 latency ≤ 4 s.
 
 ---
 
@@ -558,16 +563,17 @@ Consolidated (details and checkboxes in `progress.md`):
 - Offline `pytest` uncollectable (broken `test_claims.py`, live-LLM test leak, no markers).
 - 4 frontend type errors; `ignoreBuildErrors` removed.
 - Eval harness rewritten; `eval/data` case bugs fixed.
+- Eval dataset rebuilt (`eval/Data/axion_pairs.csv`); parse failures now instrumented.
+- LLM router health: the configured Groq model was decommissioned and non-rate-limit errors aborted the whole fallback chain — now `openai/gpt-oss-20b` / `gemini-2.5-flash` with full fallback and an empty-response guard.
 
 **Open**
 - No auth; public `NEXT_PUBLIC_TRIGGER_SECRET`.
-- No valid evaluation (dataset unusable, see §8.2).
+- Evaluation now exists, but CONTRADICTS has only 4 examples — expand the reviewed set; macro F1 0.48 is the current honest number.
 - Scheduler + progress/metrics not multi-process safe; no task queue.
 - Blocking LLM work inside `/api/query`.
 - Ingestion state `/api/ingestion/status` correctness now reported, but in-memory.
 - Gaps have no stored confidence.
-- `check_pair` hides parse failures as UNRELATED.
-- Dead Streamlit/pyvis/plotly deps; ~51 unused UI components.
+- Legacy Streamlit/pyvis/plotly deps still listed; frontend trimmed to the 10 used shadcn primitives.
 - Docs/branding contradictions (three names, conflicting stats, references to deleted files).
 - Untracked docs + `eval/` not in git; `Labeled_pairs.csv` 0 bytes.
 - No license; no Python-version marker; no hash-pinned deps.
@@ -593,7 +599,7 @@ durability**, not on features.
 1. **P0 correctness/security** — ✅ done this session (stats, temporal, fail-closed secret, error leak, placeholders, degraded boot).
 2. **Offline-green tests + CI** — ✅ done (111 tests, GitHub Actions, type-checked build).
 3. **Deployment** — ✅ done this session (Dockerfiles, full-stack compose, healthchecks).
-4. **Valid evaluation** — ⛔ blocked: rebuild a cross-paper labelled dataset; then re-run the LLM baseline and set thresholds.
+4. **Valid evaluation** — ✅ reference set rebuilt + baselines recorded (`axion_pairs.csv`, macro F1 0.48); ⏳ expand CONTRADICTS positives before setting thresholds.
 5. **Auth + multi-user** — real accounts, per-user rate limits, protect compute endpoints.
 6. **Durable task queue** — Celery/RQ for ingestion + long queries; make state cross-process.
 7. **Observability** — persistent metrics, tracing, alerting, structured logs.

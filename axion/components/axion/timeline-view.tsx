@@ -62,9 +62,10 @@ function YearlyPositionCard({ position }: { position: YearlyPosition }) {
 }
 
 function DisputeCard({ dispute }: { dispute: Dispute }) {
+  const startLabel = dispute.start_year ?? 'Unknown start'
   const duration = dispute.end_year 
-    ? `${dispute.start_year} — ${dispute.end_year}`
-    : `${dispute.start_year} — ongoing`
+    ? `${startLabel} — ${dispute.end_year}`
+    : `${startLabel} — ongoing`
 
   return (
     <div className="rounded-xl border border-[var(--axion-border-subtle)] axion-surface p-4 space-y-3 axion-card-hover">

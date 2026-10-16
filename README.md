@@ -6,7 +6,7 @@ research gaps the field hasn't answered yet.
 
 **The core insight:** scientific knowledge is a network, not a document collection.
 Two papers can agree on a topic but contradict each other on a specific finding.
-Standard search engines can't detect that. AetherGraph can — and it compounds
+Standard search engines can't detect that. Axion can — and it compounds
 what it learns over time.
 
 
@@ -17,23 +17,23 @@ what it learns over time.
 ## Live Stats
 | Metric | Count |
 |---|---|
-| Papers ingested | 9+ |
-| Claims extracted | 270+ |
-| Contradictions detected | 48 |
-| Research gaps identified | 18 |
-| Experiment designs | 36 |
+| Papers ingested | 48 |
+| Claims extracted | 2,389 |
+| Contradictions detected | 224 |
+| Suggests (support links) | 132 |
+| Research gaps identified | 30 |
+| Experiment designs | 12 |
 
 ---
 
 ## What Makes This Different From RAG
 
-Standard RAG retrieves document chunks and summarizes them. AetherGraph:
+Standard RAG retrieves document chunks and summarizes them. Axion:
 
 - **Operates at claim level** — every paper is decomposed into atomic, falsifiable assertions
 - **Builds a persistent graph** — claims, contradictions, and gaps are stored as typed edges in Neo4j
-- **Compounds over time** — paper 270 is compared against all 269 prior papers automatically
+- **Compounds over time** — each new paper is compared against all prior papers automatically
 - **Self-corrects** — claim confidence scores recalculate as more papers support or contradict them
-- **Validates its own reasoning** — a red-team agent audits detected contradictions for false positives
 
 ---
 
@@ -56,13 +56,13 @@ ArXiv Papers
      ┌─────────────▼──┐    ┌──────▼──────────────┐
      │  Agent 2:      │    │  Agent 3: Gap Finder │
      │  Contradiction │    │  Reasons about what  │
-     │  Detector +    │    │  the field hasn't    │
-     │  Red-Team      │    │  answered yet        │
+     │  Detector      │    │  the field hasn't    │
+     │                │    │  answered yet        │
      └─────────────┬──┘    └──────┬───────────────┘
                    │              │
           ┌────────▼──────────────▼───────────┐
           │    Enriched Knowledge Graph       │
-          │  CONTRADICTS · SUPPORTS · GAPS    │
+          │  CONTRADICTS · SUPPORTS · RELATED │
           └────────────────┬──────────────────┘
                            │
           ┌────────────────▼──────────────────┐
@@ -76,15 +76,15 @@ ArXiv Papers
 
 ## Key Capabilities
 
-### Contradiction Detection with Adversarial Validation
-The system finds semantically similar claims across papers and asks Claude to
-determine if they genuinely contradict. A second red-team agent then audits
-each finding — hunting for methodological differences that would explain the
-apparent contradiction without a real conflict.
+### Contradiction Detection
+The system finds semantically similar claims across papers and asks an LLM to
+judge the relationship. Every candidate pair is classified as exactly one of:
 
-Contradictions are classified into 6 types:
-`GENUINE_CONTRADICTION` · `SCALE_THRESHOLD_DISPUTE` · `METHODOLOGICAL_CONFLICT`
-· `DATA_DISTRIBUTION_SHIFT` · `BENCHMARK_SCOPE_MISMATCH` · `REPLICATION_FAILURE`
+`CONTRADICTS` · `SUPPORTS` · `UNRELATED`
+
+Contradictions and supports carry an LLM-written explanation and a confidence
+score. Pairs from the same paper are never compared (a paper can't contradict
+itself), and every finding is stored as a typed edge in Neo4j.
 
 ### Dynamic Confidence Propagation
 Every claim has a confidence score that recalculates as new papers enter the graph:
@@ -116,17 +116,17 @@ decision rule, cost estimate. Stored on the CONTRADICTS relationship in Neo4j.
 ## Running Locally
 
 ### Prerequisites
-- Python 3.10+
-- Node.js 18+
+- Python 3.11+
+- Node.js 20+
 - Docker (for Neo4j)
-- An Anthropic API key (or Groq/Gemini)
+- An LLM API key (Groq, Gemini, or Anthropic)
 
 ### Setup
 
 ```bash
 # 1. Clone and install backend
-git clone https://github.com/Som007-builds/AetherGraph
-cd AetherGraph
+git clone https://github.com/Som007-builds/Axion
+cd Axion
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
@@ -136,10 +136,10 @@ cp .env.example .env
 # Edit .env with your API keys
 
 # 3. Start Neo4j
-docker-compose up -d
+docker compose up -d neo4j
 
 # 4. Initialize the graph
-python main.py --mode init
+python -m graph.neo4j_schema
 
 # 5. Ingest papers
 python main.py --mode ingest --query "chain of thought prompting LLM" --n 10
@@ -164,13 +164,13 @@ cd axion && pnpm install && pnpm dev
 ```bash
 python main.py --mode ingest       --query "..." --n 20   # Ingest papers
 python main.py --mode contradict                           # Detect contradictions
-python main.py --mode redteam                              # Adversarial validation
 python main.py --mode confidence                           # Recalculate scores
 python main.py --mode gaps                                 # Find research gaps
 python main.py --mode experiments                          # Design experiments
 python main.py --mode citations                            # Fetch citation counts
-python main.py --mode communities                          # Community detection
+python main.py --mode query     --query "..."              # Ask a research question
 python main.py --mode schedule                             # Start auto-ingestion
+python main.py --mode backup                               # Back up the graph
 ```
 
 ---
@@ -194,16 +194,17 @@ python main.py --mode schedule                             # Start auto-ingestio
 ## Project Structure
 
 ```
-AetherGraph/
+Axion/
 ├── agents/          # All reasoning agents
 ├── api/             # FastAPI endpoints
 ├── axion/           # Next.js frontend workspace
 ├── graph/           # Neo4j client, schema, Cypher queries
 ├── ingestion/       # ArXiv client, PDF parser, scheduler
 ├── embeddings/      # ChromaDB wrapper
+├── eval/            # Evaluation harness (run_eval.py)
 ├── utils/           # Structured logging
 ├── archive/         # Deprecated SQLite layer (reference only)
-├── tests/           # 94 unit + integration tests
+├── tests/           # 111 offline unit tests (+ integration, opt-in)
 ├── main.py          # CLI entry point
 └── AXION_SPEC.md    # Full technical specification
 ```
@@ -222,11 +223,20 @@ confidence system, and long-term vision.
 
 - **Contradiction false positives:** The engine can flag complementary findings
   as contradictions when parameter scopes differ (e.g., 7B vs 70B models).
-  The red-team agent reduces but does not eliminate this.
-- **Linear confidence model:** The confidence formula treats all papers equally
-  regardless of citation count or venue quality.
-- **Synchronous ingestion:** Large batch ingestion blocks the API thread.
-  Celery/RQ task queue is the planned fix.
+  There is currently no adversarial/red-team validation pass to filter these.
+- **Linear confidence model:** The confidence formula
+  (`base + 0.08×supports − 0.12×contradictions`) treats all papers equally
+  regardless of citation count or venue quality. A separate citation-weighting
+  helper exists but is not part of the default confidence path.
+- **Synchronous work:** Large batch ingestion and `/api/query` run the full LLM
+  loop inside the request/thread. A Celery/RQ task queue is the planned fix.
+- **No authentication:** All read/query endpoints are open; only the two
+  ingestion triggers require a shared secret.
+- **Evaluation is not yet valid:** the labelled eval set's positive examples are
+  all same-paper pairs, which the engine refuses to score (see
+  [`eval/README.md`](./eval/README.md)). No trustworthy accuracy figure exists yet.
+- **Single API worker only:** in-process scheduler, metrics, and ingestion
+  progress are not safe across multiple workers.
 
 ---
 

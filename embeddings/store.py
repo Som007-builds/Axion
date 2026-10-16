@@ -1,6 +1,6 @@
 # embeddings/store.py
 """
-ChromaDB vector store for SciMesh.
+ChromaDB vector store for Axion.
 
 AUDIT FIX 1 — ChromaDB reversion bug (Audit §4 ⚠️):
   add_chunk() and add_claim() now use .upsert() instead of .add().

@@ -278,26 +278,27 @@ export function KnowledgeGraph() {
             height={dimensions.height}
             backgroundColor="#020408"
             nodeRelSize={1}
-            nodeVal={(node: GraphNode) => getNodeSize(node) ** 2}
-            nodeColor={(node: GraphNode) => getNodeColor(node)}
+            nodeVal={(node) => getNodeSize(node as GraphNode) ** 2}
+            nodeColor={(node) => getNodeColor(node as GraphNode)}
             nodeLabel=""
-            linkColor={(link: { type?: string }) => getEdgeColor(link)}
-            linkWidth={(link: { type?: string }) => getEdgeWidth(link)}
+            linkColor={(link) => getEdgeColor(link as { type?: string })}
+            linkWidth={(link) => getEdgeWidth(link as { type?: string })}
             linkDirectionalArrowLength={3}
             linkDirectionalArrowRelPos={1}
-            linkDirectionalArrowColor={(link: { type?: string }) => getEdgeColor(link)}
+            linkDirectionalArrowColor={(link) => getEdgeColor(link as { type?: string })}
             cooldownTicks={120}
-            onNodeHover={(node: GraphNode | null) => setHoveredNode(node)}
+            onNodeHover={(node) => setHoveredNode((node as GraphNode | null) ?? null)}
             enableNodeDrag={true}
             enableZoomInteraction={true}
-            nodeCanvasObject={(node: GraphNode & { x?: number; y?: number }, ctx: CanvasRenderingContext2D, globalScale: number) => {
-              const size = getNodeSize(node) / globalScale * 2
-              const color = getNodeColor(node)
-              const x = node.x ?? 0
-              const y = node.y ?? 0
+            nodeCanvasObject={(node, ctx: CanvasRenderingContext2D, globalScale: number) => {
+              const gn = node as GraphNode & { x?: number; y?: number }
+              const size = getNodeSize(gn) / globalScale * 2
+              const color = getNodeColor(gn)
+              const x = gn.x ?? 0
+              const y = gn.y ?? 0
 
               // Glow effect
-              if (node.type === 'paper' || node.type === 'gap') {
+              if (gn.type === 'paper' || gn.type === 'gap') {
                 ctx.beginPath()
                 ctx.arc(x, y, size + 3, 0, 2 * Math.PI)
                 ctx.fillStyle = `${color}15`
@@ -320,13 +321,13 @@ export function KnowledgeGraph() {
               ctx.stroke()
 
               // Label at high zoom
-              if (globalScale > 2.5 && node.label) {
+              if (globalScale > 2.5 && gn.label) {
                 ctx.font = `${Math.max(2, 10 / globalScale)}px Inter, sans-serif`
                 ctx.textAlign = 'center'
                 ctx.textBaseline = 'top'
                 ctx.fillStyle = '#94a3b8'
                 ctx.fillText(
-                  node.label.length > 25 ? node.label.slice(0, 25) + '…' : node.label,
+                  gn.label.length > 25 ? gn.label.slice(0, 25) + '…' : gn.label,
                   x,
                   y + size + 2
                 )

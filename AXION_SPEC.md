@@ -598,11 +598,13 @@ This architecture positions AXION as an infrastructure layer for scientific reas
 │   ├── neo4j_queries.py          # Cypher graph queries
 │   ├── migrate_to_neo4j.py       # SQLite to Neo4j migration utility
 │   ├── fix_gap_links.py          # Gap to claim relationship recovery
-│   └── queries.py                # Legacy SQLite queries
+│   └── backup.py                 # Graph backup utility
 ├── embeddings/                   # Vector indexing layer
 │   └── store.py                  # ChromaDB client & vector operations
-├── ui/                           # Legacy Streamlit UI components
-├── tests/                        # Integration & unit test suite
+├── ingestion/                    # ArXiv client, PDF parser, scheduler
+├── eval/                         # Evaluation harness (run_eval.py)
+├── archive/                      # Deprecated SQLite layer (reference only)
+├── tests/                        # Unit + opt-in integration test suite
 ├── config.py                     # Configuration loader (Neo4j, Chroma, Keys)
 ├── llm.py                        # Multi-provider LLM inference API
 ├── main.py                       # CLI entry point

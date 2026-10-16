@@ -117,8 +117,8 @@ class ChangedClaim(BaseModel):
 class YearlyPosition(BaseModel):
     year: int
     position: str
-    confidence: float
-    key_papers: list[str]
+    confidence: float = 0.0
+    key_papers: list[str] = []
 
 
 class TemporalEvolution(BaseModel):
@@ -131,7 +131,7 @@ class TemporalEvolution(BaseModel):
 class Dispute(BaseModel):
     id: str
     topic: str
-    start_year: int
+    start_year: Optional[int] = None
     end_year: Optional[int] = None
     resolved: bool
     resolution: Optional[str] = None

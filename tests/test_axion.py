@@ -1,7 +1,7 @@
 """
-AetherGraph — Full Test Suite
+Axion — Full Test Suite
 ==============================
-Run:  pytest tests/test_aethergraph.py -v
+Run:  pytest tests/test_axion.py -v
 Deps: pytest, pytest-mock  (pip install pytest pytest-mock)
 
 All external I/O (Neo4j, ChromaDB, LLM APIs) is mocked so the suite
@@ -102,6 +102,7 @@ class TestLLM:
         assert result == "answer"
 
     @patch("config.LLM_PROVIDER", "groq")
+    @patch("config.LLM_PROVIDER_CHAIN", ["groq"])
     @patch("llm.time.sleep")
     def test_rate_limit_retry(self, mock_sleep):
         """On rate-limit error, should wait and retry up to `retries` times."""
@@ -114,7 +115,8 @@ class TestLLM:
             importlib.reload(llm_mod)
             with pytest.raises(Exception, match="All LLM providers exhausted"):
                 llm_mod.call_llm("test", retries=2)
-        assert mock_sleep.call_count == 2
+        # retries=2 with a single-provider chain => one back-off sleep
+        assert mock_sleep.call_count == 1
 
     @patch("config.LLM_PROVIDER", "groq")
     def test_non_rate_limit_error_raises_immediately(self):

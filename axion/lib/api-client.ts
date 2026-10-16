@@ -145,7 +145,7 @@ export async function recalculateConfidence(): Promise<{ updated: number }> {
 // Ingestion
 export async function triggerIngestion(secret?: string): Promise<{ status: string }> {
   const headers: Record<string, string> = {}
-  const triggerSecret = secret || process.env.NEXT_PUBLIC_TRIGGER_SECRET || 'super_secret_trigger_key_default_123'
+  const triggerSecret = secret || process.env.NEXT_PUBLIC_TRIGGER_SECRET
   if (triggerSecret) {
     headers['X-Trigger-Secret'] = triggerSecret
   }
@@ -161,7 +161,7 @@ export async function getIngestionStatus(): Promise<IngestionStatus> {
 
 export async function runCustomIngestion(topic: string, limit: number, secret?: string): Promise<{ status: string }> {
   const headers: Record<string, string> = {}
-  const triggerSecret = secret || process.env.NEXT_PUBLIC_TRIGGER_SECRET || 'super_secret_trigger_key_default_123'
+  const triggerSecret = secret || process.env.NEXT_PUBLIC_TRIGGER_SECRET
   if (triggerSecret) {
     headers['X-Trigger-Secret'] = triggerSecret
   }

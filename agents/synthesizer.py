@@ -112,7 +112,7 @@ def synthesize(question: str, context: dict) -> dict:
 
 def format_report(question: str, result: dict, iterations_taken: int) -> str:
     lines = [
-        "# SciMesh Research Report",
+        "# Axion Research Report",
         f"**Question:** {question}",
         f"**Coordinator iterations:** {iterations_taken}",
         f"**Answer confidence:** {result.get('confidence_in_answer', 'unknown')} — {result.get('confidence_reason', '')}",

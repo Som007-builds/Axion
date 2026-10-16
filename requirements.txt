@@ -1,5 +1,5 @@
-# requirements.txt — SciMesh / AetherGraph
-# Updated: Phase 6 (v1.80 Pre-Deployment Polish)
+# requirements.txt — Axion
+# Axion v2.30 — runtime dependencies
 #
 # AUDIT FIX (§4 ⚠️ Missing Dependencies):
 #   Added neo4j, apscheduler, pyvis, plotly — all were imported in

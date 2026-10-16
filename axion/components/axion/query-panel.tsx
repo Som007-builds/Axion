@@ -793,8 +793,8 @@ export function QueryPanel({ externalQuery, onQueryClear, onLoadingChange }: Que
             <ExecutiveSummarySection report={result.report} />
             <ConsensusSection items={raw.consensus} />
             <DisputesSection items={raw.disputed} />
-            <GapsSection items={raw.missing} />
-            <ExperimentsSection items={raw.recommended_experiments} />
+            <GapsSection items={raw.missing ?? []} />
+            <ExperimentsSection items={raw.recommended_experiments ?? []} />
             <SourcesSection sources={result.sources} />
           </div>
         )}

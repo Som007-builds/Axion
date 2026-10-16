@@ -1,0 +1,44 @@
+# .dockerignore — keep the API build context small and free of secrets/data.
+# The API container mounts ./data at runtime instead of baking it in.
+
+# Version control / editor
+.git
+.gitignore
+.github
+.vscode
+.idea
+
+# Secrets — never bake into an image
+.env
+.env.*
+!.env.example
+
+# Python virtualenvs & caches
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Data (large; bind-mounted at runtime) and backups
+data/
+
+# Evaluation corpus (large CSVs) — eval runs on the host, not in the API image
+eval/Data/
+eval/results/
+
+# Docs
+*.md
+!README.md
+
+# Frontend (built by its own Dockerfile)
+axion/
+
+# Misc
+*.log
+.DS_Store
+Thumbs.db

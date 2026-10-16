@@ -1,5 +1,7 @@
 # Environment
 .env
+.env.local
+.env.*.local
 venv/
 .venv/
 
@@ -25,6 +27,7 @@ neo4j/
 # Node
 axion/node_modules/
 axion/.next/
+*.tsbuildinfo
 
 # OS
 .DS_Store

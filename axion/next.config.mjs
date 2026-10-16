@@ -1,8 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
-  },
+  // Emit a self-contained server bundle for the Docker runtime image.
+  output: 'standalone',
   images: {
     unoptimized: true,
   },

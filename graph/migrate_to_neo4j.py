@@ -186,7 +186,7 @@ def verify(conn):
 
 def run():
     print("=" * 60)
-    print("SciMesh — SQLite to Neo4j Migration")
+    print("Axion — SQLite to Neo4j Migration")
     print("=" * 60)
 
     init_neo4j()
@@ -202,7 +202,7 @@ def run():
         conn.close()
 
     print("\nMigration complete.")
-    print("SQLite file preserved at data/db/scimesh.db as backup.")
+    print("SQLite file preserved at data/db/axion.db as backup.")
     print("You can now update config.py to use Neo4j exclusively.")
 
 

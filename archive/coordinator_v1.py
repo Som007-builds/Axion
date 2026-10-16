@@ -107,7 +107,7 @@ def run(research_question: str) -> dict:
 
 def format_report(question: str, result: dict) -> str:
     lines = [
-        f"# SciMesh Report",
+        f"# Axion Report",
         f"**Question:** {question}\n",
         "## What the field agrees on",
     ]

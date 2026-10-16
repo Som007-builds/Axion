@@ -202,9 +202,15 @@ def get_contradictions() -> list[dict]:
                r.explanation AS explanation,
                r.confidence AS confidence,
                a.text AS claim_a,
+               a.section AS claim_a_section,
+               a.confidence AS claim_a_confidence,
                pa.title AS paper_a,
+               pa.arxiv_id AS paper_a_arxiv_id,
                b.text AS claim_b,
+               b.section AS claim_b_section,
+               b.confidence AS claim_b_confidence,
                pb.title AS paper_b,
+               pb.arxiv_id AS paper_b_arxiv_id,
                elementId(a) AS claim_a_id,
                elementId(b) AS claim_b_id
         ORDER BY r.confidence DESC
@@ -275,11 +281,15 @@ def get_gaps() -> list[dict]:
 # ─────────────────────────────────────────────────────────────
 
 def get_graph_stats() -> dict:
+    # COUNT {} subqueries always return a single row — no aggregation pitfalls,
+    # unlike chained `MATCH ... WITH count(...)`, which yields zero rows when any
+    # label/relationship has 0 entries.
     result = run_query("""
-        MATCH (p:Paper) WITH count(p) AS papers
-        MATCH (c:Claim) WITH papers, count(c) AS claims
-        MATCH ()-[r:CONTRADICTS]->() WITH papers, claims, count(r) AS contradictions
-        MATCH (g:Gap) WITH papers, claims, contradictions, count(g) AS gaps
-        RETURN papers, claims, contradictions, gaps
+        RETURN COUNT { MATCH (p:Paper) }               AS papers,
+               COUNT { MATCH (c:Claim) }               AS claims,
+               COUNT { MATCH ()-[:CONTRADICTS]->() }   AS contradictions,
+               COUNT { MATCH (g:Gap) }                 AS gaps
     """)
-    return result[0] if result else {}
+    if result:
+        return result[0]
+    return {"papers": 0, "claims": 0, "contradictions": 0, "gaps": 0}

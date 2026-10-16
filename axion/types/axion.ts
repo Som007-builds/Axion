@@ -1,4 +1,4 @@
-// SciMesh API Types - matching FastAPI response models
+// Axion API Types - matching FastAPI response models
 
 export interface GraphStats {
   papers: number
@@ -59,7 +59,7 @@ export interface Gap {
   text: string
   source: 'semantic' | 'llm_synthesized'
   related_claims: string[]
-  confidence?: number
+  confidence?: number | null
 }
 
 export interface GapsResponse {
@@ -126,7 +126,7 @@ export interface TemporalEvolution {
 export interface Dispute {
   id: string
   topic: string
-  start_year: number
+  start_year: number | null
   end_year: number | null
   resolved: boolean
   resolution?: string

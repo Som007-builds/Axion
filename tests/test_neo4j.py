@@ -9,6 +9,9 @@ from graph.neo4j_client import run_query
 from graph.neo4j_queries import get_all_claims, get_contradictions, get_gaps
 
 
+pytestmark = pytest.mark.integration
+
+
 def test_neo4j_connection():
     result = run_query("RETURN 1 AS n")
     assert result[0]["n"] == 1

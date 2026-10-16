@@ -1,0 +1,10 @@
+# .dockerignore for the frontend build context (axion/)
+node_modules
+.next
+.env.local
+.env*.local
+npm-debug.log*
+pnpm-debug.log*
+.git
+.DS_Store
+tsconfig.tsbuildinfo

@@ -1,0 +1,1800 @@
+ROW 0
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: The bounded update mechanism in SkillOpt results in an average decrease of 15% in edit instability.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt uses bounded edit budgets, minibatch reflection, held-out validation gates, rejected-edit buffers, and epoch-wise slow/meta update
+  distance: 0.3092548847198486
+  same_paper: True
+
+ROW 1
+  A [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: We achieve a speedup of 3.2x in model training time on a 16-node cluster when leveraging the noisy channel framework in conjunction with model parallelism.
+  B [SPACENUM: Revisiting Spatial Numerical Understanding in VLMs]: The training time for our SPACENUM model is reduced by 30% when using a distributed computing framework, allowing for faster experimentation and model development.
+  distance: 0.5163008570671082
+  same_paper: False
+
+ROW 2
+  A [LaMo: Self-Supervised Latent Motion Priors for Physical Realism in Video Generation]: LaMo achieves a 92.1% accuracy in predicting object occlusions in videos, outperforming the state-of-the-art model by 12.5%.
+  B [LaMo: Self-Supervised Latent Motion Priors for Physical Realism in Video Generation]: LaMo improves physical fidelity on VideoPhy by 10% compared to state-of-the-art self-supervised video models.
+  distance: 0.3745885491371155
+  same_paper: True
+
+ROW 3
+  A [Looped Diffusion Language Models]: We show that the Looped Diffusion Language Model is more robust to overfitting, with a 30% reduction in overfitting compared to the baseline.
+  B [Looped Diffusion Language Models]: Our experiments demonstrate that the Looped Diffusion Language Model outperforms the baseline on 8 out of 10 tasks on the SQuAD benchmark.
+  distance: 0.2816917300224304
+  same_paper: True
+
+ROW 4
+  A [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: The Shannon Scaling Law achieves a 30% improvement in model capacity utilization on the Fashion-MNIST dataset.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: Our Shannon Scaling Law reduces overtraining by 22% on the SVHN dataset.
+  distance: 0.3713743686676025
+  same_paper: True
+
+ROW 5
+  A [Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models]: The Gemini-3 model achieves 97% precision and 90% recall for rename labels when operating on the hunk mode.
+  B [Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models]: For move labels, the Sonnet model has a 100% precision and 56% recall when operating on the hunk mode.
+  distance: 0.3287948966026306
+  same_paper: True
+
+ROW 6
+  A [Reinforcing Few-step Generators via Reward-Tilted Distribution Matching]: Our experiments demonstrate that the reward-tilted distribution matching objective converges in an expected 35,000 iterations on a single NVIDIA V100 GPU.
+  B [Looped Diffusion Language Models]: The proposed model reduces the training time by 25% on a V100 GPU compared to the previous state-of-the-art model.
+  distance: 0.4706294536590576
+  same_paper: False
+
+ROW 7
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: The SkillOpt system uses a frontier optimizer model to propose structured add/delete/replace edits for agent skills.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: The SkillOpt system proposes at least 50% more add/delete/replace edits than manual methods under the same textual learning-rate budget.
+  distance: 0.2674409747123718
+  same_paper: True
+
+ROW 8
+  A [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: Our analysis identifies a fundamental Shannon capacity, proving that scaling without maintaining sufficient SNR leads to the performance degradation observed in catastrophic overtraining and quantization.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: Our analysis identifies a fundamental Shannon capacity, proving that scaling without maintaining sufficient SNR leads to the performance degradation observed in catastrophic overtraining and quantization.
+  distance: 1.788139343261719e-07
+  same_paper: True
+
+ROW 9
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: The frontier optimizer model requires no more than 5 iterations to converge on optimal edits in 80% of cases.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: The SkillOpt system uses an additional frontier model as the optimizer to convert trajectories into bounded add/delete/replace skill edits.
+  distance: 0.4334756135940552
+  same_paper: True
+
+ROW 10
+  A [Natural Yet Challenging to Detect: Robust In-the-Wild TTS through EMA and Dual-Scoring Prompt Selection -- Submission for WildSpoof 2026 TTS Track]: The dual-scoring prompt selection approach reduces the WER by 15% on average compared to the baseline model.
+  B [Natural Yet Challenging to Detect: Robust In-the-Wild TTS through EMA and Dual-Scoring Prompt Selection -- Submission for WildSpoof 2026 TTS Track]: Our model achieves competitive WER performance.
+  distance: 0.4746859073638916
+  same_paper: True
+
+ROW 11
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt lifts Claude Code by +19.1 points on average under Codex Code harness.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: On GPT–5.5, SkillOpt lifts the average no-skill accuracy by +19.1 inside Claude Code.
+  distance: 0.2267498970031738
+  same_paper: True
+
+ROW 12
+  A [Squeezing Capacity from Multimodal Large Language Models for Subject-driven Generation]: The layerwise attention pooling approach in the DLA reduces the dimensionality of the text and visual embeddings by 70.2% on average.
+  B [Squeezing Capacity from Multimodal Large Language Models for Subject-driven Generation]: By jointly encoding text and reference images, our Multimodal Large Language Model (MLLM) reduces the average cosine similarity between the generated image embeddings and the reference image embeddings by 22%.
+  distance: 0.499518871307373
+  same_paper: True
+
+ROW 13
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt achieves higher scores than one-shot LLM skills in OfficeQA on the GPT–5.5 and GPT–5.4 models with scores of 72.1% ± 39.0% and 62.8% ± 12.8%, respectively.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: For the GPT–5.5 model, SkillOpt shows an average accuracy increase of 38.9% on SpreadsheetBench compared to no-skill models.
+  distance: 0.2686181664466858
+  same_paper: True
+
+ROW 14
+  A [Understanding hydrodynamical wave-driven shear mixing in stellar radiation zones. Looking in the mirror of the dyapicnal oceanic mixing]: We compare our results to observations and find that the mixing models with a shear layer of 10° reproduce the observed metallicity gradients with 95±2% accuracy.
+  B [Understanding hydrodynamical wave-driven shear mixing in stellar radiation zones. Looking in the mirror of the dyapicnal oceanic mixing]: We demonstrate that the mixing process affects the metallicity of the stellar atmosphere, resulting in a 12.7±2.1% increase in metal abundance.
+  distance: 0.4100981950759887
+  same_paper: True
+
+ROW 15
+  A [GRB 260310A / SN 2026fgk: A Multi-Wavelength Study of a Nearby Underluminous Long GRB and SN with a Complex Afterglow]: Our analysis shows that the spectral energy distribution (SED) of GRB 260310A can be accurately modeled using a broken power-law function with 3σ confidence.
+  B [GRB 260310A / SN 2026fgk: A Multi-Wavelength Study of a Nearby Underluminous Long GRB and SN with a Complex Afterglow]: Our study demonstrates a clear evidence of a 5σ correlation between the GRB 260310A and SN 2026fgk light curves.
+  distance: 0.3871498107910156
+  same_paper: True
+
+ROW 16
+  A [Language Models Need Sleep]: The proposed SSM-attention hybrid model outperforms standard attention-based models on multi-hop graph retrieval.
+  B [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: We employ a parameter-efficient fine-tuning strategy by solely updating the weights of the self-attention layers, keeping all other network components strictly frozen.
+  distance: 0.5861460566520691
+  same_paper: False
+
+ROW 17
+  A [DiscoverPhysics: Benchmarking LLMs for Out-of-the-Box Scientific Thinking]: DiscoverPhysics-based models exhibit an average 21.3% reduction in physics knowledge leakage on out-of-distribution test sets compared to physics-focused models.
+  B [DiscoverPhysics: Benchmarking LLMs for Out-of-the-Box Scientific Thinking]: DiscoverPhysics reduces the average relative difference in physics scores between the top-2 performing language models by 30% compared to previous benchmarks.
+  distance: 0.3685812354087829
+  same_paper: True
+
+ROW 18
+  A [Language Models Need Sleep]: Increasing the size of the model's context results in a proportional increase in the time taken for the sleep mechanism.
+  B [Language Models Need Sleep]: Increasing sleep duration N from the proposed model improves performance by at least 10% on examples that require deeper reasoning.
+  distance: 0.3448107838630676
+  same_paper: True
+
+ROW 19
+  A [SPACENUM: Revisiting Spatial Numerical Understanding in VLMs]: Current VLMs fail to ground numbers in spatial meaning in the SPACENUM benchmark.
+  B [SPACENUM: Revisiting Spatial Numerical Understanding in VLMs]: VLMs often perform close to random guess during NUM2SPACE and SPACE2NUM tasks.
+  distance: 0.3626552820205688
+  same_paper: True
+
+ROW 20
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: GPT–5.5 is lifted by +24.8 points on average over no skill under Codex harness
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: GPT–5.5 is lifted by +23.5 points on average over no skill in direct chat
+  distance: 0.2260825634002685
+  same_paper: True
+
+ROW 21
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: Training SkillOpt with a learning-rate budget of 1000 iterations improves agent task-specific ability by 5%.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt generalizes better than existing methods across models and domains, with a 25% improvement in task-specific skill ability.
+  distance: 0.2998414039611816
+  same_paper: True
+
+ROW 22
+  A [PiD: Fast and High-Resolution Latent Decoding with Pixel Diffusion]: traditional VAE decoders tend to pass through or even amplify artifacts in the generated latents.
+  B [Squeezing Capacity from Multimodal Large Language Models for Subject-driven Generation]: The VAE's fine-grained visual detail capture ability is significantly improved (p-value < 0.001) when combined with the multi-stage denoising framework and two-stage training strategy.
+  distance: 0.5387682914733887
+  same_paper: False
+
+ROW 23
+  A [A new Ising/tricritical-Ising interface: From ${W}_3$ symmetry to Rydberg atoms]: Our results provide sharp experimental predictions for the defect spectrum, including cases with mixed boundary conditions.
+  B [A new Ising/tricritical-Ising interface: From ${W}_3$ symmetry to Rydberg atoms]: The Tricritical Ising-Ising interface is found in the continuum limit by defect/interface conformal field theory (DCFT/ICFT).
+  distance: 0.6704509258270264
+  same_paper: True
+
+ROW 24
+  A [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: Our experiments show that the Shannon Scaling Law generalizes across 9 out of 10 model architectures tested.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: We evaluate the universality of the Shannon Scaling Law on 10 different datasets.
+  distance: 0.2323878407478332
+  same_paper: True
+
+ROW 25
+  A [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: The law predicts performance metrics for models larger than 6.9B parameters and larger than 180B tokens.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: The law predicts the unseen 12B model performance up to 307B tokens.
+  distance: 0.2104765176773071
+  same_paper: True
+
+ROW 26
+  A [DiscoverPhysics: Benchmarking LLMs for Out-of-the-Box Scientific Thinking]: The strongest agents in the DISCOVERPHYSICS benchmark are capable of achieving an average Trajectory MSE of less than 10^-2 on held-out particles.
+  B [LaMo: Self-Supervised Latent Motion Priors for Physical Realism in Video Generation]: our approach is able to capture physically consistent dynamics in 90% of the cases when evaluated on the challenging Physics-100 dataset.
+  distance: 0.5274443626403809
+  same_paper: False
+
+ROW 27
+  A [Understanding hydrodynamical wave-driven shear mixing in stellar radiation zones. Looking in the mirror of the dyapicnal oceanic mixing]: We achieve a mean absolute error (MAE) of 2.95±0.42% in the simulations of turbulent flows using our mixing model.
+  B [LaMo: Self-Supervised Latent Motion Priors for Physical Realism in Video Generation]: we propose an approach that reduces motion drift loss by incorporating macro motion from a physics engine / simulator into the diffusion model.
+  distance: 0.5993468165397644
+  same_paper: False
+
+ROW 28
+  A [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: Our analysis identifies a fundamental Shannon capacity, proving that scaling without maintaining sufficient SNR leads to the performance degradation observed in catastrophic overtraining and quantization.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: The Shannon Scaling Law reduces overtraining by up to 9.2% compared to a baseline model without scaling.
+  distance: 0.3069899082183838
+  same_paper: True
+
+ROW 29
+  A [Natural Yet Challenging to Detect: Robust In-the-Wild TTS through EMA and Dual-Scoring Prompt Selection -- Submission for WildSpoof 2026 TTS Track]: Our model, F5-TTS-DPS, achieves a speaker similarity of 0.51 on the development set.
+  B [Natural Yet Challenging to Detect: Robust In-the-Wild TTS through EMA and Dual-Scoring Prompt Selection -- Submission for WildSpoof 2026 TTS Track]: Our model, F5-TTS-DPS, achieves a UTMOS of 3.20 on the development set.
+  distance: 0.4395119547843933
+  same_paper: True
+
+ROW 30
+  A [Looped Diffusion Language Models]: LoopMDM outperforms same-size MDMs on various reasoning benchmarks, including up to +8.5 points on GSM8K
+  B [Looped Diffusion Language Models]: Increasing the inference-time loop count in LoopMDM consistently improves GSM8K accuracy.
+  distance: 0.2594180703163147
+  same_paper: True
+
+ROW 31
+  A [PiD: Fast and High-Resolution Latent Decoding with Pixel Diffusion]: PiD exhibits a 0.95 correlation with human preferences in perceptual quality and details when evaluated using a closed-source MLLM.
+  B [Squeezing Capacity from Multimodal Large Language Models for Subject-driven Generation]: By conditioning diffusion models on Multimodal Large Language Models (MLLMs), our approach achieves a 20% improvement in human preference scores on subject-driven image generation compared to existing frameworks.
+  distance: 0.4987023472785949
+  same_paper: False
+
+ROW 32
+  A [PiD: Fast and High-Resolution Latent Decoding with Pixel Diffusion]: PiD decodes as fast as 210 ms on a GB200 GPU.
+  B [PiD: Fast and High-Resolution Latent Decoding with Pixel Diffusion]: PiD's fast inference on a GB200 GPU achieves results in as fast as 210 ms
+  distance: 0.1949003934860229
+  same_paper: True
+
+ROW 33
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt reduces the cost of transfer and iteration by 25% compared to manual skill editing methods.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt outperforms existing skill editing methods by 12% on average when using a held-out gate to select edits.
+  distance: 0.2407972812652588
+  same_paper: True
+
+ROW 34
+  A [Natural Yet Challenging to Detect: Robust In-the-Wild TTS through EMA and Dual-Scoring Prompt Selection -- Submission for WildSpoof 2026 TTS Track]: Our model, F5-TTS-DPS, achieves a-DCF scores of 0.1582, 0.5233, and 0.2562 on SASV systems.
+  B [Natural Yet Challenging to Detect: Robust In-the-Wild TTS through EMA and Dual-Scoring Prompt Selection -- Submission for WildSpoof 2026 TTS Track]: Our model, F5-TTS-DPS, achieves a UTMOS of 3.20 on the development set.
+  distance: 0.4350515604019165
+  same_paper: True
+
+ROW 35
+  A [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: We find that the Shannon Scaling Law converges 17.5% faster than the baseline scaling law on the MNIST dataset.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: The Shannon Scaling Law achieves the highest accuracy among all scaling laws on a subset of our experiments
+  distance: 0.2826050519943237
+  same_paper: True
+
+ROW 36
+  A [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: The PSNR score on mesh rendering on RE10K is higher for TriSplat compared to TSDF-fused Gaussian baselines
+  B [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: TriSplat yields cleaner triangle surfaces compared to TSDF-fused Gaussian baselines on RE10K
+  distance: 0.2075349688529968
+  same_paper: True
+
+ROW 37
+  A [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: Our model captures the phenomenon of catastrophic overtraining and quantization with superior fidelity compared to baselines.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: Our model captures catastrophic overtraining and quantization with superior fidelity compared to baselines.
+  distance: 0.0143129825592041
+  same_paper: True
+
+ROW 38
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: The frontier optimizer model used in SkillOpt has a parameter size of 50 million.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: The average model size of SkillOpt is smaller than 5.4-billion parameter GPT model by at least 1.8 billion parameters.
+  distance: 0.2849995493888855
+  same_paper: True
+
+ROW 39
+  A [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: TriSplat outperforms state-of-the-art methods on RealEstate10K and DL3DV by <insert specific margin>.
+  B [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: TriSplat yields the strongest mesh-rendering quality across RealEstate10K, DL3DV, and zero-shot ScanNet.
+  distance: 0.2875189781188965
+  same_paper: True
+
+ROW 40
+  A [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: The 3D estimator in Geo-Align achieves an accuracy of 95% in extracting precise camera trajectories from generated videos.
+  B [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: Geo-Align achieves a 10% improvement over supervised learning baselines in precise camera controllability on real-world video datasets.
+  distance: 0.2767084836959839
+  same_paper: True
+
+ROW 41
+  A [OrpQuant: Geometric Orthogonal Residual Projection for Multiplier-Free Power-of-Two Transformer Quantization]: ORP’s analytical solver offers a practical alternative to computationally intensive gradient-based optimization, reducing the full-model calibration time for LLaMA-2-7B to approximately 15 minutes.
+  B [OrpQuant: Geometric Orthogonal Residual Projection for Multiplier-Free Power-of-Two Transformer Quantization]: ORP’s analytical solver reduces the full-model calibration time for LLaMA-2-7B to approximately 15 minutes.
+  distance: 0.1296924948692321
+  same_paper: True
+
+ROW 42
+  A [MobileGym: A Verifiable and Highly Parallel Simulation Platform for Mobile GUI Agent Research]: The system supports snapshotting and resetting the environment, enabling the creation of a new environment state with specific values such as cart = [6123] and order = {'id': '999', 'status': 'created'}.
+  B [MobileGym: A Verifiable and Highly Parallel Simulation Platform for Mobile GUI Agent Research]: The system can produce a rendered UI for an agent, including app state, system state, and runtime state.
+  distance: 0.7712845206260681
+  same_paper: True
+
+ROW 43
+  A [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: Quantization-induced dynamic fluctuations captured by the noise term in our Shannon Scaling Law (Figure 2) will reduce the effective capacity of LLMs.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: Perturbations such as quantization introduce dynamic fluctuations that reduce the effective capacity of LLMs.
+  distance: 0.1719952821731567
+  same_paper: True
+
+ROW 44
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: The strongest per-cell baseline from human, LLM, Trace2Skill, TextGrad, GEPA, and EvoSkill skills is beaten by SkillOpt with an average margin of +5.4 points.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt beats every per-cell competitor among human, one-shot LLM, Trace2Skill, TextGrad, GEPA, and EvoSkill skills across 52 evaluated cells.
+  distance: 0.1513419151306152
+  same_paper: True
+
+ROW 45
+  A [Squeezing Capacity from Multimodal Large Language Models for Subject-driven Generation]: Early layers of the MLLM (layers 1-4) contribute most to identity preservation, accounting for 55.6% of the total performance.
+  B [Squeezing Capacity from Multimodal Large Language Models for Subject-driven Generation]: The Dual Layer Aggregation mechanism improves subject identity preservation by 15.3% compared to relying solely on the MLLM's final-layer feature.
+  distance: 0.2978094816207886
+  same_paper: True
+
+ROW 46
+  A [SPACENUM: Revisiting Spatial Numerical Understanding in VLMs]: Training with a lower learning rate (0.1x) results in a 0.5% decrease in accuracy on the synthetic data compared to training with a standard learning rate.
+  B [DiscoverPhysics: Benchmarking LLMs for Out-of-the-Box Scientific Thinking]: A DiscoverPhysics model trained on 1000 hours of physics lecture recordings requires 45.2% less data to achieve equivalent performance compared to a model trained on in-domain text data.
+  distance: 0.4683377146720886
+  same_paper: False
+
+ROW 47
+  A [DiscoverPhysics: Benchmarking LLMs for Out-of-the-Box Scientific Thinking]: We will evaluate the generality of scientific theories in our benchmark by checking their applicability to at least 20% of the cases beyond initial observations.
+  B [DiscoverPhysics: Benchmarking LLMs for Out-of-the-Box Scientific Thinking]: There is a strong correlation between predictive accuracy and explanation score on the DISCOVERPHYSICS benchmark.
+  distance: 0.4382290244102478
+  same_paper: True
+
+ROW 48
+  A [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: For all models in our study, the Shannon entropy of the model's representation output on the WikiText103 benchmark is strongly correlated with the model's performance, with a Pearson correlation coefficient of 0.85.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: The Shannon entropy of our LLM model on the WikiText103 benchmark increases by 23.5% when the model capacity is scaled up from 1 billion to 2 billion parameters.
+  distance: 0.2272698283195495
+  same_paper: True
+
+ROW 49
+  A [What to do with a Ricci-flat Calabi--Yau metric?]: The data from numerical Calabi-Yau geometry can be used to determine canonically normalized Yukawa couplings.
+  B [What to do with a Ricci-flat Calabi--Yau metric?]: The propagators on a Calabi–Yau threefold can be computed using the numerically obtained Ricci-flat metric.
+  distance: 0.3558288812637329
+  same_paper: True
+
+ROW 50
+  A [SPACENUM: Revisiting Spatial Numerical Understanding in VLMs]: Our experiments show that fine-tuning our VLM using in-domain data leads to an average F1-score increase of 8.2 on the Spatial Reasoning benchmark compared to pre-training only.
+  B [SPACENUM: Revisiting Spatial Numerical Understanding in VLMs]: Our VLM achieves a 15% average improvement in numerical reasoning tasks over a 12-layer ResNet-50 backbone with a 3x reduction in spatial noise artifacts.
+  distance: 0.4274858236312866
+  same_paper: True
+
+ROW 51
+  A [Language Models (Mostly) Know What They Know]: Language models can produce well-calibrated predictions for token probabilities on-distribution.
+  B [Looped Diffusion Language Models]: We show that the Looped Diffusion Language Model is more robust to overfitting, with a 30% reduction in overfitting compared to the baseline.
+  distance: 0.4721215367317199
+  same_paper: False
+
+ROW 52
+  A [LaMo: Self-Supervised Latent Motion Priors for Physical Realism in Video Generation]: By leveraging pre-trained auxiliary models through knowledge distillation, LaMo achieves a 20% improvement in physical realism on the Pose dataset.
+  B [LaMo: Self-Supervised Latent Motion Priors for Physical Realism in Video Generation]: When fine-tuning on a 1-hour curated physics dataset, LaMo achieves a 12% increase in physical realism metrics compared to the standard video diffusion model without fine-tuning.
+  distance: 0.4832395315170288
+  same_paper: True
+
+ROW 53
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt achieves a bounded update size of 10 edits or less on 90% of the skill edits it proposes.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: The average edit size of SkillOpt is 10 tokens, significantly reducing the risk of introducing errors in skill updates.
+  distance: 0.1874652504920959
+  same_paper: True
+
+ROW 54
+  A [VeriTrace: Evolving Mental Models for Deep Research Agents]: We achieve an average episode length of 200 timesteps, a 20% increase compared to the baseline.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: The average edit duration using SkillOpt is less than 5 minutes on a high-spec GPU cluster.
+  distance: 0.5266328454017639
+  same_paper: False
+
+ROW 55
+  A [OPT: Open Pre-trained Transformer Language Models]: The OPT logbook detailing infrastructure challenges is released alongside the code.
+  B [Prism: A Plug-in Reproducible Infrastructure for Scalable Multimodal Continual Instruction Tuning]: Tab. 1 reveals critical limitations in the quantitative coverage and engineering infrastructure of MCIT toolkits.
+  distance: 0.5634434223175049
+  same_paper: False
+
+ROW 56
+  A [Looped Diffusion Language Models]: Selective looping of early-middle transformer layers yields a depth-scaling effect without adding parameters
+  B [Looped Diffusion Language Models]: Uniform looping results in higher training cost than selectively looping a few early-middle transformer layers.
+  distance: 0.285068929195404
+  same_paper: True
+
+ROW 57
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: Transfer experiments show that optimized skill artifacts can retain at least 80% of their value when moved to a nearby math benchmark without further optimization.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt retains skill artifact value when moved to a nearby math benchmark without further optimization.
+  distance: 0.2504327297210693
+  same_paper: True
+
+ROW 58
+  A [Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models]: Our LLM-based approach can extract semantic attributes such as old/new identifier names for renaming changes.
+  B [Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models]: Our approach achieves up to 84% recall in taxonomy-based labeling of code changes.
+  distance: 0.470073938369751
+  same_paper: True
+
+ROW 59
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: Our method, SkillOpt, achieves an average edit budget of 50 or less to reach task-specific skill improvements.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: The proposed structured add/delete/replace edits used by SkillOpt result in a 9% increase in task-specific ability.
+  distance: 0.2830874919891357
+  same_paper: True
+
+ROW 60
+  A [Looped Diffusion Language Models]: Our experiments show that the Looped Diffusion Model converges at an average training speed of 30 minutes per epoch on a single NVIDIA V100 GPU.
+  B [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: The average training time across 64 NVIDIA A800 GPUs is approximately 2 hours per RL iteration.
+  distance: 0.4318411946296692
+  same_paper: False
+
+ROW 61
+  A [LaMo: Self-Supervised Latent Motion Priors for Physical Realism in Video Generation]: When fine-tuning on a 1-hour curated physics dataset, LaMo achieves a 12% increase in physical realism metrics compared to the standard video diffusion model without fine-tuning.
+  B [LaMo: Self-Supervised Latent Motion Priors for Physical Realism in Video Generation]: Our method, LaMo, outperforms the diffusion denoising loss in terms of physical realism by 12.1% on the Physics-Accuracy metric.
+  distance: 0.2937917113304138
+  same_paper: True
+
+ROW 62
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: Across six benchmarks, SkillOpt improves the held-out validation score by at least 1 point.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: Across six benchmarks, SkillOpt is best or tied on all evaluated cells.
+  distance: 0.2791072726249695
+  same_paper: True
+
+ROW 63
+  A [PiD: Fast and High-Resolution Latent Decoding with Pixel Diffusion]: Our method PiD outperforms the baseline method in edge fidelity, resulting in a 30% reduction in edge ringing and a 20% reduction in edge halos.
+  B [PiD: Fast and High-Resolution Latent Decoding with Pixel Diffusion]: PiD improves visual fidelity over cascaded diffusion-based super-resolution pipelines
+  distance: 0.4768963456153869
+  same_paper: True
+
+ROW 64
+  A [Reinforcing Few-step Generators via Reward-Tilted Distribution Matching]: The RTDMD approach requires 48 groups with a group size of 24 for training in the first stage on SD3-M.
+  B [Reinforcing Few-step Generators via Reward-Tilted Distribution Matching]: On the SD3-M model, the RTDMD approach achieves a CLIP-score of 0.3161.
+  distance: 0.4373264908790588
+  same_paper: True
+
+ROW 65
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: The exact-match accuracy of SkillOpt on held-out test splits across all seven target models from frontier-scale GPT to small Qwen is higher than the median of the baselines.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt achieves higher than 90% exact-match accuracy on held-out test splits across all seven target models from frontier-scale GPT to small Qwen.
+  distance: 0.0348321199417114
+  same_paper: True
+
+ROW 66
+  A [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: Scaling without maintaining sufficient SNR leads to the performance degradation observed in catastrophic overtraining and quantization.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: Classical scaling laws fail to explain non-monotonic phenomena such as catastrophic overtraining and quantization-induced degradation, where performance deteriorates despite increased compute.
+  distance: 0.2451801896095276
+  same_paper: True
+
+ROW 67
+  A [It's the humans, not the data: Geopolitical bias in LLMs originates in post-training, amplified by the language of the prompt]: The French-made Mistral model becomes pro-France only when prompted with French.
+  B [It's the humans, not the data: Geopolitical bias in LLMs originates in post-training, amplified by the language of the prompt]: The direction of geopolitical bias in the pre-trained base model of Alibaba's Qwen 2.5 is neutral on China-favourability with a log-odds of −0.15.
+  distance: 0.7176291942596436
+  same_paper: True
+
+ROW 68
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt reduces the cost of transfer and iteration by 25% compared to manual skill editing methods.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt reduces the cost of skill adaptation by 30% compared to one-shot skills.
+  distance: 0.1929831504821777
+  same_paper: True
+
+ROW 69
+  A [From Raw Experience to Skill Consumption: A Systematic Study of Model-Generated Agent Skills]: Pure-failure pools are consistently the worst, while the optimal mix tends to be domain-dependent.
+  B [From Raw Experience to Skill Consumption: A Systematic Study of Model-Generated Agent Skills]: The optimal success–failure ratio is domain-specific.
+  distance: 0.4804967641830444
+  same_paper: True
+
+ROW 70
+  A [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: The Shannon Scaling Law reveals a fundamental Shannon capacity for LLMs.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: Our new scaling law, the Shannon Scaling Law, defines the LLM's capacity (CLLM) as CLLM = aN α log2 (1 + bDβ / c(DN)γ + dDδ + e).
+  distance: 0.1845539808273315
+  same_paper: True
+
+ROW 71
+  A [InstructSAM: Segment Any Instance with Any Instructions]: Training our framework in two stages for one epoch each results in improved performance on the Inst2Seg benchmark when compared to a single-stage training approach.
+  B [InstructSAM: Segment Any Instance with Any Instructions]: Fine-tuning our framework using an LoRA-based approach with a rank of 256 improves the segmentation performance on the Inst2Seg benchmark by at least 5%.
+  distance: 0.3157631754875183
+  same_paper: True
+
+ROW 72
+  A [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: The model capacity is directly proportional to the ratio of the number of parameters to the number of tokens in the training set.
+  B [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: The proposed model architecture consists of 34 million parameters, resulting in a 25.8% increase in model capacity compared to a previous work
+  distance: 0.3929095268249511
+  same_paper: False
+
+ROW 73
+  A [GRB 260310A / SN 2026fgk: A Multi-Wavelength Study of a Nearby Underluminous Long GRB and SN with a Complex Afterglow]: If GRB 260310A / SN 2026fgk occurred at a typical redshift (z≳0.5), its prompt emission would likely have remained undetected by current γ-ray monitors.
+  B [GRB 260310A / SN 2026fgk: A Multi-Wavelength Study of a Nearby Underluminous Long GRB and SN with a Complex Afterglow]: The radio observations of GRB 260310A demand an additional emission component beyond synchrotron emission from the forward shock.
+  distance: 0.3435479402542114
+  same_paper: True
+
+ROW 74
+  A [From Raw Experience to Skill Consumption: A Systematic Study of Model-Generated Agent Skills]: We find that such skills are beneficial on average but exhibit substantial variance and non-trivial negative transfer.
+  B [From Raw Experience to Skill Consumption: A Systematic Study of Model-Generated Agent Skills]: The utility of model-generated skills is independent of model scale but depends significantly on the target task strength in diverse agentic task domains.
+  distance: 0.4424614906311035
+  same_paper: True
+
+ROW 75
+  A [Squeezing Capacity from Multimodal Large Language Models for Subject-driven Generation]: The VAE's fine-grained visual detail capture ability is significantly improved (p-value < 0.001) when combined with the multi-stage denoising framework and two-stage training strategy.
+  B [PiD: Fast and High-Resolution Latent Decoding with Pixel Diffusion]: We observe a 14.56% reduction in latency for generating 1024x1024 images with PiD compared to VAE decoding.
+  distance: 0.5235362648963928
+  same_paper: False
+
+ROW 76
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt lifts GPT-5.5 by +24.8 points on average under Codex harness.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: On GPT-5.5, SkillOpt lifts the average no-skill accuracy by +24.8 points inside the Codex agentic loop.
+  distance: 0.1930876970291137
+  same_paper: True
+
+ROW 77
+  A [Prism: A Plug-in Reproducible Infrastructure for Scalable Multimodal Continual Instruction Tuning]: A user with prior knowledge of multimodal continual instruction tuning requires less than 5 hours to implement and reproduce the PRISM methods
+  B [Prism: A Plug-in Reproducible Infrastructure for Scalable Multimodal Continual Instruction Tuning]: PRISM achieves a 25% reduction in infrastructure costs for multimodal continual instruction tuning compared to a custom implementation
+  distance: 0.1199656724929809
+  same_paper: True
+
+ROW 78
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt achieves a 4.3% average increase in ALFWorld exact-match accuracy compared to Trace2Skill.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt achieves 80.2% accuracy on ALFWorld with a GPT-5.4-mini model, outperforming no-skill by 4.3%.
+  distance: 0.1861436367034912
+  same_paper: True
+
+ROW 79
+  A [From Model Scaling to System Scaling: Scaling the Harness in Agentic AI]: We observe a 12% improvement in F1 score on the SQuAD 2.0 dataset when using a 6-layer transformer encoder with 256 attention heads.
+  B [Looped Diffusion Language Models]: Our experiments demonstrate that the Looped Diffusion Language Model outperforms the baseline on 8 out of 10 tasks on the SQuAD benchmark.
+  distance: 0.5031651258468628
+  same_paper: False
+
+ROW 80
+  A [LaMo: Self-Supervised Latent Motion Priors for Physical Realism in Video Generation]: The self-supervised training process of LaMo converges to a stable solution in an average of 15 epochs.
+  B [LaMo: Self-Supervised Latent Motion Priors for Physical Realism in Video Generation]: The learned micro motion field component of LaMo has an average inference time of no more than 2 milliseconds.
+  distance: 0.4661239385604858
+  same_paper: True
+
+ROW 81
+  A [OrpQuant: Geometric Orthogonal Residual Projection for Multiplier-Free Power-of-Two Transformer Quantization]: The Angular Gap in PoT creates enough orientation deviation to compromise the semantic integrity of the feature manifold.
+  B [OrpQuant: Geometric Orthogonal Residual Projection for Multiplier-Free Power-of-Two Transformer Quantization]: The ORP framework address the angular degradation associated with a 1-D PoT mapping.
+  distance: 0.4998011589050293
+  same_paper: True
+
+ROW 82
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt repeatedly analyzes successes and failures of the target domain to propose edits.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: The held-out gate in SkillOpt rejects more than 20% of proposed edits in 75% of the tested domains.
+  distance: 0.2966363430023193
+  same_paper: True
+
+ROW 83
+  A [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: On certain tasks, such as math, QA, and code, the Shannon Scaling Law outperforms traditional learning.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: The Shannon Scaling Law consistently outperforms classical scaling laws and recent perturbation-aware laws, achieving strong R2 scores of ≥0.847.
+  distance: 0.302823543548584
+  same_paper: True
+
+ROW 84
+  A [Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models]: Our labeling pipeline can label 500 diff hunks per minute on average with an accuracy of 85% or higher.
+  B [Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models]: The proposed LLM-based framework for labeling diff hunks is more than 20% faster than a baseline approach in terms of execution time.
+  distance: 0.2897992134094238
+  same_paper: True
+
+ROW 85
+  A [Looped Diffusion Language Models]: LoopMDM matches the baseline test NLL with up to 3.3× fewer training FLOPs when selective looping is applied only to a small set of early-middle layers.
+  B [Looped Diffusion Language Models]: LoopMDM reaches the same final NLL as the MDM baseline with 3.34×, 2.95×, and 2.34× fewer training FLOPs on LM1B, OpenWebText, and FineWeb-Edu, respectively.
+  distance: 0.1735820174217224
+  same_paper: True
+
+ROW 86
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt achieves 74.8% accuracy on Codex harness with a GPT-5.2 model, outperforming no-skill by 2.9%.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: On GPT–5.5, SkillOpt lifts the average no-skill accuracy by +24.8 points inside the Codex agentic loop.
+  distance: 0.2222487926483154
+  same_paper: True
+
+ROW 87
+  A [InstructSAM: Segment Any Instance with Any Instructions]: InstructSAM produces multi-instance masks that are both accurate and efficient.
+  B [InstructSAM: Segment Any Instance with Any Instructions]: The 2B-scale InstructSAM produces accurate and efficient multi-instance masks.
+  distance: 0.1136495471000671
+  same_paper: True
+
+ROW 88
+  A [Not all black holes decohere quantum superpositions]: The decoherence rate is suppressed to zero at late times for near-extremal black holes near extremality.
+  B [Not all black holes decohere quantum superpositions]: The spin-induced energy gap is responsible for the decoherence rate vanishing at late times for near-extremal black holes.
+  distance: 0.186305284500122
+  same_paper: True
+
+ROW 89
+  A [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: Monotonic baselines collapse while our model's predictions hold up to 1.7× beyond its fitting range.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: The monotonic baselines collapse when extrapolating to unseen 12B models with ≤307B tokens.
+  distance: 0.2859536409378052
+  same_paper: True
+
+ROW 90
+  A [Prism: A Plug-in Reproducible Infrastructure for Scalable Multimodal Continual Instruction Tuning]: Existing MCIT toolkits lack a unified and decoupled architecture.
+  B [Prism: A Plug-in Reproducible Infrastructure for Scalable Multimodal Continual Instruction Tuning]: PRISM is capable of integrating 5 or more new MCIT strategies as independent plugins
+  distance: 0.3474705815315246
+  same_paper: True
+
+ROW 91
+  A [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: We test our Shannon Scaling Law against 7 different perturbation sources and observe consistent results.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: The Shannon Scaling Law achieves the highest accuracy among all scaling laws on a subset of our experiments
+  distance: 0.2110503911972046
+  same_paper: True
+
+ROW 92
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt achieves higher scores than one-shot LLM skills in OfficeQA on the GPT–5.5 and GPT–5.4 models with scores of 72.1% ± 39.0% and 62.8% ± 12.8%, respectively.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt's performance on OfficeQA is improved by 39.0% compared to one-shot LLM-skill with a GPT-5.4 model.
+  distance: 0.1380016803741455
+  same_paper: True
+
+ROW 93
+  A [Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models]: The structured labeling approach reduces the labeling time by 25% compared to the unstructured approach on the same dataset.
+  B [Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models]: Our approach requires 25% less training data compared to traditional labeling methods for the same level of performance on the Codex-M dataset.
+  distance: 0.3621778488159179
+  same_paper: True
+
+ROW 94
+  A [From Model Scaling to System Scaling: Scaling the Harness in Agentic AI]: Redesigning tool-schema can improve benchmark accuracy substantially even with a fixed backbone model.
+  B [From Model Scaling to System Scaling: Scaling the Harness in Agentic AI]: Careful tool-schema design alone can improve benchmark accuracy substantially even with a fixed backbone model.
+  distance: 0.0736706256866455
+  same_paper: True
+
+ROW 95
+  A [EVIDENT: Routing MLLM Adaptation through Entity-Grounded Visual Evidence for Cross-Domain Video Temporal Grounding]: EVIDENT delivers a +5.5 R1@0.5 and +7.2 R1@0.7 OOD gain over the Qwen2.5-VL baseline on Cha.→QVH.
+  B [EVIDENT: Routing MLLM Adaptation through Entity-Grounded Visual Evidence for Cross-Domain Video Temporal Grounding]: Qwen2.5-VL's OOD R1@0.5 drops by over 23.9 points on Cha.→QVH and over 19.6 points on QVH→Cha compared to its ID performance.
+  distance: 0.2757124900817871
+  same_paper: True
+
+ROW 96
+  A [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: A majority of the meshes exported by TriSplat can be used directly in mainstream physics engines without any modifications.
+  B [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: TriSplat's direct export yields a non-manifold triangle soup adequate for rendering and physics but not for applications requiring watertight meshes.
+  distance: 0.3315938711166382
+  same_paper: True
+
+ROW 97
+  A [Show Your Work: Scratchpads for Intermediate Computation with Language Models]: Our models are able to correctly execute arbitrary programs with a success rate of 85% or higher.
+  B [InstructSAM: Segment Any Instance with Any Instructions]: Our method achieves an average instance-level accuracy of 85% on the complex instructions benchmark.
+  distance: 0.4909794926643371
+  same_paper: False
+
+ROW 98
+  A [Coherent dynamics in chaotic spin chains via interference-protected subspaces]: The authors will explore the implications of weak ergodicity breaking on our understanding of Hilbert space.
+  B [Coherent dynamics in chaotic spin chains via interference-protected subspaces]: Rydberg atom arrays can host periodic revivals, slow relaxation, or localization in initial states due to weak ergodicity breaking.
+  distance: 0.5998843312263489
+  same_paper: True
+
+ROW 99
+  A [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: TriSplat yields cleaner triangle surfaces compared to TSDF-fused Gaussian baselines on RE10K
+  B [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: TriSplat yields cleaner triangle surfaces when compared to TSDF-fused Gaussian baselines on textured mesh comparison on RE10K.
+  distance: 0.0669443607330322
+  same_paper: True
+
+ROW 100
+  A [Language Models Need Sleep]: Increasing the number of recursions, or sleep duration, improves the model’s ability to perform deep sequential computation over evicted context.
+  B [Language Models Need Sleep]: Increasing the size of the model's context results in a proportional increase in the time taken for the sleep mechanism.
+  distance: 0.4379332661628723
+  same_paper: True
+
+ROW 101
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt outperforms one-shot LLM-skill, prompt-optimization (TextGrad, GEPA), and skill-evolution (Trace2Skill, EvoSkill) baselines across Direct chat.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt achieves better or tied performance on all 52 evaluated (model, benchmark, harness) cells compared to human, one-shot LLM, Trace2Skill, TextGrad, GEPA, and EvoSkill skills.
+  distance: 0.2739284634590149
+  same_paper: True
+
+ROW 102
+  A [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: The Chamfer Distance (CD) on the reconstructed surface geometry in RE10K is lower for TriSplat compared to TSDF-fused Gaussian baselines
+  B [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: TriSplat yields cleaner triangle surfaces when compared to TSDF-fused Gaussian baselines on textured mesh comparison on RE10K.
+  distance: 0.2430387735366821
+  same_paper: True
+
+ROW 103
+  A [Show Your Work: Scratchpads for Intermediate Computation with Language Models]: The execution accuracy of large language models on a set of 10 benchmark tasks decreases by 18% when increasing the input size from 100 characters to 500 characters.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: We find that the scaling exponent for model capacity and performance on the WikiText103 benchmark depends on the specific pre-training objective used, and is larger (1.12) when using the 'masked language modeling' objective compared to the 'next sentence prediction' objective (0.85).
+  distance: 0.3987939357757568
+  same_paper: False
+
+ROW 104
+  A [Language Models Need Sleep]: Increasing the number of recursions, or sleep duration, improves the model’s ability to perform deep sequential computation over evicted context.
+  B [Language Models Need Sleep]: The number of offline recurrent passes performed during sleep is fixed at N, where N is a hyperparameter.
+  distance: 0.5009133219718933
+  same_paper: True
+
+ROW 105
+  A [Reinforcing Few-step Generators via Reward-Tilted Distribution Matching]: The proposed Few-step Generators require an average of 3 hours to train on a single NVIDIA V100 GPU.
+  B [Reinforcing Few-step Generators via Reward-Tilted Distribution Matching]: Using a larger batch size of 128, the proposed Few-step Generators achieve a 42.9% reduction in training time compared to the smaller batch size of 64.
+  distance: 0.3577338457107544
+  same_paper: True
+
+ROW 106
+  A [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: The Shannon entropy of our LLM model on the WikiText103 benchmark increases by 23.5% when the model capacity is scaled up from 1 billion to 2 billion parameters.
+  B [Language Models Need Sleep]: The largest model (345M parameters) trained with the proposed method achieves a test perplexity of 17.42 on the WikiText-103 benchmark.
+  distance: 0.400652527809143
+  same_paper: False
+
+ROW 107
+  A [Not all black holes decohere quantum superpositions]: The rate of decoherence induced by a black hole on a qubit is comparable to that of ordinary matter when the qubit sources an electromagnetic field.
+  B [Not all black holes decohere quantum superpositions]: The decoherence rate becomes nonzero for energies above the spin-induced energy gap in the quantum black hole spectrum.
+  distance: 0.29614919424057
+  same_paper: True
+
+ROW 108
+  A [SPACENUM: Revisiting Spatial Numerical Understanding in VLMs]: Asymmetric vision-number mappings are a challenge for VLMs in SPACENUM.
+  B [SPACENUM: Revisiting Spatial Numerical Understanding in VLMs]: Weak spatial abstraction is a contributing factor to VLMs' failure in SPACENUM.
+  distance: 0.3532838821411133
+  same_paper: True
+
+ROW 109
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt beats the strongest per-cell baseline from human, LLM, Trace2Skill, TextGrad, GEPA, and EvoSkill skills by +5.4 points on average.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt beats every per-cell competitor among human, one-shot LLM, Trace2Skill, TextGrad, GEPA, and EvoSkill skills across six benchmarks, seven target models, and three execution harnesses.
+  distance: 0.1401968002319336
+  same_paper: True
+
+ROW 110
+  A [LaMo: Self-Supervised Latent Motion Priors for Physical Realism in Video Generation]: On Fluid–Fluid category, LaMo-2B achieves 67.3 PC, and LaMo-5B reaches 78.2 PC.
+  B [LaMo: Self-Supervised Latent Motion Priors for Physical Realism in Video Generation]: LaMo-5B outperforms CogVideoX-5B on both overall SA/PC axes (73.0/41.0 vs 70.0/32.3).
+  distance: 0.4702540636062622
+  same_paper: True
+
+ROW 111
+  A [MobileGym: A Verifiable and Highly Parallel Simulation Platform for Mobile GUI Agent Research]: Trajectory-length check: successful trajectories on operate tasks have similar lengths in simulation and on device
+  B [MobileGym: A Verifiable and Highly Parallel Simulation Platform for Mobile GUI Agent Research]: We conduct experiments with simulation time ranging from 1 minute to 24 hours to demonstrate the platform's ability to adapt to varying computational resources.
+  distance: 0.5505490303039551
+  same_paper: True
+
+ROW 112
+  A [LaMo: Self-Supervised Latent Motion Priors for Physical Realism in Video Generation]: We achieve a 23.5% reduction in motion drift loss with LaMo compared to the physics-agnostic baseline.
+  B [LaMo: Self-Supervised Latent Motion Priors for Physical Realism in Video Generation]: LaMo uses a macro motion drift as Motion Drift Loss
+  distance: 0.2006341218948364
+  same_paper: True
+
+ROW 113
+  A [Coherent dynamics in chaotic spin chains via interference-protected subspaces]: Our framework can be used to construct parent-Hamiltonian constructions that yield a 20-fold increase in the range of nonthermal phenomena.
+  B [Coherent dynamics in chaotic spin chains via interference-protected subspaces]: Our framework connects the constructions of asymptotic scars, quantum cages, and parent-Hamiltonian in a novel way.
+  distance: 0.5224443674087524
+  same_paper: True
+
+ROW 114
+  A [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: Our experiments demonstrate that model robustness improves by 4.5% when applying the proposed scaling law to adversarial attacks.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: We achieve an average improvement of 3.5% in model performance on ImageNet compared to the state-of-the-art scaling law.
+  distance: 0.5170703530311584
+  same_paper: True
+
+ROW 115
+  A [Not all black holes decohere quantum superpositions]: The decoherence rate for energies above the spin-induced energy gap in the quantum black hole spectrum is nonzero.
+  B [Not all black holes decohere quantum superpositions]: The spin-induced energy gap in the quantum black hole spectrum is responsible for the decoherence rate vanishing at late times.
+  distance: 0.0680450797080993
+  same_paper: True
+
+ROW 116
+  A [DiscoverPhysics: Benchmarking LLMs for Out-of-the-Box Scientific Thinking]: Our implementation achieves a speedup of 1.8x compared to the original TensorFlow implementation on the CIFAR-10 dataset.
+  B [DiscoverPhysics: Benchmarking LLMs for Out-of-the-Box Scientific Thinking]: The proposed method reduces the training time by 30% on a single GPU for the CIFAR-10 dataset.
+  distance: 0.3132939338684082
+  same_paper: True
+
+ROW 117
+  A [Squeezing Capacity from Multimodal Large Language Models for Subject-driven Generation]: Our model achieves the highest score on DreamBench among VAE-based and MLLM-based approaches, as shown in Table 1.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: Our proposed method consistently outperforms the baselines on at least 80% of the 5 model architectures considered.
+  distance: 0.5056232213973999
+  same_paper: False
+
+ROW 118
+  A [Looped Diffusion Language Models]: We observe that the Looped Diffusion Model exhibits better generalization performance (95.3% vs 92.1%) when fine-tuned on smaller datasets.
+  B [Looped Diffusion Language Models]: We show that the Looped Diffusion Language Model is more robust to overfitting, with a 30% reduction in overfitting compared to the baseline.
+  distance: 0.3668137192726135
+  same_paper: True
+
+ROW 119
+  A [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: By using a hybrid data sampling strategy, we can reduce the reliance on time-synchronized multi-view video data by 50% or more compared to existing methods.
+  B [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: Our proposed metric-aware data sampling pipeline results in a 25% increase in robust group-normalized advantages when using a group size of 12 video rollouts per condition.
+  distance: 0.474469780921936
+  same_paper: True
+
+ROW 120
+  A [Not all black holes decohere quantum superpositions]: Near-extremal black holes exhibit large quantum metric fluctuations of the near-horizon geometry at low temperatures.
+  B [Not all black holes decohere quantum superpositions]: Near-extremal black holes exhibit large quantum metric fluctuations of the near-horizon geometry at very low temperatures.
+  distance: 0.0014743208885192
+  same_paper: True
+
+ROW 121
+  A [ETCHR: Editing To Clarify and Harness Reasoning]: With ETCHR, Pass@1 increased from 65.08 to 70.55 (+5.47) with Gemini-3.1-Flash-Lite.
+  B [ETCHR: Editing To Clarify and Harness Reasoning]: ETCHR raises Pass@1 from 76.55 to 81.16 (+4.61) with the 1T-parameter MoE model Kimi K2.5.
+  distance: 0.4046250581741333
+  same_paper: True
+
+ROW 122
+  A [Squeezing Capacity from Multimodal Large Language Models for Subject-driven Generation]: Our method receives more preference from users compared to existing models, as shown by the automatic human-aligned evaluation and user study.
+  B [Natural Yet Challenging to Detect: Robust In-the-Wild TTS through EMA and Dual-Scoring Prompt Selection -- Submission for WildSpoof 2026 TTS Track]: The dual-scoring prompt selection approach reduces the WER by 15% on average compared to the baseline model.
+  distance: 0.4918334484100342
+  same_paper: False
+
+ROW 123
+  A [SPACENUM: Revisiting Spatial Numerical Understanding in VLMs]: The difficulty of layout reasoning grows systematically with spatial complexity and scene scale.
+  B [SPACENUM: Revisiting Spatial Numerical Understanding in VLMs]: In static layouts, models perform relatively well in 1D layouts and desk-scale scenes, but degrade in higher-dimensional and room-scale settings.
+  distance: 0.4734370112419128
+  same_paper: True
+
+ROW 124
+  A [GRB 260310A / SN 2026fgk: A Multi-Wavelength Study of a Nearby Underluminous Long GRB and SN with a Complex Afterglow]: The proposed transfer learning approach reduces the training time by 80% and achieves a similar level of accuracy compared to the standard approach on the GRB 260310A dataset.
+  B [GRB 260310A / SN 2026fgk: A Multi-Wavelength Study of a Nearby Underluminous Long GRB and SN with a Complex Afterglow]: The implementation of the ensemble method on the GRB 260310A dataset results in an average increase of 5% in the predicted values compared to the individual models.
+  distance: 0.4841785430908203
+  same_paper: True
+
+ROW 125
+  A [LaMo: Self-Supervised Latent Motion Priors for Physical Realism in Video Generation]: The VideoPhy-style model-judged metrics used in this paper do not isolate contact, deformation, fluids, conservation, or long-horizon stability.
+  B [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: Geo-Align's synthesized video has a motion flow consistency measure of 0.85, outperforming a state-of-the-art method (FLAME) by 10.2% on the same dataset.
+  distance: 0.5061111450195312
+  same_paper: False
+
+ROW 126
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt achieves a 9.6% average increase in SearchQA hard scores compared to no-skill models.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt improves skill performance by 10% or more in 70% of the targeted domains.
+  distance: 0.2501943111419678
+  same_paper: True
+
+ROW 127
+  A [PiD: Fast and High-Resolution Latent Decoding with Pixel Diffusion]: PiD achieves an average win rate of 62.5% against the baseline method over two rounds of evaluation.
+  B [PiD: Fast and High-Resolution Latent Decoding with Pixel Diffusion]: Our proposed method PiD achieves a higher win rate of 61.2% in perceptual quality and details over the baseline method when evaluated by a closed-source MLLM using a position-bias corrected pairwise comparison.
+  distance: 0.410762071609497
+  same_paper: True
+
+ROW 128
+  A [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: TriSplat's architecture requires explicit normal bootstrapping and validity-aware training to prevent orientation errors.
+  B [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: TriSplat uses an image-conditioned normal head to refine geometry normals and stabilize them with validity-aware masking.
+  distance: 0.3212722539901733
+  same_paper: True
+
+ROW 129
+  A [PiD: Fast and High-Resolution Latent Decoding with Pixel Diffusion]: The raw A/B verdicts are then converted into method-level preferences, i.e., whether the MLLM prefers Ours or Base in each round.
+  B [Prism: A Plug-in Reproducible Infrastructure for Scalable Multimodal Continual Instruction Tuning]: On the MLLM- benchmark, PRISM results in a reduction in model-specific architectures by 70% when compared to standard MLLM implementation methods.
+  distance: 0.585644006729126
+  same_paper: False
+
+ROW 130
+  A [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: Compared to a baseline approach, Geo-Align reduces the training time of novel view synthesis by 32.1% on the same hardware platform with 8 GPUs.
+  B [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: Geo-Align reduces the average runtime of camera-controlled video generation by 30% compared to existing methods.
+  distance: 0.3413171172142029
+  same_paper: True
+
+ROW 131
+  A [Not all black holes decohere quantum superpositions]: Near-extremal black holes exhibit large quantum metric fluctuations of the near-horizon geometry at low temperatures.
+  B [Not all black holes decohere quantum superpositions]: The near-horizon geometry of near-extremal black holes exhibits large quantum metric fluctuations at low temperatures.
+  distance: 0.0055745840072631
+  same_paper: True
+
+ROW 132
+  A [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: Our adoption of a fusion strategy combining real and synthetic data improves visual quality metrics, such as peak signal-to-noise ratio (PSNR), by 12% on average, compared to previous synthetic-only methods.
+  B [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: Our approach consistently enhances visual quality at least 10% over existing baselines.
+  distance: 0.4008994102478027
+  same_paper: True
+
+ROW 133
+  A [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: The Shannon-Hartley Theorem [25] will serve as a theoretical framework for understanding the capacity bounds of LLMs.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: We predict that our proposal of viewing LLMs as noisy communication systems will lead to a better understanding of their capacity bounds and constraints.
+  distance: 0.2732661962509155
+  same_paper: True
+
+ROW 134
+  A [MobileGym: A Verifiable and Highly Parallel Simulation Platform for Mobile GUI Agent Research]: Manual review of all 118 signal-bucket real-device trajectories identifies 12 errors for Qwen3.6-Plus (5/59 base, 7/59 trained)
+  B [ETCHR: Editing To Clarify and Harness Reasoning]: ETCHR raises Pass@1 from 55.95 to 60.77 (+4.82) with Qwen3-VL-8B.
+  distance: 0.5634186267852783
+  same_paper: False
+
+ROW 135
+  A [It's the humans, not the data: Geopolitical bias in LLMs originates in post-training, amplified by the language of the prompt]: The pre-trained base models were often substantially more neutral compared to their post-trained counterparts.
+  B [It's the humans, not the data: Geopolitical bias in LLMs originates in post-training, amplified by the language of the prompt]: We have seven pre-trained base models and seven post-trained chat variants.
+  distance: 0.5010302066802979
+  same_paper: True
+
+ROW 136
+  A [LaMo: Self-Supervised Latent Motion Priors for Physical Realism in Video Generation]: LaMo requires no architectural changes to existing video generators
+  B [LaMo: Self-Supervised Latent Motion Priors for Physical Realism in Video Generation]: LaMo improves CogVideoX backbones on VideoPhy benchmark
+  distance: 0.4272128343582153
+  same_paper: True
+
+ROW 137
+  A [Prism: A Plug-in Reproducible Infrastructure for Scalable Multimodal Continual Instruction Tuning]: The current MCIT research paradigm faces significant engineering challenges.
+  B [Prism: A Plug-in Reproducible Infrastructure for Scalable Multimodal Continual Instruction Tuning]: By using PRISM, researchers can develop and integrate new MCIT strategies without modifying the underlying MLLM codebase in less than one week.
+  distance: 0.3287050127983093
+  same_paper: True
+
+ROW 138
+  A [PiD: Fast and High-Resolution Latent Decoding with Pixel Diffusion]: PiD terminates the latent diffusion process early.
+  B [PiD: Fast and High-Resolution Latent Decoding with Pixel Diffusion]: The use of pixel diffusion decoding in PiD results in a significant reduction in processing time compared to the baseline method.
+  distance: 0.4595521688461303
+  same_paper: True
+
+ROW 139
+  A [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: Removing normal anchoring from TriSplat degrades CD, F1, PSNR, and LPIPS metrics by a comparable margin.
+  B [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: TriSplat achieves a CD metric of 0.190, an F1 metric of 0.708, a PSNR metric of 23.25, and an LPIPS metric of 0.318 on the RE10K dataset with 6 input views.
+  distance: 0.2941657900810241
+  same_paper: True
+
+ROW 140
+  A [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: TriSplat outperforms state-of-the-art methods on RealEstate10K and DL3DV by <insert specific margin>.
+  B [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: The average mesh-rendering quality of TriSplat on RealEstate10K is significantly better than the baselines.
+  distance: 0.2907549738883972
+  same_paper: True
+
+ROW 141
+  A [Not all black holes decohere quantum superpositions]: In the gravitational case, the effective black hole 'viscosity' is high compared to most matter systems.
+  B [Not all black holes decohere quantum superpositions]: Near-extremal black holes exhibit significant modification to their absorption cross-section relative to semiclassical predictions.
+  distance: 0.4969345927238464
+  same_paper: True
+
+ROW 142
+  A [OrpQuant: Geometric Orthogonal Residual Projection for Multiplier-Free Power-of-Two Transformer Quantization]: The ORP accelerator attains a critical path delay of 0.35 ns.
+  B [OrpQuant: Geometric Orthogonal Residual Projection for Multiplier-Free Power-of-Two Transformer Quantization]: The ORP accelerator supports a theoretical maximum clock frequency of approximately 2.85 GHz.
+  distance: 0.4329330921173095
+  same_paper: True
+
+ROW 143
+  A [Not all black holes decohere quantum superpositions]: Quantum gravity effects always enhance the coherence of the superposition for energies above the spin-induced energy gap.
+  B [Not all black holes decohere quantum superpositions]: Quantum black hole spectrum exhibits a spin-induced energy gap.
+  distance: 0.3417506217956543
+  same_paper: True
+
+ROW 144
+  A [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: The Shannon Scaling Law maps model parameters to channel bandwidth and training tokens to signal power.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: Our formulation of the Shannon Scaling Law consistently outperforms classical scaling laws and recent perturbation-aware laws.
+  distance: 0.308639645576477
+  same_paper: True
+
+ROW 145
+  A [From Model Scaling to System Scaling: Scaling the Harness in Agentic AI]: We will operationalize system scaling with harness-level benchmarks that measure trajectory quality with a 20% improvement over one-shot task success.
+  B [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: The specific metric 3D evaluator used in our reward mechanism enables us to explicitly optimize how accurately the generated video follows the target camera trajectory.
+  distance: 0.5127108693122864
+  same_paper: False
+
+ROW 146
+  A [DiscoverPhysics: Benchmarking LLMs for Out-of-the-Box Scientific Thinking]: The average training time for the proposed model is 3 hours and 45 minutes on a single CPU core.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: The average execution time of SkillOpt is 30 seconds when optimizing skills with a batch size of 16.
+  distance: 0.3888784050941467
+  same_paper: False
+
+ROW 147
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: Across all six benchmarks, SkillOpt has a win rate of at least 65% against each of the seven target models using the three execution harnesses.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt, across six benchmarks, seven target models, and three execution harnesses, is best or tied on all 52 evaluated (model, benchmark, harness) cells.
+  distance: 0.154590368270874
+  same_paper: True
+
+ROW 148
+  A [StakeBench: Evaluating Language Understanding Grounded in Market Commitment]: The authors of StakeBench find that a significant number (25%) of Reddit comments linked to investment communities on Polymarket and Manifold are classified as revealing a side (i.e., market commitment detection) using the StakeBench benchmark.
+  B [StakeBench: Evaluating Language Understanding Grounded in Market Commitment]: Using Polymarket and Manifold data, the authors of StakeBench successfully link comments to verified financial positions in 85% of cases.
+  distance: 0.2774301171302795
+  same_paper: True
+
+ROW 149
+  A [Looped Diffusion Language Models]: We find that the Looped Diffusion Language Model achieves a 20% reduction in inference latency on a production-scale dataset compared to the baseline.
+  B [Looped Diffusion Language Models]: We show that the Looped Diffusion Language Model is more robust to overfitting, with a 30% reduction in overfitting compared to the baseline.
+  distance: 0.2611055374145508
+  same_paper: True
+
+ROW 150
+  A [MobileGym: A Verifiable and Highly Parallel Simulation Platform for Mobile GUI Agent Research]: The number of successful trajectories in the High-Risk subset for the Gemini 3.1 Pro model is 17.1%.
+  B [Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models]: Retype labels in the file mode have a precision score of 0.92 for the Gemini-3 model.
+  distance: 0.5117460489273071
+  same_paper: False
+
+ROW 151
+  A [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: Scalings the model size or data without preserving a sufficient SNR inevitably amplifies noise, leading to a transition from monotonic improvement to U-shaped performance degradation.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: Scaling model size or data without preserving a sufficient signal-to-noise ratio (SNR) inevitably amplifies noise, inducing a transition from monotonic improvement to U-shaped performance degradation.
+  distance: 0.0245090723037719
+  same_paper: True
+
+ROW 152
+  A [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: Our model, LLM, achieves a 4.23 BLEU score when trained on 1.5 billion parameters and evaluated on the 100K test set of the widely adopted WikiText103 benchmark.
+  B [Looped Diffusion Language Models]: Our Looped Diffusion Model achieved an average perplexity of 20.5 on the WikiText-103 validation set after 50 epochs of training.
+  distance: 0.4212398529052734
+  same_paper: False
+
+ROW 153
+  A [Prism: A Plug-in Reproducible Infrastructure for Scalable Multimodal Continual Instruction Tuning]: PRISM's architecture is 30% more efficient in terms of model size compared to the state-of-the-art model.
+  B [Prism: A Plug-in Reproducible Infrastructure for Scalable Multimodal Continual Instruction Tuning]: At least 20 researchers can simultaneously use PRISM without noticeable performance degradation.
+  distance: 0.3660374283790588
+  same_paper: True
+
+ROW 154
+  A [From Raw Experience to Skill Consumption: A Systematic Study of Model-Generated Agent Skills]: The meta-skill prior distilled from a validated utility-grounded rubric improves extraction in all evaluated cells.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt is best or tied-best on 52 of 52 evaluated cells across six benchmarks, seven target models, and three execution modes
+  distance: 0.5266056060791016
+  same_paper: False
+
+ROW 155
+  A [Squeezing Capacity from Multimodal Large Language Models for Subject-driven Generation]: Increasing the input token length to 512 from 256 improves the CIDEr score by 6.1 on average.
+  B [DiscoverPhysics: Benchmarking LLMs for Out-of-the-Box Scientific Thinking]: The DiscoverPhysics leaderboard shows that a model with a sequence length of 512 tokens outperforms a model with a sequence length of 256 tokens by 12.3%.
+  distance: 0.6033188104629517
+  same_paper: False
+
+ROW 156
+  A [SPACENUM: Revisiting Spatial Numerical Understanding in VLMs]: Tuning partially improves performance and transfers to related benchmarks.
+  B [InstructSAM: Segment Any Instance with Any Instructions]: Using LoRA with a rank of 256 for parameter-efficient fine-tuning results in a 256-dimensional low-rank approximation.
+  distance: 0.4302851557731628
+  same_paper: False
+
+ROW 157
+  A [Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models]: The proposed structured labeling approach has a 20% reduction in error rate on the CodeChange dataset compared to the unstructured approach.
+  B [Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models]: Using the large language model, we observe a 30% increase in code change labeling accuracy on the CodeChange dataset compared to the baseline model.
+  distance: 0.2651390433311462
+  same_paper: True
+
+ROW 158
+  A [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: Our approach outperforms state-of-the-art models (e.g. Recammaster, Redirector, Trajectorycrafter) in terms of camera control precision, consistency, and visual quality.
+  B [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: Our approach consistently enhances camera control precision, consistency, and visual quality over existing baselines.
+  distance: 0.3555799722671509
+  same_paper: True
+
+ROW 159
+  A [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: Our model generates video sequences of N = 81 frames at a spatial resolution of 480 × 832.
+  B [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: Our model generates video sequences of 81 frames at a spatial resolution of 480 × 832.
+  distance: 0.013877511024475
+  same_paper: True
+
+ROW 160
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: The number of trajectory batches sampled by SkillOpt is capped at 500 per training session.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt achieves a 95% reduction in suboptimal skill edits when using a batch size of 32 compared to a batch size of 1.
+  distance: 0.3855066299438476
+  same_paper: True
+
+ROW 161
+  A [Large Language Models Can Self-Improve]: our model improves from a validation set perplexity of 15.2 to 12.9 over the course of 50 training iterations.
+  B [Language Models Need Sleep]: The largest model (345M parameters) trained with the proposed method achieves a test perplexity of 17.42 on the WikiText-103 benchmark.
+  distance: 0.4301533102989197
+  same_paper: False
+
+ROW 162
+  A [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: Triangle orientation in TriSplat is anchored to predicted local geometry rather than learned as an unconstrained variable
+  B [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: each primitive in TriSplat is instantiated from a canonical triangle template with learned center, scale, and orientation.
+  distance: 0.2519899606704712
+  same_paper: True
+
+ROW 163
+  A [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: We achieve strong R2 scores with the Shannon Scaling Law
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: The Shannon Scaling Law consistently outperforms classical scaling laws and recent perturbation-aware laws, achieving strong R2 scores of ≥0.847.
+  distance: 0.1767547726631164
+  same_paper: True
+
+ROW 164
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: On GPT–5.5, SkillOpt lifts the average no-skill accuracy by +19.1 points inside Claude Code.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: Inside the Claude Code execution environment on GPT-5.5, SkillOpt improves average no-skill accuracy by +19.1 points compared to a baseline without skill.
+  distance: 0.0928560495376586
+  same_paper: True
+
+ROW 165
+  A [Language Models (Mostly) Know What They Know]: We reduce the computational cost of the model by 31.4% using our proposed optimization technique.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: The proposed method achieves a relative model size reduction of 20% without compromising accuracy on the dataset used.
+  distance: 0.3630760908126831
+  same_paper: False
+
+ROW 166
+  A [EVIDENT: Routing MLLM Adaptation through Entity-Grounded Visual Evidence for Cross-Domain Video Temporal Grounding]: Splitting OOD samples by visual similarity to the source domain yields a substantially larger performance gap compared to splitting by query-concept overlap.
+  B [EVIDENT: Routing MLLM Adaptation through Entity-Grounded Visual Evidence for Cross-Domain Video Temporal Grounding]: The Entity Bottleneck Adapter component of EVIDENT reduces the density of visual tokens by at least 50%.
+  distance: 0.5849146246910095
+  same_paper: True
+
+ROW 167
+  A [It's the humans, not the data: Geopolitical bias in LLMs originates in post-training, amplified by the language of the prompt]: The pre-trained base models were often substantially more neutral compared to their post-trained counterparts.
+  B [From Raw Experience to Skill Consumption: A Systematic Study of Model-Generated Agent Skills]: At least 30% of model-generated skills exhibit non-trivial negative transfer, leading to decreased task performance in new contexts.
+  distance: 0.5637324452400208
+  same_paper: False
+
+ROW 168
+  A [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: The feed-forward reconstruction network TriSplat exports simulation-ready mesh scenes with an average quality score of 92.1 on the DL3DV test set.
+  B [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: TriSplat achieves novel-view rendering quality on par with existing Gaussian feed-forward baselines on DL3DV dataset.
+  distance: 0.319151222705841
+  same_paper: True
+
+ROW 169
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: The learned skills from SkillOpt have a higher cost compared to other methods on the GPT–5.5 model in ALFWorld.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: The learned skills of SkillOpt across all models show a trade-off between accuracy and cost.
+  distance: 0.27327960729599
+  same_paper: True
+
+ROW 170
+  A [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: Our approach consistently enhances camera control precision, consistency, and visual quality over existing baselines.
+  B [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: Our approach consistently enhances visual quality at least 10% over existing baselines.
+  distance: 0.2486010193824768
+  same_paper: True
+
+ROW 171
+  A [Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models]: Our LLM-based approach offers reduced formal guarantees compared to traditional static analysis methods.
+  B [Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models]: Our evaluation of four LLMs shows that LLM-based labeling can complement static analysis for code review.
+  distance: 0.3976162075996399
+  same_paper: True
+
+ROW 172
+  A [Show Your Work: Scratchpads for Intermediate Computation with Language Models]: Our models are able to correctly execute arbitrary programs with a success rate of 85% or higher.
+  B [MobileGym: A Verifiable and Highly Parallel Simulation Platform for Mobile GUI Agent Research]: The open-source GUI-specialized model UI-Venus-1.5-8B achieves a success rate of 85.0% on all tasks.
+  distance: 0.518176794052124
+  same_paper: False
+
+ROW 173
+  A [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: Experiments on Pythia and OLMo2 under perturbations, including Gaussian noise, quantization, and supervised fine-tuning on math, QA, and code tasks, validate the Shannon Scaling Law.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: The Shannon Scaling Law consistently outperforms classical scaling laws in experiments on Pythia and OLMo2 models.
+  distance: 0.1849101185798645
+  same_paper: True
+
+ROW 174
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: Across six benchmarks, SkillOpt improves the held-out validation score by at least 1 point.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt performs better than no-skill, human-skill, one-shot LLM-skill, prompt-optimization (TextGrad, GEPA), and skill-evolution (Trace2Skill, EvoSkill) baselines on the SearchQA benchmark, with an absolute improvement of 9.6% (+9.6) on the native hard score.
+  distance: 0.2785483598709106
+  same_paper: True
+
+ROW 175
+  A [MobileGym: A Verifiable and Highly Parallel Simulation Platform for Mobile GUI Agent Research]: The structured state enables full-environment state comparison between an episode's initial and terminal states.
+  B [MobileGym: A Verifiable and Highly Parallel Simulation Platform for Mobile GUI Agent Research]: Deterministic judges inspect environment state to judge task success, providing fine-grained outcome signals.
+  distance: 0.5426303148269653
+  same_paper: True
+
+ROW 176
+  A [What to do with a Ricci-flat Calabi--Yau metric?]: Working examples of “real world”-like theories may allow us to test correlations among parameters in a statistically meaningful way.
+  B [DiscoverPhysics: Benchmarking LLMs for Out-of-the-Box Scientific Thinking]: We will evaluate the generality of scientific theories in our benchmark by checking their applicability to at least 20% of the cases beyond initial observations.
+  distance: 0.4485700130462646
+  same_paper: False
+
+ROW 177
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: GPT–5.5 is lifted by +23.5 points on average over no skill in direct chat
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt lifts GPT-5.5 by +23.5 points on average over no skill in direct chat.
+  distance: 0.094626247882843
+  same_paper: True
+
+ROW 178
+  A [What to do with a Ricci-flat Calabi--Yau metric?]: Working examples of “real world”-like theories may allow us to test correlations among parameters in a statistically meaningful way.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: Our experiments cover a wide range of model sizes (from 1M to 10M parameters) and validate the universality of the Shannon Scaling Law.
+  distance: 0.5828639268875122
+  same_paper: False
+
+ROW 179
+  A [InstructSAM: Segment Any Instance with Any Instructions]: The proposed method supports parallel instance queries with at least 10 simultaneous object queries, reducing the overall processing time by 50%
+  B [InstructSAM: Segment Any Instance with Any Instructions]: The resulting LLM-conditioned queries are projected into SAM3’s detector query space to drive accurate multi-instance segmentation in a single forward pass.
+  distance: 0.4420690536499023
+  same_paper: True
+
+ROW 180
+  A [Large Language Models Can Self-Improve]: the best combination of hyperparameters we find for our model is learning rate 0.002, batch size 64, and early stopping patience of 5.
+  B [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: Using the parameter-efficient fine-tuning strategy, our model achieves a 3.5B parameter reduction compared to fine-tuning the entire model.
+  distance: 0.4878484010696411
+  same_paper: False
+
+ROW 181
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: The held-out gate rejects 30% of the skill edits proposed by SkillOpt due to performance degradation.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt outperforms existing skill editing methods by 12% on average when using a held-out gate to select edits.
+  distance: 0.1728851795196533
+  same_paper: True
+
+ROW 182
+  A [It's the humans, not the data: Geopolitical bias in LLMs originates in post-training, amplified by the language of the prompt]: We examine seven open-weight model pairs from seven labs in three countries.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: The average model size used in these experiments is approximately 10 million parameters.
+  distance: 0.5981823205947876
+  same_paper: False
+
+ROW 183
+  A [StakeBench: Evaluating Language Understanding Grounded in Market Commitment]: Using Polymarket and Manifold data, the authors of StakeBench successfully link comments to verified financial positions in 85% of cases.
+  B [StakeBench: Evaluating Language Understanding Grounded in Market Commitment]: StakeBench is packaged with evaluation code and dataset under CC-BY 4.0.
+  distance: 0.6347165703773499
+  same_paper: True
+
+ROW 184
+  A [Language Models Need Sleep]: Across controlled synthetic tasks and a more realistic mathematical reasoning benchmark, increasing the number of recursions, or sleep duration, improves the model’s performance.
+  B [Language Models Need Sleep]: Increasing sleep duration N from the proposed model improves performance by at least 10% on examples that require deeper reasoning.
+  distance: 0.2830768823623657
+  same_paper: True
+
+ROW 185
+  A [Squeezing Capacity from Multimodal Large Language Models for Subject-driven Generation]: Increasing the input token length to 512 from 256 improves the CIDEr score by 6.1 on average.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: The SkillOpt optimizer achieves a 6.2% average increase in SearchQA hard scores compared to GEPA.
+  distance: 0.6228887438774109
+  same_paper: False
+
+ROW 186
+  A [A new Ising/tricritical-Ising interface: From ${W}_3$ symmetry to Rydberg atoms]: The Tricritical Ising-Ising interface is found in the continuum limit by defect/interface conformal field theory (DCFT/ICFT).
+  B [A new Ising/tricritical-Ising interface: From ${W}_3$ symmetry to Rydberg atoms]: We report on the discovery of a new conformal interface.
+  distance: 0.5715698003768921
+  same_paper: True
+
+ROW 187
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: The average edit direction proposed by SkillOpt has a cosine similarity of 0.8 or higher with the optimal edit direction.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt achieves a 90% success rate in proposing effective edit directions, using a trajectory-derived edit direction method.
+  distance: 0.3052921891212463
+  same_paper: True
+
+ROW 188
+  A [ETCHR: Editing To Clarify and Harness Reasoning]: ETCHR raises average Pass@1 from 65.08 to 70.55 (+5.47) specifically for chart understanding.
+  B [ETCHR: Editing To Clarify and Harness Reasoning]: ETCHR raises average Pass@1 from 55.95 to 60.77 (+4.82) specifically for fine-grained perception.
+  distance: 0.2032076120376587
+  same_paper: True
+
+ROW 189
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt achieves lifts of +24.8/ +19.1 points on average under Codex and Claude Code harnesses, respectively.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: On Claude Code execution environment, SkillOpt lifts average no-skill accuracy by +19.1 points.
+  distance: 0.2154766917228698
+  same_paper: True
+
+ROW 190
+  A [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: TriSplat yields the strongest mesh-rendering quality across RealEstate10K, DL3DV, and zero-shot ScanNet.
+  B [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: TriSplat maintains a novel-view rendering quality that is competitive with state-of-the-art models on the DL3DV dataset.
+  distance: 0.2109589576721191
+  same_paper: True
+
+ROW 191
+  A [GRB 260310A / SN 2026fgk: A Multi-Wavelength Study of a Nearby Underluminous Long GRB and SN with a Complex Afterglow]: We achieve a 90% accuracy in predicting the afterglow peak emission time using our GRB 260310A afterglow model.
+  B [GRB 260310A / SN 2026fgk: A Multi-Wavelength Study of a Nearby Underluminous Long GRB and SN with a Complex Afterglow]: The GRB 260310A afterglow has a shallow decay not expected from canonical afterglow models.
+  distance: 0.3265191912651062
+  same_paper: True
+
+ROW 192
+  A [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: The model is configured to perform inference and RL sampling discretized into T = 25 denoising timesteps.
+  B [Prism: A Plug-in Reproducible Infrastructure for Scalable Multimodal Continual Instruction Tuning]: The plug-in mechanism reduces the model inference time by 20% compared to the original implementation.
+  distance: 0.4930252432823181
+  same_paper: False
+
+ROW 193
+  A [From Model Scaling to System Scaling: Scaling the Harness in Agentic AI]: Once models reach a sufficient capability threshold, many additional gains in long-horizon agent performance increasingly depend on how the system around the model is designed.
+  B [From Model Scaling to System Scaling: Scaling the Harness in Agentic AI]: Practical agent capability arises from the interaction between the foundation model and the harness surrounding it.
+  distance: 0.3910280466079712
+  same_paper: True
+
+ROW 194
+  A [Coherent dynamics in chaotic spin chains via interference-protected subspaces]: The paper will demonstrate the creation of multiple chirally propagating quasiparticles in chaotic systems.
+  B [A new Ising/tricritical-Ising interface: From ${W}_3$ symmetry to Rydberg atoms]: Our analysis discovers a new conformal Tricritical Ising-Ising interface with emergent W3 chiral symmetry.
+  distance: 0.6165630221366882
+  same_paper: False
+
+ROW 195
+  A [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: The Shannon Scaling Law captures the interaction between learning signal and intrinsic noise
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: Our formulation captures the interaction between learning signal and intrinsic noise by mapping model parameters to channel bandwidth and training tokens to signal power.
+  distance: 0.2463512420654297
+  same_paper: True
+
+ROW 196
+  A [Show Your Work: Scratchpads for Intermediate Computation with Language Models]: Standard graph neural networks fail to systematically generalize on simple programs with loops, resulting in an error rate of 70% or higher.
+  B [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: We optimize the network using a constant learning rate of η = 1 × 10−4 for a total of 140 RL iterations.
+  distance: 0.581531286239624
+  same_paper: False
+
+ROW 197
+  A [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: Our proposed approach reduces the scale drift in generated trajectories by 43.1% compared to state-of-the-art methods.
+  B [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: When using real-world conditioning videos and synthetic target camera trajectories from OmniWorld, Geo-Align achieves a 10% reduction in scale drift compared to fine-tuning on synthetic data alone.
+  distance: 0.5146775245666504
+  same_paper: True
+
+ROW 198
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: The learned skills of SkillOpt across all models show a trade-off between accuracy and cost.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt generalizes better than existing methods across models and domains, with a 25% improvement in task-specific skill ability.
+  distance: 0.2481047511100769
+  same_paper: True
+
+ROW 199
+  A [From Raw Experience to Skill Consumption: A Systematic Study of Model-Generated Agent Skills]: A minimum of 50 model-generated skills are needed to achieve consistent skill quality and reduce negative transfer across agentic task domains.
+  B [From Raw Experience to Skill Consumption: A Systematic Study of Model-Generated Agent Skills]: The skill extraction stage accounts for at least 60% of the overall time required to generate domain-level skills.
+  distance: 0.3092826008796692
+  same_paper: True
+
+ROW 200
+  A [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: The Shannon Scaling Law accurately captures loss basins missed by prior approaches.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: The Shannon Scaling Law accurately captures loss basins missed by prior approaches, as shown on Pythia and OLMo2 under perturbations.
+  distance: 0.1469178199768066
+  same_paper: True
+
+ROW 201
+  A [From Model Scaling to System Scaling: Scaling the Harness in Agentic AI]: Our experiments demonstrate a 15% increase in accuracy on the GLUE benchmark when scaling up the model size from 220M to 440M parameters.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: On average, the proposed method requires 30% less computational resources compared to traditional model scaling methods.
+  distance: 0.4932327270507812
+  same_paper: False
+
+ROW 202
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt outperforms or ties with the best model on 52 of 52 evaluated cells across six benchmarks, seven target models, and three execution modes.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt is best or tied-best on 52 of 52 evaluated cells across six benchmarks, seven target models, and three execution modes
+  distance: 0.071884274482727
+  same_paper: True
+
+ROW 203
+  A [InstructSAM: Segment Any Instance with Any Instructions]: InstructSAM translates free-form instructions involving attributes, relations, counting, exclusion, and implicit intent into a set of parallel, learnable instance slots.
+  B [InstructSAM: Segment Any Instance with Any Instructions]: We construct Inst2Seg, a high-quality and large-scale instruction-based instance segmentation dataset, with 2.5 million examples, that couples free-form instructions with instance-level masks.
+  distance: 0.3945454359054565
+  same_paper: True
+
+ROW 204
+  A [Chain-of-Thought Prompting Elicits Reasoning in Large Language Models]: The large language model Fine-Tuned on a dataset of 3 billion parameters demonstrates a 10% increase in reasoning ability compared to a baseline model.
+  B [DiscoverPhysics: Benchmarking LLMs for Out-of-the-Box Scientific Thinking]: The DiscoverPhysics benchmark detects an average 8.9% improvement in scientific reasoning for language models that incorporate inductive reasoning components.
+  distance: 0.3385815024375915
+  same_paper: False
+
+ROW 205
+  A [DiscoverPhysics: Benchmarking LLMs for Out-of-the-Box Scientific Thinking]: We observe a correlation coefficient of 0.85 between the model's performance and the number of training samples on the validation set.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: The number of validation errors per iteration decreases by 40% or more in 85% of the runs.
+  distance: 0.496313214302063
+  same_paper: False
+
+ROW 206
+  A [From Model Scaling to System Scaling: Scaling the Harness in Agentic AI]: Larger context windows do not guarantee effective information access.
+  B [From Model Scaling to System Scaling: Scaling the Harness in Agentic AI]: The context governance component in CheetahClaws2 improves communication fidelity by at least 10% compared to OpenClaw.
+  distance: 0.6595476269721985
+  same_paper: True
+
+ROW 207
+  A [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: Our approach takes 34 minutes to process a 10-second input video on a NVIDIA V100 GPU with a batch size of 16.
+  B [Reinforcing Few-step Generators via Reward-Tilted Distribution Matching]: The proposed Few-step Generators require an average of 3 hours to train on a single NVIDIA V100 GPU.
+  distance: 0.3504899740219116
+  same_paper: False
+
+ROW 208
+  A [Chain-of-Thought Prompting Elicits Reasoning in Large Language Models]: The model size of our Chain-of-Thought prompted large language model is 530M parameters, which is 30% larger than the standard model.
+  B [Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models]: The model size of our largest language model is 1.5 billion parameters, which is 30% larger than the model size of the base model.
+  distance: 0.1050536036491394
+  same_paper: False
+
+ROW 209
+  A [From Model Scaling to System Scaling: Scaling the Harness in Agentic AI]: We do not recommend measuring only one-shot success as a primary metric for agentic AI benchmarks.
+  B [From Model Scaling to System Scaling: Scaling the Harness in Agentic AI]: A field-level analysis of agent benchmarks finds that many results do not separate capability from costs, prompting strategy, and demonstrations, and become non-Pareto-optimal once these factors are controlled.
+  distance: 0.4193068146705627
+  same_paper: True
+
+ROW 210
+  A [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: the refined normals from TriSplat form local tangent frames that orient each triangle.
+  B [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: triangle orientation in TriSplat is anchored to predicted local geometry.
+  distance: 0.3577227592468261
+  same_paper: True
+
+ROW 211
+  A [Squeezing Capacity from Multimodal Large Language Models for Subject-driven Generation]: We adopt InternVL3-8B as the MLLM, with a LoRA rank of 512 for fine-tuning the DiT attention blocks.
+  B [EVIDENT: Routing MLLM Adaptation through Entity-Grounded Visual Evidence for Cross-Domain Video Temporal Grounding]: The performance gain of EVIDENT over the LoRA fine-tuned baseline is observed in the ID and OOD settings.
+  distance: 0.5173320770263672
+  same_paper: False
+
+ROW 212
+  A [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: The Shannon Scaling Law achieves strong R2 scores.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: The Shannon Scaling Law consistently outperforms classical scaling laws and recent perturbation-aware laws, achieving strong R2 scores of ≥0.847.
+  distance: 0.1404206752777099
+  same_paper: True
+
+ROW 213
+  A [What to do with a Ricci-flat Calabi--Yau metric?]: The specific falsifiable claim as a complete sentence: the pointwise curvature invariants on a Calabi–Yau threefold can be computed to a high degree of accuracy using the numerically obtained Ricci-flat metric.
+  B [What to do with a Ricci-flat Calabi--Yau metric?]: The volume of a curve on a Calabi–Yau threefold can be computed to within 10^-3 error using a numerically obtained Ricci-flat metric.
+  distance: 0.2559533715248108
+  same_paper: True
+
+ROW 214
+  A [ETCHR: Editing To Clarify and Harness Reasoning]: The language-side gap, where editors trained as passive instruction-followers cannot map an abstract question to an appropriate visual transformation, exists in off-the-shelf image editors.
+  B [Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models]: Our approach employs few-shot prompting to produce language-agnostic and customizable labels
+  distance: 0.5244969725608826
+  same_paper: False
+
+ROW 215
+  A [Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models]: The structured outputs of our LLM-based framework for labeling diff hunks can be integrated seamlessly into automated review and analysis pipelines, reducing manual effort by at least 30%.
+  B [Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models]: Combining the LLM-based framework for labeling diff hunks with classical static analysis can improve the robustness of automated code review systems by up to 25%.
+  distance: 0.1858417987823486
+  same_paper: True
+
+ROW 216
+  A [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: The 3D metric estimator introduced in Geo-Align achieves an accuracy of 95% in extracting precise camera trajectories from generated videos.
+  B [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: Geo-Align extracts precise camera trajectories from generated videos using a metric 3D estimator.
+  distance: 0.041431188583374
+  same_paper: True
+
+ROW 217
+  A [From Raw Experience to Skill Consumption: A Systematic Study of Model-Generated Agent Skills]: Spread-sheetBench favors more successful trajectories.
+  B [LaMo: Self-Supervised Latent Motion Priors for Physical Realism in Video Generation]: LaMo improves motion-related dimensions on VBench benchmark
+  distance: 0.5389624238014221
+  same_paper: False
+
+ROW 218
+  A [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: RL training of Geo-Align requires on average 15 hours per iteration on a single NVIDIA A100 GPU.
+  B [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: Compared to a baseline approach, Geo-Align reduces the training time of novel view synthesis by 32.1% on the same hardware platform with 8 GPUs.
+  distance: 0.350659430027008
+  same_paper: True
+
+ROW 219
+  A [Prism: A Plug-in Reproducible Infrastructure for Scalable Multimodal Continual Instruction Tuning]: The PRISM model size was reduced by 25.6% using knowledge distillation on the multimodal continual instruction tuning task.
+  B [Prism: A Plug-in Reproducible Infrastructure for Scalable Multimodal Continual Instruction Tuning]: PRISM reduces the code modification required for multimodal continual instruction tuning by more than 50%
+  distance: 0.2176282405853271
+  same_paper: True
+
+ROW 220
+  A [InstructSAM: Segment Any Instance with Any Instructions]: Our InstructSAM framework achieves strong results on complex instruction-driven benchmarks with less than the computational resources needed for prior methods.
+  B [InstructSAM: Segment Any Instance with Any Instructions]: InstructSAM outperforms prior end-to-end models across diverse instruction-driven and referring segmentation benchmarks.
+  distance: 0.3635897636413574
+  same_paper: True
+
+ROW 221
+  A [InstructSAM: Segment Any Instance with Any Instructions]: The number of iterations required for our method to converge on a solution is reduced by 50% compared to the MLLM-based mask-token generation approach.
+  B [EVIDENT: Routing MLLM Adaptation through Entity-Grounded Visual Evidence for Cross-Domain Video Temporal Grounding]: Fine-tuning MLLMs for VTG on domain-shifted data reduces in-domain performance by at least 20%.
+  distance: 0.5378445982933044
+  same_paper: False
+
+ROW 222
+  A [InstructSAM: Segment Any Instance with Any Instructions]: Training our framework for two stages with different data compositions results in a 15% improvement in segmentation accuracy compared to training with a single data composition.
+  B [InstructSAM: Segment Any Instance with Any Instructions]: Our Inst2Seg model outperforms ReasonSeg [15] in instance-level segmentation but may not outperform in semantic-level segmentation.
+  distance: 0.4928716421127319
+  same_paper: True
+
+ROW 223
+  A [PiD: Fast and High-Resolution Latent Decoding with Pixel Diffusion]: At 4K resolution, PiD outperforms VAE decoding by 8.21% in PSNR (Peak Signal-to-Noise Ratio) with an average of 34.17 dB.
+  B [PiD: Fast and High-Resolution Latent Decoding with Pixel Diffusion]: PiD decodes as fast as 210 ms on a GB200 GPU.
+  distance: 0.4206929802894592
+  same_paper: True
+
+ROW 224
+  A [LaMo: Self-Supervised Latent Motion Priors for Physical Realism in Video Generation]: LaMo improves physical fidelity on VideoPhy by 10% compared to a baseline model.
+  B [LaMo: Self-Supervised Latent Motion Priors for Physical Realism in Video Generation]: LaMo improves physical fidelity on VideoPhy by 10% compared to state-of-the-art self-supervised video models.
+  distance: 0.1919552087783813
+  same_paper: True
+
+ROW 225
+  A [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: Normal anchoring fixes orientation: replacing it with an unconstrained quaternion leads to a 5.7% decrease in CD and a 6.1% decrease in PSNR.
+  B [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: The scale-aware perceptual reward mechanism in Geo-Align results in a 15% reduction in rotation and translation deviations.
+  distance: 0.6230260133743286
+  same_paper: False
+
+ROW 226
+  A [Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models]: Our approach can assign taxonomy-based labels to individual diff hunks.
+  B [Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models]: The structured outputs of our LLM-based framework for labeling diff hunks can be integrated seamlessly into automated review and analysis pipelines, reducing manual effort by at least 30%.
+  distance: 0.238865315914154
+  same_paper: True
+
+ROW 227
+  A [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: TriSplat meshes are directly exportable and can be loaded into mainstream physics engines (Unity and NVIDIA Isaac Sim) without any manual cleanup or format conversion.
+  B [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: TriSplat can produce explicit meshes that can be ingested directly by simulation engines such as NVIDIA Isaac Sim, Unity, and Unreal
+  distance: 0.1694979071617126
+  same_paper: True
+
+ROW 228
+  A [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: Our approach represents scenes with oriented triangle primitives and directly exports simulation-ready mesh scenes.
+  B [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: TriSplat's direct export yields a non-manifold triangle soup adequate for rendering and physics but not for applications requiring watertight meshes.
+  distance: 0.4570056796073913
+  same_paper: True
+
+ROW 229
+  A [InstructSAM: Segment Any Instance with Any Instructions]: Our InstructSAM framework achieves strong results on complex instruction-driven benchmarks with 2B-scale models.
+  B [InstructSAM: Segment Any Instance with Any Instructions]: InstructSAM consistently achieves strong performance across diverse instruction-driven and referring segmentation benchmarks.
+  distance: 0.3311519622802734
+  same_paper: True
+
+ROW 230
+  A [Not all black holes decohere quantum superpositions]: The spin-induced energy gap is responsible for the decoherence rate vanishing at late times for near-extremal black holes.
+  B [Not all black holes decohere quantum superpositions]: These quantum gravity effects make the decoherence rate vanish due to a spin-induced energy gap in the quantum black hole spectrum.
+  distance: 0.1134267449378967
+  same_paper: True
+
+ROW 231
+  A [DiscoverPhysics: Benchmarking LLMs for Out-of-the-Box Scientific Thinking]: Claude Opus 4.7 fails to discover the true underlying force law in the oscillator world.
+  B [DiscoverPhysics: Benchmarking LLMs for Out-of-the-Box Scientific Thinking]: Discovered physics worlds will contain at least 70% cases with non-canonical laws.
+  distance: 0.5427870154380798
+  same_paper: True
+
+ROW 232
+  A [Squeezing Capacity from Multimodal Large Language Models for Subject-driven Generation]: We adopt InternVL3-8B as the MLLM, with a LoRA rank of 512 for fine-tuning the DiT attention blocks.
+  B [InstructSAM: Segment Any Instance with Any Instructions]: Our framework, when built on the Qwen3-VL backbone and using a rank of 256 for LORA, achieves an increase in segmentation accuracy of at least 5% compared to the baseline ReasonSeg model.
+  distance: 0.5228233933448792
+  same_paper: False
+
+ROW 233
+  A [Large Language Models Can Self-Improve]: The proposed adversarial training method reduces the average error rate on the CIFAR-10 test set by 12.2% compared to the baseline model.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt can improve validation performance by at least 10% compared to random skill edits.
+  distance: 0.5320582389831543
+  same_paper: False
+
+ROW 234
+  A [Faithful Chain-of-Thought Reasoning]: Faithful CoT achieves new state-of-the-art performance on specific complex reasoning problems.
+  B [Language Models Need Sleep]: Across controlled synthetic tasks and a more realistic mathematical reasoning benchmark, increasing the number of recursions, or sleep duration, improves the model’s performance.
+  distance: 0.4348644614219665
+  same_paper: False
+
+ROW 235
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: The textual learning-rate budget and rejected-edit buffer together stabilize SkillOpt training without increasing inference-time model calls by more than 10%.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt achieves a learning rate of 0.01 in 10 steps for updating skills under a textual learning-rate budget.
+  distance: 0.2668424844741821
+  same_paper: True
+
+ROW 236
+  A [Prism: A Plug-in Reproducible Infrastructure for Scalable Multimodal Continual Instruction Tuning]: the use of PRISM enables code reuse and fair comparison of MCIT strategies by at least 25%
+  B [Prism: A Plug-in Reproducible Infrastructure for Scalable Multimodal Continual Instruction Tuning]: PRISM is more than 2x scalable than the current state-of-the-art MCIT approaches
+  distance: 0.2291814684867859
+  same_paper: True
+
+ROW 237
+  A [Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models]: The move label precision score for the Sonnet model in patch mode is 0.82.
+  B [Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models]: For rename labels, the Sonnet model achieves a precision of 0.92 and a recall of 0.85 when operating on the hunk mode.
+  distance: 0.2929092049598694
+  same_paper: True
+
+ROW 238
+  A [Squeezing Capacity from Multimodal Large Language Models for Subject-driven Generation]: The use of the multi-stage denoising framework yields a 30.5% reduction in mode collapse compared to the baseline model.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: Monotonic baselines collapse when extrapolated to large model sizes
+  distance: 0.522789478302002
+  same_paper: False
+
+ROW 239
+  A [PiD: Fast and High-Resolution Latent Decoding with Pixel Diffusion]: PiD can decode partially denoised latents, which allows for early termination of base latent diffusion while preserving high-fidelity outputs.
+  B [PiD: Fast and High-Resolution Latent Decoding with Pixel Diffusion]: The proposed pixel diffusion decoder can handle partially denoised latents with a PSNR loss of no more than 0.8 dB when compared to the baseline method.
+  distance: 0.3430386185646057
+  same_paper: True
+
+ROW 240
+  A [SPACENUM: Revisiting Spatial Numerical Understanding in VLMs]: When evaluating on the 3D ShapeNet dataset, our model achieves a 1.2% relative improvement in shape classification accuracy compared to a baseline VLN model.
+  B [DiscoverPhysics: Benchmarking LLMs for Out-of-the-Box Scientific Thinking]: Our model achieves an average improvement of 2.1% in F1-score on the MNIST dataset compared to baseline models after fine-tuning.
+  distance: 0.5181690454483032
+  same_paper: False
+
+ROW 241
+  A [ETCHR: Editing To Clarify and Harness Reasoning]: ETCHR raises average Pass@1 from 65.08 to 70.55 (+5.47) specifically for chart understanding.
+  B [ETCHR: Editing To Clarify and Harness Reasoning]: ETCHR raises Pass@1 from 65.08 to 70.55 (+5.47) with Gemini-3.1-Flash-Lite.
+  distance: 0.3388184309005737
+  same_paper: True
+
+ROW 242
+  A [Looped Diffusion Language Models]: Adaptively adjusting the number of loops throughout the sampling process yields additional gains in compute efficiency while maintaining performance
+  B [Looped Diffusion Language Models]: The gains from looping in LoopMDM are consistent with benefits from reusing computation within the diffusion architecture.
+  distance: 0.4375727772712707
+  same_paper: True
+
+ROW 243
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: The performance of SkillOpt on ALFWorld is at least 15.6% higher than its performance on Claude Code harness.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt achieves the highest exact-match accuracy on the ALFWorld benchmark, surpassing all other baselines and achieving an exact-match accuracy of 95.5% (+11.9) on the held-out test split.
+  distance: 0.2496935129165649
+  same_paper: True
+
+ROW 244
+  A [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: End-to-end, TriSplat is the only method that remains well under one second per scene at the smallest input setting.
+  B [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: TriSplat is 33× faster than the fastest Gaussian baseline at 6 views and up to 249× faster than the slowest baseline at 24 views.
+  distance: 0.4168674349784851
+  same_paper: True
+
+ROW 245
+  A [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: Geo-Align achieves a peak signal-to-noise ratio (PSNR) of 34.2 dB on the DTED3 dataset under the same video generation alignment task.
+  B [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: Geo-Align eliminates the reliance on paired data by leveraging real-world conditioning videos and target camera trajectories derived from synthetic data.
+  distance: 0.3709661960601806
+  same_paper: True
+
+ROW 246
+  A [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: Monotonic baselines collapse when extrapolated beyond the fitting range, while our model maintains predictive power.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: Monotonic baselines collapse compared to the Shannon Scaling Law's prediction.
+  distance: 0.3098213672637939
+  same_paper: True
+
+ROW 247
+  A [Looped Diffusion Language Models]: Increasing the inference-time loop count of LoopMDM consistently improves GSM8K accuracy.
+  B [Looped Diffusion Language Models]: LoopMDM achieves better performance than uniform looping at a substantially lower training cost.
+  distance: 0.4071927666664123
+  same_paper: True
+
+ROW 248
+  A [MobileGym: A Verifiable and Highly Parallel Simulation Platform for Mobile GUI Agent Research]: Model Doubao-Seed-2.0-Pro achieves 100.0% success rate on payment.txt tasks in the High-Risk subset.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt outperforms GEPA by 2.4% on LiveMath with a GPT-5.4 model.
+  distance: 0.6400061249732971
+  same_paper: False
+
+ROW 249
+  A [ETCHR: Editing To Clarify and Harness Reasoning]: ETCHR raises average Pass@1 from 65.08 to 70.55 (+5.47) specifically for chart understanding.
+  B [ETCHR: Editing To Clarify and Harness Reasoning]: ETCHR raises average Pass@1 from 55.95 to 60.77 (+4.82) with Qwen3-VL-8B.
+  distance: 0.207330048084259
+  same_paper: True
+
+ROW 250
+  A [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: Our model predicts the unseen 12B model up to 307B tokens with pooled R2=0.847.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: The fitted Shannon Scaling Law model predicts the unseen 12B model up to 307B tokens at pooled R2=0.847.
+  distance: 0.181863784790039
+  same_paper: True
+
+ROW 251
+  A [Looped Diffusion Language Models]: We show that the Looped Diffusion Language Model is more robust to overfitting, with a 30% reduction in overfitting compared to the baseline.
+  B [Looped Diffusion Language Models]: We find that our Looped Diffusion Language Model requires 15% less computational resources than a standard transformer model.
+  distance: 0.274640679359436
+  same_paper: True
+
+ROW 252
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt can perform batch / minibatch training with optimal parameters in less than 12 hours on a high-spec GPU cluster.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: The average training time per iteration of SkillOpt is 30 minutes or less in 80% of the cases.
+  distance: 0.3904072046279907
+  same_paper: True
+
+ROW 253
+  A [PiD: Fast and High-Resolution Latent Decoding with Pixel Diffusion]: PiD decodes as fast as 210 ms on a GB200 GPU.
+  B [PiD: Fast and High-Resolution Latent Decoding with Pixel Diffusion]: PiD decodes latents of 512×512 images into 2048×2048 pixels in under 1 second with 13 GB peak memory on a consumer RTX 5090.
+  distance: 0.2329974770545959
+  same_paper: True
+
+ROW 254
+  A [Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models]: Retype labels in the file mode have a precision score of 0.92 for the Gemini-3 model.
+  B [Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models]: The Sonnet model achieves a higher retype label precision score than the Gemini-3 model when evaluating in the hunk mode.
+  distance: 0.3208110928535461
+  same_paper: True
+
+ROW 255
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: GPT–5.5 is lifted by +19.1 points on average over no skill under Claude Code harness
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt lifts GPT-5.5 by +24.8 points on average under Codex harness.
+  distance: 0.196983516216278
+  same_paper: True
+
+ROW 256
+  A [SPACENUM: Revisiting Spatial Numerical Understanding in VLMs]: Asymmetric vision-number mappings are a challenge for VLMs in SPACENUM.
+  B [SPACENUM: Revisiting Spatial Numerical Understanding in VLMs]: VLMs rely on shallow spatial cues instead of stable spatial reasoning in the SPACENUM benchmark.
+  distance: 0.2901090383529663
+  same_paper: True
+
+ROW 257
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt retains skill artifact value when moved between Codex and Claude Code execution environments.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: The optimized skill artifacts retain value when moved between Codex and Claude Code execution environments.
+  distance: 0.1647970676422119
+  same_paper: True
+
+ROW 258
+  A [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: For all models in our study, the Shannon entropy of the model's representation output on the WikiText103 benchmark is strongly correlated with the model's performance, with a Pearson correlation coefficient of 0.85.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: Our study demonstrates that the relationship between model capacity and performance on the WikiText103 benchmark follows the 'power law' scaling behavior, characterized by a 0.72 exponent.
+  distance: 0.3059634566307068
+  same_paper: True
+
+ROW 259
+  A [Natural Yet Challenging to Detect: Robust In-the-Wild TTS through EMA and Dual-Scoring Prompt Selection -- Submission for WildSpoof 2026 TTS Track]: The dual-scoring prompt selection approach improves the F0 accuracy by 17.9% on average compared to the single-scoring approach.
+  B [Natural Yet Challenging to Detect: Robust In-the-Wild TTS through EMA and Dual-Scoring Prompt Selection -- Submission for WildSpoof 2026 TTS Track]: The dual-scoring prompt selection approach reduces the WER by 15% on average compared to the baseline model.
+  distance: 0.2953701019287109
+  same_paper: True
+
+ROW 260
+  A [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: The Shannon-Hartley Theorem is applied to LLMs, defining their capacity CLLM (Capacity of Large language models) analogous to the Shannon capacity in Figure 2.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: The Shannon-Hartley Theorem offers a theoretical framework for modeling the capacity of LLMs (CLLM).
+  distance: 0.1423996686935424
+  same_paper: True
+
+ROW 261
+  A [Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models]: The current reliance on git diff hunks limits the labeling accuracy by at least 10% compared to a more granular approach.
+  B [Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models]: The accuracy of LLMs for structured labeling of diff hunks is potentially less predictable than traditional static analysis methods.
+  distance: 0.2945820093154907
+  same_paper: True
+
+ROW 262
+  A [DiscoverPhysics: Benchmarking LLMs for Out-of-the-Box Scientific Thinking]: Among eleven frontier models, the strongest agents pass only half of the 22 worlds generated by the N-body simulator.
+  B [Coherent dynamics in chaotic spin chains via interference-protected subspaces]: The experiments will be performed on quantum many-body systems.
+  distance: 0.5958330035209656
+  same_paper: False
+
+ROW 263
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt retains skill artifact value when moved between Codex and Claude Code execution environments.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt retains skill artifact value when moved across model scales.
+  distance: 0.2174060940742492
+  same_paper: True
+
+ROW 264
+  A [Prism: A Plug-in Reproducible Infrastructure for Scalable Multimodal Continual Instruction Tuning]: A user with prior knowledge of multimodal continual instruction tuning requires less than 5 hours to implement and reproduce the PRISM methods
+  B [Prism: A Plug-in Reproducible Infrastructure for Scalable Multimodal Continual Instruction Tuning]: The plug-in architecture of PRISM enables 4.5x faster training times on the multimodal continual instruction tuning task compared to the baseline.
+  distance: 0.1472893953323364
+  same_paper: True
+
+ROW 265
+  A [MobileGym: A Verifiable and Highly Parallel Simulation Platform for Mobile GUI Agent Research]: On a 32-cores machine with 64 GB of RAM, our platform can process 5000 GUI operations in under 5 minutes.
+  B [MobileGym: A Verifiable and Highly Parallel Simulation Platform for Mobile GUI Agent Research]: Our platform successfully parallelizes 85.6% of the GUI operations, reducing the overall computation time by 56.7%.
+  distance: 0.3027256727218628
+  same_paper: True
+
+ROW 266
+  A [PiD: Fast and High-Resolution Latent Decoding with Pixel Diffusion]: DMD2 distills the model, reducing inference to just 4 steps.
+  B [Reinforcing Few-step Generators via Reward-Tilted Distribution Matching]: RTDMD outperforms the strongest prior methods Rdm and GDMD on the SD3-M model by a large margin.
+  distance: 0.5316152572631836
+  same_paper: False
+
+ROW 267
+  A [Large Language Models Can Self-Improve]: we observe a correlation coefficient of 0.7 between the number of training iterations and the final perplexity on the validation set.
+  B [Looped Diffusion Language Models]: Our Looped Diffusion Model achieved an average perplexity of 20.5 on the WikiText-103 validation set after 50 epochs of training.
+  distance: 0.4618924856185913
+  same_paper: False
+
+ROW 268
+  A [What to do with a Ricci-flat Calabi--Yau metric?]: Computing the metric of a heterotic compactification allows for the determination of Kaluza-Klein spectra.
+  B [What to do with a Ricci-flat Calabi--Yau metric?]: The validity of the theory can be measured by pointwise curvature invariants, which can be computed using a Ricci-flat Calabi–Yau metric.
+  distance: 0.5487145185470581
+  same_paper: True
+
+ROW 269
+  A [InstructSAM: Segment Any Instance with Any Instructions]: Training our framework for one epoch is sufficient for model convergence.
+  B [LaMo: Self-Supervised Latent Motion Priors for Physical Realism in Video Generation]: The self-supervised training process of LaMo converges to a stable solution in an average of 15 epochs.
+  distance: 0.5400295257568359
+  same_paper: False
+
+ROW 270
+  A [InstructSAM: Segment Any Instance with Any Instructions]: InstructSAM achieves strong performance on referring segmentation benchmarks.
+  B [InstructSAM: Segment Any Instance with Any Instructions]: InstructSAM consistently achieves strong performance across diverse instruction-driven and referring segmentation benchmarks.
+  distance: 0.116934061050415
+  same_paper: True
+
+ROW 271
+  A [OrpQuant: Geometric Orthogonal Residual Projection for Multiplier-Free Power-of-Two Transformer Quantization]: standard quantization introduces unpredictable and uncorrectable angular deviation (cos θq) that contributes to performance degradation
+  B [OrpQuant: Geometric Orthogonal Residual Projection for Multiplier-Free Power-of-Two Transformer Quantization]: Standard quantization introduces unpredictable and uncorrectable angular deviation.
+  distance: 0.1590323448181152
+  same_paper: True
+
+ROW 272
+  A [InstructSAM: Segment Any Instance with Any Instructions]: Our method outperforms SAM3 in 70% of the cases when the instruction involves complex compositional constraints, such as spatial or relation-based queries, with a p-value < 0.01
+  B [InstructSAM: Segment Any Instance with Any Instructions]: Our InstructSAM framework achieves strong results on complex instruction-driven benchmarks with less than the computational resources needed for prior methods.
+  distance: 0.4313593506813049
+  same_paper: True
+
+ROW 273
+  A [SPACENUM: Revisiting Spatial Numerical Understanding in VLMs]: Explicit reasoning provides only marginal gains in improving spatial numerical understanding.
+  B [SPACENUM: Revisiting Spatial Numerical Understanding in VLMs]: The accuracy of our cognitive map construction in spatial understanding is improved by 30% when using numbers to encode relative spatial relationships, compared to using relative spatial layouts alone.
+  distance: 0.4963941574096679
+  same_paper: True
+
+ROW 274
+  A [OPT: Open Pre-trained Transformer Language Models]: The OPT model weights are fully shared with interested researchers.
+  B [InstructSAM: Segment Any Instance with Any Instructions]: InstructSAM substantially improves over prior end-to-end models across various benchmarks.
+  distance: 0.5449559688568115
+  same_paper: False
+
+ROW 275
+  A [LaMo: Self-Supervised Latent Motion Priors for Physical Realism in Video Generation]: LaMo's computational overhead is reduced to 0.35x compared to using a state-of-the-art autoencoder on a Tesla V100 GPU.
+  B [From Model Scaling to System Scaling: Scaling the Harness in Agentic AI]: The proposed scaling approach achieves a 20% reduction in memory usage for large-scale models with 770M parameters on a Tesla V100 GPU.
+  distance: 0.3750683665275574
+  same_paper: False
+
+ROW 276
+  A [Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models]: Our approach can extract semantic attributes (e.g., old/new identifier names) for renaming changes.
+  B [Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models]: Our approach achieves up to 84% recall in taxonomy-based labeling of code changes.
+  distance: 0.4845174551010132
+  same_paper: True
+
+ROW 277
+  A [It's the humans, not the data: Geopolitical bias in LLMs originates in post-training, amplified by the language of the prompt]: Geopolitical preferences in language models are shaped through alignment and post-training procedures rather than arising solely from pre-training corpora.
+  B [It's the humans, not the data: Geopolitical bias in LLMs originates in post-training, amplified by the language of the prompt]: Prompting language can amplify or reveal latent geopolitical preferences in language models.
+  distance: 0.2750114202499389
+  same_paper: True
+
+ROW 278
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt reduces the cost of transfer and iteration by 25% compared to manual skill editing methods.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: SkillOpt achieves a 25% increase in task-specific skill performance compared to the original skill editing process.
+  distance: 0.1929796934127807
+  same_paper: True
+
+ROW 279
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: The GPT-5.4 model family demonstrates a significant decrease in performance across all benchmarks when the skill-evolution methods (Trace2Skill, EvoSkill) are used compared to the baseline of no-skill or human skill, with an average decline of 11.1%.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: For the GPT–5.5 model, SkillOpt shows an average accuracy increase of 38.9% on SpreadsheetBench compared to no-skill models.
+  distance: 0.3176238536834717
+  same_paper: True
+
+ROW 280
+  A [Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models]: Our approach will perform better on language-specific codebases than on language-agnostic codebases.
+  B [Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models]: Our experiment on the CodeT5 dataset shows a statistically significant improvement of at least 5% in code completion accuracy compared to the baseline model.
+  distance: 0.5287022590637207
+  same_paper: True
+
+ROW 281
+  A [Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models]: Our two-stage pipeline assigns labels to diff hunks with up to 81% precision.
+  B [Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models]: We introduce a two-stage pipeline that assigns labels to diff hunks and refines them to capture structural relationships and semantic attributes
+  distance: 0.2914440631866455
+  same_paper: True
+
+ROW 282
+  A [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: The Metric 3D evaluator rewards mechanism we designed allows the model to optimize camera control for accuracy at an average of 0.95 IoU.
+  B [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: Our model, Geo-Align, achieves a 20% improvement in camera control precision over Recammaster.
+  distance: 0.4046526551246643
+  same_paper: True
+
+ROW 283
+  A [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: Our proposed reinforcement learning framework results in a 10% improvement in geometric consistency on the DAVIS [10] dataset, as compared to ReDirector [2].
+  B [SPACENUM: Revisiting Spatial Numerical Understanding in VLMs]: Our spatial exploration model achieves a 25% higher success rate in navigating the environment when generating numerical actions conditioned on observations, compared to a baseline model that simply outputs fixed actions.
+  distance: 0.5579491257667542
+  same_paper: False
+
+ROW 284
+  A [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: Geo-Align requires 200 hours of training on a NVIDIA Tesla V100 with 16GB of memory to achieve state-of-the-art video-to-video alignment results.
+  B [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: Geo-Align reduces the average runtime of camera-controlled video generation by 30% compared to existing methods.
+  distance: 0.3332827091217041
+  same_paper: True
+
+ROW 285
+  A [LaMo: Self-Supervised Latent Motion Priors for Physical Realism in Video Generation]: LaMo outperforms DALL-E on the COCO captioning benchmark with a relative improvement of 15.6% in BLEU score.
+  B [LaMo: Self-Supervised Latent Motion Priors for Physical Realism in Video Generation]: LaMo achieves a video quality score of 85.2 on the Vimeo-90K dataset, which is 4.1 points higher than the baseline model.
+  distance: 0.5212237238883972
+  same_paper: True
+
+ROW 286
+  A [Not all black holes decohere quantum superpositions]: The decoherence effect can be viewed as illustrating another way in which semiclassical gravity appears to 'know' about its own microstates.
+  B [Not all black holes decohere quantum superpositions]: These quantum gravity effects make the decoherence rate vanish due to a spin-induced energy gap in the quantum black hole spectrum.
+  distance: 0.4681284427642822
+  same_paper: True
+
+ROW 287
+  A [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: The directly exported meshes can be ingested by mainstream physics engines without any post-processing.
+  B [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: TriSplat can produce explicit meshes that can be ingested directly by simulation engines such as NVIDIA Isaac Sim, Unity, and Unreal
+  distance: 0.4618881940841675
+  same_paper: True
+
+ROW 288
+  A [Large Language Models Can Self-Improve]: Using the proposed data pruning technique reduces the model size by 20% with minimal loss in accuracy on the SQuAD benchmark.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: The proposed method achieves a relative model size reduction of 20% without compromising accuracy on the dataset used.
+  distance: 0.400637149810791
+  same_paper: False
+
+ROW 289
+  A [It's the humans, not the data: Geopolitical bias in LLMs originates in post-training, amplified by the language of the prompt]: The effects of geopolitical bias are modulated by linguistic context.
+  B [It's the humans, not the data: Geopolitical bias in LLMs originates in post-training, amplified by the language of the prompt]: The language used to prompt the model can amplify geopolitical biases.
+  distance: 0.2262637615203857
+  same_paper: True
+
+ROW 290
+  A [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: TriSplat outperforms MeshSplat in terms of F1 score on RE10K.
+  B [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: The rendering PSNR score of TriSplat is higher than that of MVSplat, DepthSplat, AnySplat, YoNoSplat, MeshSplat, and SurfelSplat when evaluating on mesh rendering on RE10K.
+  distance: 0.2922412157058716
+  same_paper: True
+
+ROW 291
+  A [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: We achieve more geometry-faithful reconstructions than Gaussian feed-forward baselines on RealEstate10K dataset.
+  B [TriSplat: Simulation-Ready Feed-Forward 3D Scene Reconstruction]: TriSplat achieves novel-view rendering quality on par with existing Gaussian feed-forward baselines on DL3DV dataset.
+  distance: 0.4884610176086426
+  same_paper: True
+
+ROW 292
+  A [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: The GPT-5.4 model family demonstrates a significant decrease in performance across all benchmarks when the skill-evolution methods (Trace2Skill, EvoSkill) are used compared to the baseline of no-skill or human skill, with an average decline of 11.1%.
+  B [SkillOpt: Executive Strategy for Self-Evolving Agent Skills]: On GPT-5.5, SkillOpt increases average no-skill accuracy by +24.8 points inside the Codex agentic loop compared to baseline.
+  distance: 0.3210211992263794
+  same_paper: True
+
+ROW 293
+  A [A new Ising/tricritical-Ising interface: From ${W}_3$ symmetry to Rydberg atoms]: The newly developed technology in [27] allows for the implementation of our conformal interface using a simulator based on Rydberg-atom arrays.
+  B [A new Ising/tricritical-Ising interface: From ${W}_3$ symmetry to Rydberg atoms]: The O'Brien-Fendley formulation is used to study the spectrum of a Hamiltonian in the presence of the newly discovered conformal interface.
+  distance: 0.5757993459701538
+  same_paper: True
+
+ROW 294
+  A [From Raw Experience to Skill Consumption: A Systematic Study of Model-Generated Agent Skills]: Our meta-skill prior outperforms baseline methods in all evaluated cells.
+  B [From Raw Experience to Skill Consumption: A Systematic Study of Model-Generated Agent Skills]: The meta-skill prior distilled from a validated utility-grounded rubric improves extraction in all evaluated cells.
+  distance: 0.2843267917633056
+  same_paper: True
+
+ROW 295
+  A [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: Our approach takes 34 minutes to process a 10-second input video on a NVIDIA V100 GPU with a batch size of 16.
+  B [Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models]: With a model size of 300M parameters, the average inference time per code change is 12 milliseconds on an NVIDIA Tesla V100 GPU.
+  distance: 0.3510165810585022
+  same_paper: False
+
+ROW 296
+  A [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: Fitted on ≤6.9B Pythia models with ≤180B tokens, the Shannon Scaling Law predicts the unseen 12B model up to 307B tokens with a pooled R2=0.847.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: Fitting the Shannon Scaling Law on ≤6.9B Pythia models and ≤180B tokens allows it to predict the unseen 12B model up to 307B tokens with pooled R2=0.847.
+  distance: 0.0221706628799438
+  same_paper: True
+
+ROW 297
+  A [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: Monotonic baselines collapse when extrapolated beyond the fitting range, while our model maintains predictive power.
+  B [LLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws]: Monotonic baselines collapse while our model's predictions hold up to 1.7× beyond its fitting range.
+  distance: 0.1482964158058166
+  same_paper: True
+
+ROW 298
+  A [LaMo: Self-Supervised Latent Motion Priors for Physical Realism in Video Generation]: the proposed approach outperforms existing methods that rely on external simulator and teacher models in terms of video realism and motion coherence.
+  B [Geo-Align: Video Generation Alignment via Metric Geometry Reward]: Existing video-to-video re-rendering methods struggle to accurately adhere to physical scales and camera trajectories with out-of-distribution real-world videos.
+  distance: 0.5612755417823792
+  same_paper: False
+
+ROW 299
+  A [LaMo: Self-Supervised Latent Motion Priors for Physical Realism in Video Generation]: LaMo's generated videos have a 40% lower deviation from ground truth motion compared to videos generated by the standard diffusion model.
+  B [LaMo: Self-Supervised Latent Motion Priors for Physical Realism in Video Generation]: LaMo uses unlabeled video data to improve physical fidelity in modern video diffusion models
+  distance: 0.2686440944671631
+  same_paper: True
+

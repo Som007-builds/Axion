@@ -51,7 +51,12 @@ export default function AxionWorkspace() {
       if (stored) {
         const parsed = JSON.parse(stored)
         if (Array.isArray(parsed)) {
-          setRecentQueries(parsed.map((item: { question?: string }) => item.question).filter(Boolean).slice(0, 10))
+          setRecentQueries(
+            parsed
+              .map((item: { question?: string }) => item.question)
+              .filter((q): q is string => typeof q === 'string')
+              .slice(0, 10)
+          )
         }
       }
     } catch {}

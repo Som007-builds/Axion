@@ -1,6 +1,6 @@
 # main.py
 """
-SciMesh CLI
+Axion CLI
 
 AUDIT FIX (§4 ⚠️ False Positives in test_phase5.py):
   The smoke test scans files for deprecated v1 imports but also flags
@@ -94,7 +94,7 @@ def ingest(query: str, n: int) -> dict:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="SciMesh CLI")
+    parser = argparse.ArgumentParser(description="Axion CLI")
     parser.add_argument(
         "--mode",
         choices=[

@@ -1,6 +1,6 @@
 # api/main.py
 """
-SciMesh FastAPI backend.
+Axion FastAPI backend.
 Wraps all existing Python functions as HTTP endpoints.
 Run with: uvicorn api.main:app --reload --port 8000
 """
@@ -12,6 +12,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
 import json
+import secrets
 import config
 
 # Initialize logging configuration using LOG_LEVEL
@@ -36,7 +37,7 @@ from api.models import (
 
 limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])
 app = FastAPI(
-    title="SciMesh API",
+    title="Axion API",
     description="Multi-agent AI research knowledge graph",
     version="1.70"
 )
@@ -46,9 +47,10 @@ app.add_middleware(SlowAPIMiddleware)
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
+    logger.exception("Unhandled error on %s %s", request.method, request.url.path)
     return JSONResponse(
         status_code=500,
-        content={"error": "Internal server error", "detail": str(exc)}
+        content={"error": "Internal server error"}
     )
 
 # Allow Next.js (3000) or React (5173) dev server to call the API
@@ -59,6 +61,23 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+def require_trigger_secret(x_trigger_secret: Optional[str]) -> None:
+    """
+    Validate the ingestion trigger secret.
+
+    Fail-closed: if TRIGGER_SECRET is not configured on the server, ingestion
+    triggers are disabled entirely rather than left open to anonymous callers.
+    """
+    expected = config.TRIGGER_SECRET
+    if not expected:
+        raise HTTPException(
+            status_code=503,
+            detail="Ingestion triggers are disabled: TRIGGER_SECRET is not configured on the server.",
+        )
+    if not x_trigger_secret or not secrets.compare_digest(x_trigger_secret, expected):
+        raise HTTPException(status_code=401, detail="Invalid trigger secret")
 
 
 def format_experiment_for_frontend(exp_dict: dict) -> dict:
@@ -215,16 +234,16 @@ def get_contradictions(min_confidence: float = 0.0, limit: int = 50):
             "claim_a": {
                 "id": str(c.get("claim_a_id", "")),
                 "text": c.get("claim_a", ""),
-                "section": "Unknown",
-                "confidence": c.get("confidence", 0.0),
-                "arxiv_id": ""
+                "section": c.get("claim_a_section") or "Unknown",
+                "confidence": c.get("claim_a_confidence", 0.0) or 0.0,
+                "arxiv_id": c.get("paper_a_arxiv_id") or ""
             },
             "claim_b": {
                 "id": str(c.get("claim_b_id", "")),
                 "text": c.get("claim_b", ""),
-                "section": "Unknown",
-                "confidence": c.get("confidence", 0.0),
-                "arxiv_id": ""
+                "section": c.get("claim_b_section") or "Unknown",
+                "confidence": c.get("claim_b_confidence", 0.0) or 0.0,
+                "arxiv_id": c.get("paper_b_arxiv_id") or ""
             },
             "paper_a": c.get("paper_a", ""),
             "paper_b": c.get("paper_b", ""),
@@ -286,7 +305,7 @@ def get_gaps(source: Optional[str] = None):
             "text": g.get("text", ""),
             "source": g.get("source", "llm_synthesized"),
             "related_claims": [str(cid) for cid in g.get("related_claims", [])],
-            "confidence": 0.8  # dummy fallback
+            "confidence": g.get("confidence")
         })
         
     return {"total": len(formatted), "gaps": formatted}
@@ -366,16 +385,28 @@ def get_evolution(
 ):
     from agents.temporal import get_consensus_evolution
     res = get_consensus_evolution(topic, year_start, year_end)
-    
+
+    overall_confidence = res.get("confidence")
     yearly_positions = []
-    for pos in res.get("yearly_positions", []):
+    for pos in res.get("yearly_positions", []) or []:
+        if not isinstance(pos, dict):
+            continue
+        try:
+            year = int(pos.get("year"))
+        except (TypeError, ValueError):
+            continue  # skip positions without a usable year rather than inventing one
+
+        conf = pos.get("confidence", overall_confidence)
+        if not isinstance(conf, (int, float)):
+            conf = 0.0
+
         yearly_positions.append({
-            "year": int(pos.get("year", 2020)),
+            "year": year,
             "position": pos.get("position", ""),
-            "confidence": pos.get("confidence", 0.8),
-            "key_papers": pos.get("key_claim_arxiv_ids", [])
+            "confidence": float(conf),
+            "key_papers": pos.get("key_claim_arxiv_ids", []) or []
         })
-        
+
     return {
         "topic": topic,
         "yearly_positions": yearly_positions,
@@ -388,18 +419,36 @@ def get_evolution(
 def get_disputes(topic: str):
     from agents.temporal import get_contradiction_timeline
     res = get_contradiction_timeline(topic)
-    
+
+    claim_text_by_id = res.get("claim_text_by_id", {}) or {}
     disputes = []
-    for d in res.get("disputes", []):
+    for i, d in enumerate(res.get("disputes", []) or []):
+        if not isinstance(d, dict):
+            continue
+
+        status = str(d.get("status", "")).lower()
+        first = d.get("first_appeared")
+        resolution_year = d.get("resolution_year")
+
+        raw_ids = d.get("related_claim_ids") or []
+        key_claims = []
+        for cid in raw_ids:
+            cid = str(cid)
+            text = claim_text_by_id.get(cid) or cid
+            if isinstance(text, str) and len(text) > 90:
+                text = text[:87].rstrip() + "..."
+            key_claims.append(text)
+
         disputes.append({
-            "id": str(d.get("id", "")),
-            "topic": d.get("explanation", ""),
-            "start_year": d.get("year_a", 2022),
-            "end_year": d.get("year_b"),
-            "resolved": False,
-            "key_claims": [d.get("claim_a", ""), d.get("claim_b", "")]
+            "id": str(d.get("id") or f"dispute-{i + 1}"),
+            "topic": d.get("description") or d.get("explanation") or "Unspecified dispute",
+            "start_year": int(first) if isinstance(first, (int, float)) else None,
+            "end_year": int(resolution_year) if isinstance(resolution_year, (int, float)) else None,
+            "resolved": status == "resolved",
+            "resolution": d.get("resolution"),
+            "key_claims": key_claims
         })
-        
+
     return {
         "topic": topic,
         "disputes": disputes
@@ -455,21 +504,25 @@ def recalculate_confidence(request: Request):
 
 @app.get("/api/ingestion/status", response_model=IngestionSummary)
 def ingestion_status():
-    from ingestion.scheduler import get_run_log
+    from ingestion.scheduler import get_run_log, is_running
+    from ingestion.progress import progress_tracker
+
+    running = is_running() or progress_tracker.get_progress().get("running", False)
+
     log = get_run_log()
     if not log:
         return {
             "new_papers": 0,
             "new_claims": 0,
             "last_run": None,
-            "running": False
+            "running": running
         }
     last = log[-1]
     return {
         "new_papers": last.get("papers_added", 0),
         "new_claims": last.get("claims_added", 0),
         "last_run": last.get("timestamp"),
-        "running": False
+        "running": running
     }
 
 
@@ -477,10 +530,7 @@ def ingestion_status():
 @limiter.limit("2/minute")
 def trigger_ingestion(background_tasks: BackgroundTasks, request: Request, x_trigger_secret: Optional[str] = Header(None)):
     """Trigger an ingestion cycle in the background."""
-    import os
-    expected_secret = os.getenv("TRIGGER_SECRET", "super_secret_trigger_key_default_123")
-    if expected_secret and x_trigger_secret != expected_secret:
-        raise HTTPException(status_code=401, detail="Invalid trigger secret")
+    require_trigger_secret(x_trigger_secret)
 
     from ingestion.scheduler import trigger_now
     background_tasks.add_task(trigger_now)
@@ -496,13 +546,11 @@ def trigger_custom_ingestion(
     x_trigger_secret: Optional[str] = Header(None)
 ):
     """Trigger a custom ingestion cycle with a specific topic and paper count limit."""
-    import os
-    expected_secret = os.getenv("TRIGGER_SECRET", "super_secret_trigger_key_default_123")
-    if expected_secret and x_trigger_secret != expected_secret:
-        raise HTTPException(status_code=401, detail="Invalid trigger secret")
+    require_trigger_secret(x_trigger_secret)
 
     from ingestion.progress import progress_tracker
-    if progress_tracker.get_progress()["running"]:
+    from ingestion.scheduler import is_running
+    if is_running() or progress_tracker.get_progress()["running"]:
         raise HTTPException(status_code=409, detail="An ingestion pipeline is already running")
 
     topic = body.get("topic", "").strip()
@@ -539,13 +587,13 @@ def get_graph_data(limit_claims: int = 100):
     edges = []
 
     # Papers
-    papers = run_query("MATCH (p:Paper) RETURN p.arxiv_id AS id, p.title AS title LIMIT 50")
+    papers = run_query("MATCH (p:Paper) RETURN p.arxiv_id AS id, p.title AS title, p.year AS year LIMIT 50")
     for p in papers:
         nodes.append({
             "id": f"paper_{p['id']}",
             "label": p["title"][:30] if p["title"] else p["id"],
             "type": "paper",
-            "year": 2024  # dummy
+            "year": p.get("year")
         })
 
     # Claims
@@ -602,7 +650,11 @@ def get_graph_data(limit_claims: int = 100):
 
 @app.on_event("startup")
 async def startup_checks():
-    logger.info("Running SciMesh backend startup checks...")
+    logger.info("Running Axion backend startup checks...")
+
+    # Dependencies are optional at boot: the API must start even when Neo4j or
+    # ChromaDB are down so it can report a degraded status via /api/health.
+    # Individual data endpoints will surface their own errors.
 
     # 1. Test Neo4j connection
     try:
@@ -610,8 +662,7 @@ async def startup_checks():
         run_query("RETURN 1")
         logger.info("Neo4j database connection verified.")
     except Exception as e:
-        logger.error(f"FATAL: Neo4j database is unreachable: {e}")
-        raise RuntimeError(f"Neo4j database is unreachable: {e}")
+        logger.warning(f"Neo4j is unreachable at startup (API will run degraded): {e}")
 
     # 2. Test ChromaDB connection
     try:
@@ -619,24 +670,57 @@ async def startup_checks():
         collection_stats()
         logger.info("ChromaDB vector database connection verified.")
     except Exception as e:
-        logger.error(f"FATAL: ChromaDB database is unreachable: {e}")
-        raise RuntimeError(f"ChromaDB database is unreachable: {e}")
+        logger.warning(f"ChromaDB is unreachable at startup (API will run degraded): {e}")
 
-    # 3. Log claim count and Groq model name on startup
+    # 3. Log claim count and model name on startup (best-effort)
     try:
         from graph.neo4j_queries import get_graph_stats
         stats = get_graph_stats()
         claims_count = stats.get("claims", 0)
-        
+
         # Groq model name from config
         groq_model = config.GROQ_MODEL
-        logger.info(f"SciMesh startup complete: {claims_count} claims loaded in Neo4j.")
+        logger.info(f"Axion startup complete: {claims_count} claims loaded in Neo4j.")
         logger.info(f"Active Groq LLM model configured: {groq_model}")
     except Exception as e:
         logger.warning(f"Failed to log database stats on startup: {e}")
 
+    # 4. Optionally start the in-process ingestion scheduler
+    if config.SCHEDULER_ENABLED:
+        try:
+            from ingestion.scheduler import start_scheduler
+            start_scheduler()
+            logger.warning(
+                "Ingestion scheduler started in the API process. This requires a "
+                "single worker (uvicorn --workers 1); multiple workers would run "
+                "duplicate ingestion cycles."
+            )
+        except Exception as e:
+            logger.error(f"Failed to start ingestion scheduler: {e}")
+
+
+@app.on_event("shutdown")
+async def shutdown_scheduler():
+    if config.SCHEDULER_ENABLED:
+        try:
+            from ingestion.scheduler import stop_scheduler
+            stop_scheduler()
+        except Exception as e:
+            logger.warning(f"Failed to stop ingestion scheduler cleanly: {e}")
+
 
 # ─── Health ───────────────────────────────────────────────────────────────────
+
+@app.get("/healthz")
+def healthz():
+    """
+    Liveness probe: process is up and serving. Always 200.
+
+    Deliberately does NOT check Neo4j/ChromaDB — a datastore outage is a
+    readiness problem (see /api/health), not a reason to restart the container.
+    """
+    return {"status": "ok"}
+
 
 @app.get("/api/health")
 def health():
@@ -653,7 +737,8 @@ def health():
         claims_count = stats.get("claims", 0)
     except Exception as e:
         neo4j_status = "disconnected"
-        errors.append(f"Neo4j unreachable: {e}")
+        logger.warning(f"Health check: Neo4j unreachable: {e}")
+        errors.append("Neo4j unreachable")
 
     # 2. Test ChromaDB
     try:
@@ -661,7 +746,8 @@ def health():
         collection_stats()
     except Exception as e:
         chromadb_status = "disconnected"
-        errors.append(f"ChromaDB unreachable: {e}")
+        logger.warning(f"Health check: ChromaDB unreachable: {e}")
+        errors.append("ChromaDB unreachable")
 
     if neo4j_status == "disconnected" or chromadb_status == "disconnected":
         return JSONResponse(
@@ -697,7 +783,8 @@ def get_metrics():
         from utils.metrics import metrics
         summary = metrics.get_summary()
     except Exception as e:
-        summary = {"error": str(e)}
+        logger.warning(f"Failed to collect metrics: {e}")
+        summary = {"error": "metrics unavailable"}
 
     # Attach LLM cache stats if cache is active
     try:

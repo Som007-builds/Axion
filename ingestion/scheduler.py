@@ -31,6 +31,7 @@ from agents.contradiction import run_contradiction_detection
 # ─── Module-level state (accessible from UI thread) ──────────
 _scheduler = None
 _run_log: list[dict] = []   # [{timestamp, papers_added, claims_added, contradictions_found}]
+_running = False            # True while an ingestion cycle is in flight
 _lock = threading.Lock()
 
 
@@ -59,6 +60,26 @@ def _on_job_event(event):
 def _ingestion_job():
     """
     Single ingestion run. Called by the scheduler on each tick.
+
+    Guards against overlapping runs (max_instances only protects scheduled
+    ticks, not manual triggers) and exposes running state to the API.
+    """
+    global _running
+    with _lock:
+        if _running:
+            logger.warning("[Scheduler] Ingestion already running — skipping this tick.")
+            return
+        _running = True
+
+    try:
+        _run_ingestion_cycle()
+    finally:
+        with _lock:
+            _running = False
+
+
+def _run_ingestion_cycle():
+    """
     Searches ArXiv for each configured topic, ingests new papers,
     then runs contradiction detection on newly added claims.
     """
@@ -113,6 +134,12 @@ def get_run_log() -> list[dict]:
     """Returns a copy of the ingestion run log. Thread-safe."""
     with _lock:
         return list(_run_log)
+
+
+def is_running() -> bool:
+    """True while a scheduled/manual ingestion cycle is in flight. Thread-safe."""
+    with _lock:
+        return _running
 
 
 def start_scheduler() -> BackgroundScheduler:

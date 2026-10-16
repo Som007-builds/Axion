@@ -78,6 +78,7 @@ Return ONLY valid JSON, no other text:
       "year": 2022,
       "position": "one sentence describing what the field believed this year",
       "shift_from_prior": "same | strengthened | weakened | reversed | first_appearance",
+      "confidence": 0.7,
       "key_claim_arxiv_ids": ["arxiv_id_1"]
     }}
   ],
@@ -86,6 +87,9 @@ Return ONLY valid JSON, no other text:
   "confidence": 0.0
 }}
 """
+
+# `confidence` per year is 0.0-1.0 and reflects how strongly the claims from
+# that year support the stated position (how much evidence vs. uncertainty).
 
 
 def get_consensus_evolution(topic: str, year_start: int = 2020,
@@ -154,6 +158,9 @@ For each contradiction:
 - Is it still active (both positions still defended in recent papers) or resolved?
 - If resolved, which position won and when?
 
+Each contradiction below is annotated with the two claim IDs (CLAIM_ID) that clash.
+Copy those IDs into `related_claim_ids` for the matching dispute. Never invent IDs.
+
 Return ONLY valid JSON, no other text:
 {{
   "disputes": [
@@ -162,7 +169,8 @@ Return ONLY valid JSON, no other text:
       "first_appeared": 2022,
       "status": "active | resolved | fading",
       "resolution": "which position appears to have won, or null if unresolved",
-      "resolution_year": null
+      "resolution_year": null,
+      "related_claim_ids": ["CLAIM_ID_A", "CLAIM_ID_B"]
     }}
   ],
   "summary": "one paragraph on the overall dispute landscape for this topic"
@@ -197,13 +205,20 @@ def get_contradiction_timeline(topic: str) -> dict:
             year_by_id[c["id"]] = c["paper_year"]
 
     contradiction_text = ""
+    claim_text_by_id = {}
     for contra in topic_contradictions[:8]:
         year_a = year_by_id.get(contra.get("claim_a_id"), "unknown")
         year_b = year_by_id.get(contra.get("claim_b_id"), "unknown")
+        a_id = contra.get("claim_a_id") or ""
+        b_id = contra.get("claim_b_id") or ""
+        if a_id:
+            claim_text_by_id[a_id] = contra.get("claim_a", "")
+        if b_id:
+            claim_text_by_id[b_id] = contra.get("claim_b", "")
         contradiction_text += (
-            f"\n- [{year_a}] {contra.get('claim_a', '')[:100]}\n"
+            f"\n- [{year_a}] (CLAIM_ID: {a_id}) {contra.get('claim_a', '')[:100]}\n"
             f"  CONTRADICTS\n"
-            f"  [{year_b}] {contra.get('claim_b', '')[:100]}\n"
+            f"  [{year_b}] (CLAIM_ID: {b_id}) {contra.get('claim_b', '')[:100]}\n"
             f"  Reason: {contra.get('explanation', '')[:80]}\n"
         )
 
@@ -218,5 +233,24 @@ def get_contradiction_timeline(topic: str) -> dict:
     result = safe_json_parse(raw, context="temporal.timeline") or {}
     if not isinstance(result, dict):
         result = {}
+
+    disputes = result.get("disputes")
+    if not isinstance(disputes, list):
+        disputes = []
+        result["disputes"] = disputes
+
+    # Data-driven fallback: when the model omits first_appeared, use the
+    # earliest paper year involved in the matched contradictions.
+    known_years = [y for y in year_by_id.values() if isinstance(y, int) and y]
+    fallback_year = min(known_years) if known_years else None
+    for d in disputes:
+        if not isinstance(d, dict):
+            continue
+        if not isinstance(d.get("first_appeared"), (int, float)) and fallback_year:
+            d["first_appeared"] = fallback_year
+
+    # Provide claim-id -> text lookup so the API can render readable
+    # key-claim chips without a second graph round trip.
+    result["claim_text_by_id"] = claim_text_by_id
 
     return result

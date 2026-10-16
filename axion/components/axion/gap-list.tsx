@@ -36,7 +36,7 @@ function GapCard({ gap }: { gap: Gap }) {
             )}
           </Badge>
         </div>
-        {gap.confidence !== undefined && (
+        {gap.confidence != null && (
           <span className="text-xs text-[#475569] font-mono tabular-nums">
             {Math.round(gap.confidence * 100)}%
           </span>

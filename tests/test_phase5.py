@@ -173,13 +173,11 @@ def test_every_gap_has_a_related_to_edge():
 @pytest.mark.integration
 def test_chroma_paper_year_is_int():
     import chromadb
-    from chromadb.utils import embedding_functions
 
-    from config import CHROMA_DIR, EMBEDDING_MODEL
+    from config import CHROMA_DIR
 
     client = chromadb.PersistentClient(path=str(CHROMA_DIR))
-    ef = embedding_functions.SentenceTransformerEmbeddingFunction(model_name=EMBEDDING_MODEL)
-    col = client.get_or_create_collection("claims", embedding_function=ef)
+    col = client.get_collection("claims")
     metadatas = col.get(include=["metadatas"]).get("metadatas", [])
 
     string_years = [
@@ -209,7 +207,7 @@ def test_neo4j_query_layer_shapes():
         ct = contras[0]
         assert "claim_a_id" in ct
         assert "claim_b_id" in ct
-        assert isinstance(ct.get("confidence"), float)
+        assert isinstance(ct.get("confidence"), (int, float))
 
     gaps = get_gaps()
     assert isinstance(gaps, list)

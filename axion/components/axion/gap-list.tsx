@@ -5,7 +5,6 @@ import useSWR from 'swr'
 import { Lightbulb, Sparkles, Search, Link2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
 import { getGaps } from '@/lib/api-client'
 import type { Gap, GapsResponse } from '@/types/axion'
 

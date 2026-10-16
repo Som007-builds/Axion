@@ -7,6 +7,7 @@ Run with: uvicorn api.main:app --reload --port 8000
 
 import logging
 import os
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Request, Header
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -35,11 +36,68 @@ from api.models import (
     ConfidenceDistribution, ChangedClaim, TemporalEvolution, DisputeTimeline
 )
 
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    """
+    Application lifespan: verify optional dependencies at boot (the API must
+    start even when Neo4j/ChromaDB are down so /api/health can report
+    "degraded"), and start/stop the in-process scheduler when enabled.
+    """
+    # ─── Startup ────────────────────────────────────────────────────────────
+    logger.info("Running Axion backend startup checks...")
+
+    try:
+        from graph.neo4j_client import run_query
+        run_query("RETURN 1")
+        logger.info("Neo4j database connection verified.")
+    except Exception as e:
+        logger.warning(f"Neo4j is unreachable at startup (API will run degraded): {e}")
+
+    try:
+        from embeddings.store import collection_stats
+        collection_stats()
+        logger.info("ChromaDB vector database connection verified.")
+    except Exception as e:
+        logger.warning(f"ChromaDB is unreachable at startup (API will run degraded): {e}")
+
+    try:
+        from graph.neo4j_queries import get_graph_stats
+        stats = get_graph_stats()
+        claims_count = stats.get("claims", 0)
+        logger.info(f"Axion startup complete: {claims_count} claims loaded in Neo4j.")
+        logger.info(f"Active Groq LLM model configured: {config.GROQ_MODEL}")
+    except Exception as e:
+        logger.warning(f"Failed to log database stats on startup: {e}")
+
+    if config.SCHEDULER_ENABLED:
+        try:
+            from ingestion.scheduler import start_scheduler
+            start_scheduler()
+            logger.warning(
+                "Ingestion scheduler started in the API process. This requires a "
+                "single worker (uvicorn --workers 1); multiple workers would run "
+                "duplicate ingestion cycles."
+            )
+        except Exception as e:
+            logger.error(f"Failed to start ingestion scheduler: {e}")
+
+    yield
+
+    # ─── Shutdown ───────────────────────────────────────────────────────────
+    if config.SCHEDULER_ENABLED:
+        try:
+            from ingestion.scheduler import stop_scheduler
+            stop_scheduler()
+        except Exception as e:
+            logger.warning(f"Failed to stop ingestion scheduler cleanly: {e}")
+
+
 limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])
 app = FastAPI(
     title="Axion API",
     description="Multi-agent AI research knowledge graph",
-    version="1.70"
+    version="1.70",
+    lifespan=lifespan,
 )
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -646,67 +704,7 @@ def get_graph_data(limit_claims: int = 100):
     return {"nodes": nodes, "edges": edges}
 
 
-# ─── Startup Validation ────────────────────────────────────────────────────────
-
-@app.on_event("startup")
-async def startup_checks():
-    logger.info("Running Axion backend startup checks...")
-
-    # Dependencies are optional at boot: the API must start even when Neo4j or
-    # ChromaDB are down so it can report a degraded status via /api/health.
-    # Individual data endpoints will surface their own errors.
-
-    # 1. Test Neo4j connection
-    try:
-        from graph.neo4j_client import run_query
-        run_query("RETURN 1")
-        logger.info("Neo4j database connection verified.")
-    except Exception as e:
-        logger.warning(f"Neo4j is unreachable at startup (API will run degraded): {e}")
-
-    # 2. Test ChromaDB connection
-    try:
-        from embeddings.store import collection_stats
-        collection_stats()
-        logger.info("ChromaDB vector database connection verified.")
-    except Exception as e:
-        logger.warning(f"ChromaDB is unreachable at startup (API will run degraded): {e}")
-
-    # 3. Log claim count and model name on startup (best-effort)
-    try:
-        from graph.neo4j_queries import get_graph_stats
-        stats = get_graph_stats()
-        claims_count = stats.get("claims", 0)
-
-        # Groq model name from config
-        groq_model = config.GROQ_MODEL
-        logger.info(f"Axion startup complete: {claims_count} claims loaded in Neo4j.")
-        logger.info(f"Active Groq LLM model configured: {groq_model}")
-    except Exception as e:
-        logger.warning(f"Failed to log database stats on startup: {e}")
-
-    # 4. Optionally start the in-process ingestion scheduler
-    if config.SCHEDULER_ENABLED:
-        try:
-            from ingestion.scheduler import start_scheduler
-            start_scheduler()
-            logger.warning(
-                "Ingestion scheduler started in the API process. This requires a "
-                "single worker (uvicorn --workers 1); multiple workers would run "
-                "duplicate ingestion cycles."
-            )
-        except Exception as e:
-            logger.error(f"Failed to start ingestion scheduler: {e}")
-
-
-@app.on_event("shutdown")
-async def shutdown_scheduler():
-    if config.SCHEDULER_ENABLED:
-        try:
-            from ingestion.scheduler import stop_scheduler
-            stop_scheduler()
-        except Exception as e:
-            logger.warning(f"Failed to stop ingestion scheduler cleanly: {e}")
+# Startup/shutdown now live in the `lifespan` handler near the top of this file.
 
 
 # ─── Health ───────────────────────────────────────────────────────────────────

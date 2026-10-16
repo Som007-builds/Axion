@@ -12,13 +12,11 @@ function ConfidenceBar({
   label, 
   count, 
   total, 
-  color,
   gradient,
 }: { 
   label: string
   count: number
   total: number
-  color: string
   gradient: string
 }) {
   const percentage = total > 0 ? (count / total) * 100 : 0
@@ -172,21 +170,18 @@ export function GraphEvolution() {
                   label="High (>80%)"
                   count={distribution.high}
                   total={distribution.total}
-                  color="bg-[#10b981]"
                   gradient="bg-gradient-to-r from-[#10b981] to-[#06b6d4]"
                 />
                 <ConfidenceBar
                   label="Medium (50-80%)"
                   count={distribution.medium}
                   total={distribution.total}
-                  color="bg-[#f59e0b]"
                   gradient="bg-gradient-to-r from-[#f59e0b] to-[#f97316]"
                 />
                 <ConfidenceBar
                   label="Low (<50%)"
                   count={distribution.low}
                   total={distribution.total}
-                  color="bg-[#f43f5e]"
                   gradient="bg-gradient-to-r from-[#f43f5e] to-[#e11d48]"
                 />
               </div>

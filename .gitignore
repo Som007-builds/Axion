@@ -42,3 +42,7 @@ Thumbs.db
 .pytest_cache/
 htmlcov/
 .coverage
+
+# Lint artifacts
+lint-output.txt
+axion/lint-output.txt

@@ -407,16 +407,16 @@ function ExecutiveSummarySection({ report }: { report?: string }) {
       <div className="text-sm text-[#cbd5e1] leading-relaxed space-y-3">
         <ReactMarkdown
           components={{
-            h1: ({_node, ...props}) => <h1 className="text-lg font-bold text-[#f0f6ff] mt-4 mb-2" {...props} />,
-            h2: ({_node, ...props}) => <h2 className="text-base font-semibold text-[#f0f6ff] mt-3 mb-2" {...props} />,
-            h3: ({_node, ...props}) => <h3 className="text-sm font-semibold text-[#f0f6ff] mt-2 mb-1" {...props} />,
-            p: ({_node, ...props}) => <p className="mb-3 last:mb-0" {...props} />,
-            ul: ({_node, ...props}) => <ul className="list-disc pl-5 mb-3 space-y-1" {...props} />,
-            ol: ({_node, ...props}) => <ol className="list-decimal pl-5 mb-3 space-y-1" {...props} />,
-            li: ({_node, ...props}) => <li className="text-sm text-[#94a3b8]" {...props} />,
-            strong: ({_node, ...props}) => <strong className="font-semibold text-[#f0f6ff]" {...props} />,
-            code: ({_node, ...props}) => <code className="bg-white/5 px-1.5 py-0.5 rounded font-mono text-xs text-[#f0f6ff]" {...props} />,
-            a: ({_node, ...props}) => {
+            h1: ({ node: _node, ...props}) => <h1 className="text-lg font-bold text-[#f0f6ff] mt-4 mb-2" {...props} />,
+            h2: ({ node: _node, ...props}) => <h2 className="text-base font-semibold text-[#f0f6ff] mt-3 mb-2" {...props} />,
+            h3: ({ node: _node, ...props}) => <h3 className="text-sm font-semibold text-[#f0f6ff] mt-2 mb-1" {...props} />,
+            p: ({ node: _node, ...props}) => <p className="mb-3 last:mb-0" {...props} />,
+            ul: ({ node: _node, ...props}) => <ul className="list-disc pl-5 mb-3 space-y-1" {...props} />,
+            ol: ({ node: _node, ...props}) => <ol className="list-decimal pl-5 mb-3 space-y-1" {...props} />,
+            li: ({ node: _node, ...props}) => <li className="text-sm text-[#94a3b8]" {...props} />,
+            strong: ({ node: _node, ...props}) => <strong className="font-semibold text-[#f0f6ff]" {...props} />,
+            code: ({ node: _node, ...props}) => <code className="bg-white/5 px-1.5 py-0.5 rounded font-mono text-xs text-[#f0f6ff]" {...props} />,
+            a: ({ node: _node, ...props}) => {
               const text = props.children?.toString() || ''
               if (text.startsWith('arXiv:') || text.match(/^\d{4}\.\d{4,5}$/) || text.startsWith('[arXiv:')) {
                 return <CitationChip id={text} />
@@ -576,7 +576,7 @@ export function QueryPanel({ externalQuery, onQueryClear, onLoadingChange }: Que
   const raw: RawReport = result?.raw ? parseRaw(result.raw) : {}
   const conf = result ? getConfidenceConfig(result.confidence) : null
 
-  if (!mounted) {
+  if (!isClient) {
     return (
       <div className="rounded-xl border border-[var(--axion-border-subtle)] p-6 space-y-4">
         <div className="animate-shimmer h-24 w-full rounded-lg" />

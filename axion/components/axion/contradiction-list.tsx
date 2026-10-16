@@ -5,7 +5,6 @@ import useSWR from 'swr'
 import { ChevronDown, ChevronRight, AlertTriangle, FileText } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Slider } from '@/components/ui/slider'
-import { Skeleton } from '@/components/ui/skeleton'
 import {
   Collapsible,
   CollapsibleContent,

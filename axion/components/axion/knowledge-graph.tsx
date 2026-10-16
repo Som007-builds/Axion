@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
 import { Badge } from '@/components/ui/badge'
 import { getGraphData } from '@/lib/api-client'
-import type { GraphData, GraphNode, GraphEdge } from '@/types/axion'
+import type { GraphData, GraphNode } from '@/types/axion'
 
 // Dynamic import for react-force-graph-2d (needs window/canvas)
 import dynamic from 'next/dynamic'

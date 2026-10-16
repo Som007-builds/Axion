@@ -20,6 +20,7 @@ sentence-transformers==5.5.1
 
 # ── PDF / document ingestion ──────────────────────────────────
 PyMuPDF==1.27.2.3
+arxiv==4.0.0                   # ingestion/arxiv_client.py
 requests==2.33.1
 
 # ── Scheduling ────────────────────────────────────────────────

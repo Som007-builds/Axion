@@ -24,12 +24,13 @@ services:
       - "127.0.0.1:7474:7474"   # Neo4j Browser (local debugging)
     environment:
       - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD}
-      # Exposed for the healthcheck below (cypher-shell needs the password).
-      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
       - NEO4J_PLUGINS=["apoc"]
       - NEO4J_dbms_security_procedures_unrestricted=apoc.*
     healthcheck:
-      test: ["CMD-SHELL", "cypher-shell -u neo4j -p \"$$NEO4J_PASSWORD\" 'RETURN 1' || exit 1"]
+      # Derive the password from NEO4J_AUTH. Do NOT add a dedicated NEO4J_*
+      # env var for it: Neo4j parses every NEO4J_* variable as a config
+      # setting and rejects unknown ones under strict validation.
+      test: ["CMD-SHELL", "cypher-shell -u neo4j -p \"$${NEO4J_AUTH#neo4j/}\" 'RETURN 1' || exit 1"]
       interval: 15s
       timeout: 10s
       retries: 10

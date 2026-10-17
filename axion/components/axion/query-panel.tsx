@@ -30,7 +30,7 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
 import { runQuery } from '@/lib/api-client'
-import type { CoordinatorOutput, ReflectionStep } from '@/types/axion'
+import type { CoordinatorOutput, JobStatus, ReflectionStep } from '@/types/axion'
 import ReactMarkdown from 'react-markdown'
 import { useIsClient } from '@/lib/use-is-client'
 
@@ -448,6 +448,7 @@ interface QueryPanelProps {
 export function QueryPanel({ externalQuery, onQueryClear, onLoadingChange }: QueryPanelProps) {
   const [question, setQuestion] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [jobStage, setJobStage] = useState<JobStatus | null>(null)
   const [result, setResult] = useState<CoordinatorOutput | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [history, setHistory] = useState<QueryHistoryItem[]>([])
@@ -462,10 +463,12 @@ export function QueryPanel({ externalQuery, onQueryClear, onLoadingChange }: Que
       setIsLoading(true)
       setError(null)
       setResult(null)
+      setJobStage(null)
 
       try {
         const trimmedQ = q.trim()
-        const output = await runQuery(trimmedQ)
+        // Submitted as a background job; runQuery polls until the report is ready.
+        const output = await runQuery(trimmedQ, { onStatus: setJobStage })
         setResult(output)
 
         // Add to history
@@ -486,6 +489,7 @@ export function QueryPanel({ externalQuery, onQueryClear, onLoadingChange }: Que
         setResult(null)
       } finally {
         setIsLoading(false)
+        setJobStage(null)
       }
     },
     [history, isLoading]
@@ -682,16 +686,18 @@ export function QueryPanel({ externalQuery, onQueryClear, onLoadingChange }: Que
         {/* Loading state */}
         {isLoading && (
           <div className="rounded-xl border border-[#3b82f6]/15 bg-[#3b82f6]/[0.02] p-6 space-y-6 animate-fade-up">
-            {/* Indeterminate progress. /api/query runs synchronously and reports
-                no per-stage progress, so this lists the pipeline without
-                pretending stages have completed. */}
+            {/* Indeterminate progress. The query runs as a queued job and
+                reports no per-stage progress, so this lists the pipeline
+                without pretending stages have completed. */}
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#3b82f6]/10">
                   <Loader2 className="h-3.5 w-3.5 animate-spin text-[#3b82f6]" />
                 </div>
                 <span className="text-sm text-[#f0f6ff] font-medium">
-                  Synthesizing research intelligence…
+                  {jobStage === 'queued'
+                    ? 'Queued — waiting for a worker…'
+                    : 'Synthesizing research intelligence…'}
                 </span>
               </div>
               <div className="ml-9 space-y-2">

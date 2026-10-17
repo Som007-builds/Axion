@@ -262,7 +262,9 @@ export function IngestionStatus({ externalOpen, onExternalClose }: IngestionStat
                       Topic: &ldquo;{customProgress.topic}&rdquo;
                     </span>
                     <h4 className="font-semibold text-sm capitalize text-[#f0f6ff]">
-                      {customProgress.status === 'processing'
+                      {customProgress.status === 'queued'
+                        ? 'Queued — waiting for a worker'
+                        : customProgress.status === 'processing'
                         ? `Ingesting Paper ${customProgress.current_index}/${customProgress.limit}`
                         : customProgress.status === 'contradiction'
                         ? 'Checking Contradictions'

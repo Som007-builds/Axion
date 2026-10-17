@@ -1,10 +1,11 @@
-// Server-side proxy for write/compute backend endpoints.
+// Server-side proxy for credentialled backend endpoints.
 //
 // The browser must never hold the backend API key: anything that spends LLM
-// tokens or mutates the graph is proxied through this route handler, which
-// injects `X-API-Key` from the server-only AXION_API_KEY environment variable.
+// tokens, mutates the graph, or returns the result of queued work is proxied
+// through this route handler, which injects `X-API-Key` from the server-only
+// AXION_API_KEY environment variable.
 //
-// Read-only endpoints are still called directly from the browser (see
+// Public read-only endpoints are still called directly from the browser (see
 // lib/api-client.ts) — they require no credentials.
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -16,24 +17,39 @@ const API_BASE =
 
 const API_KEY = process.env.AXION_API_KEY || ''
 
-// Explicit allowlist: only these paths may be proxied. Everything else 404s,
-// so this cannot be abused as an open proxy.
-const ALLOWED: RegExp[] = [
-  /^query$/,
-  /^experiments\/[A-Za-z0-9_:-]+\/design$/,
-  /^confidence\/recalculate$/,
-  /^ingestion\/trigger$/,
-  /^ingestion\/custom$/,
+type Rule = { method: 'GET' | 'POST'; pattern: RegExp }
+
+// Explicit allowlist: only these method+path pairs may be proxied. Everything
+// else 404s, so this cannot be abused as an open proxy.
+const ALLOWED: Rule[] = [
+  { method: 'POST', pattern: /^query$/ },
+  { method: 'POST', pattern: /^experiments\/[A-Za-z0-9_:-]+\/design$/ },
+  { method: 'POST', pattern: /^confidence\/recalculate$/ },
+  { method: 'POST', pattern: /^ingestion\/trigger$/ },
+  { method: 'POST', pattern: /^ingestion\/custom$/ },
+  // Job results carry the research report, so they are key-guarded too.
+  { method: 'GET', pattern: /^jobs\/[A-Za-z0-9_-]{1,64}$/ },
 ]
+
+let warnedMissingKey = false
 
 async function proxy(request: NextRequest, path: string[] | undefined) {
   const endpoint = (path ?? []).join('/')
+  const method = request.method === 'HEAD' ? 'GET' : request.method
 
-  if (!ALLOWED.some((pattern) => pattern.test(endpoint))) {
+  if (!ALLOWED.some((rule) => rule.method === method && rule.pattern.test(endpoint))) {
     return NextResponse.json({ detail: 'Not found' }, { status: 404 })
   }
 
   if (!API_KEY) {
+    // Log once per process so an operator can see why the UI is failing
+    // without the message being repeated on every request.
+    if (!warnedMissingKey) {
+      console.warn(
+        '[axion] AXION_API_KEY is not set on the web server: credentialled endpoints are disabled.'
+      )
+      warnedMissingKey = true
+    }
     return NextResponse.json(
       {
         detail:
@@ -80,6 +96,10 @@ export async function POST(
   return proxy(request, path)
 }
 
-export function GET() {
-  return NextResponse.json({ detail: 'Method not allowed' }, { status: 405 })
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ path: string[] }> }
+) {
+  const { path } = await params
+  return proxy(request, path)
 }

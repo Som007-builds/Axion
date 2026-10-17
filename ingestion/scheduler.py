@@ -5,6 +5,11 @@ Continuous ingestion scheduler.
 Fetches new ArXiv papers on a configurable interval (default: every 6 hours),
 runs Agent 1 (Reader) on them, then triggers Agent 2 (Contradiction Detector).
 
+Each tick is dispatched through `_dispatch_ingestion`: with a Redis queue
+configured the work is enqueued for the `axion-worker` process, otherwise it
+runs inline here. That keeps a single ingestion path whether the scheduler is
+enabled or not.
+
 Usage — embedded in Streamlit / main.py:
     from ingestion.scheduler import start_scheduler, stop_scheduler, trigger_now
     start_scheduler()
@@ -72,16 +77,18 @@ def _ingestion_job():
         _running = True
 
     try:
-        _run_ingestion_cycle()
+        return _run_ingestion_cycle()
     finally:
         with _lock:
             _running = False
 
 
-def _run_ingestion_cycle():
+def _run_ingestion_cycle() -> dict:
     """
     Searches ArXiv for each configured topic, ingests new papers,
     then runs contradiction detection on newly added claims.
+
+    Returns the run tally so the queue layer can persist it as the job result.
     """
     logger.info(f"\n[Scheduler] Starting ingestion run at {datetime.now().isoformat()}")
 
@@ -126,6 +133,12 @@ def _run_ingestion_cycle():
         f"{total_papers} papers, {total_claims} claims, "
         f"{contradictions_found} contradictions"
     )
+    return {
+        "mode": "scheduled",
+        "papers_added": total_papers,
+        "claims_added": total_claims,
+        "contradictions_found": contradictions_found,
+    }
 
 
 # ─── Public API ───────────────────────────────────────────────
@@ -157,7 +170,7 @@ def start_scheduler() -> BackgroundScheduler:
     _scheduler.add_listener(_on_job_event, EVENT_JOB_ERROR | EVENT_JOB_EXECUTED)
 
     _scheduler.add_job(
-        func=_ingestion_job,
+        func=_dispatch_ingestion,
         trigger="interval",
         hours=SCHEDULER_INTERVAL_HOURS,
         id="ingestion_job",
@@ -184,8 +197,35 @@ def stop_scheduler():
 
 
 def trigger_now():
-    """Run one ingestion job immediately, outside the normal schedule."""
+    """
+    Run one ingestion job immediately.
+
+    With a queue configured this enqueues the job (so a worker picks it up and
+    it survives a restart); without one it runs inline in this process.
+    """
     logger.info("[Scheduler] Manual trigger...")
+    _dispatch_ingestion()
+
+
+def _dispatch_ingestion():
+    """
+    Send one ingestion run to the queue when Redis is available, else run it
+    inline.
+
+    Keeping scheduling and manual triggers on this single path is what stops
+    the API's scheduler and a separate worker from ingesting concurrently —
+    which would double-write papers into the graph.
+    """
+    from jobs import backend as job_backend
+
+    if job_backend.backend_name() == "rq":
+        try:
+            job_id, _ = job_backend.submit(job_backend.JOB_INGESTION)
+            logger.info("[Scheduler] Enqueued ingestion job %s", job_id)
+        except job_backend.JobConflictError:
+            logger.info("[Scheduler] Ingestion already queued or running — skipping this tick.")
+        return
+
     _ingestion_job()
 
 
@@ -209,7 +249,6 @@ def run_custom_ingestion(topic: str, limit: int):
             progress_tracker.add_log("No new papers found matching the query topic.")
             progress_tracker.complete(0)
             return
-
         progress_tracker.add_log(f"Found {len(papers)} papers on ArXiv. Starting ingestion...")
 
         # 2. Process papers
@@ -271,6 +310,7 @@ def run_custom_ingestion(topic: str, limit: int):
     except Exception as e:
         logger.exception("Custom ingestion pipeline failed")
         progress_tracker.fail(str(e))
+        raise
 
 
 if __name__ == "__main__":

@@ -71,8 +71,10 @@ def test_health_ok_when_datastores_up():
 # ─── Ingestion (offline) ──────────────────────────────────────────────────────
 
 def test_ingestion_status_offline():
-    with patch("ingestion.scheduler.is_running", return_value=False), \
-         patch("ingestion.scheduler.get_run_log", return_value=[]):
+    from ingestion.progress import progress_tracker
+
+    progress_tracker.reset()
+    with patch("jobs.backend.active_ingestion_job", return_value=None):
         r = client.get("/api/ingestion/status")
 
     assert r.status_code == 200
@@ -83,9 +85,30 @@ def test_ingestion_status_offline():
 
 
 def test_ingestion_progress_offline():
-    r = client.get("/api/ingestion/progress")
+    from ingestion.progress import progress_tracker
+
+    progress_tracker.reset()
+    with patch("jobs.backend.active_ingestion_job", return_value=None):
+        r = client.get("/api/ingestion/progress")
     assert r.status_code == 200
     assert "status" in r.json()
+
+
+def test_ingestion_progress_reports_queued_job():
+    """A queued job with no worker claim yet must not look idle to the UI."""
+    from ingestion.progress import progress_tracker
+
+    progress_tracker.reset()
+    queued = {"id": "abc123", "kind": "custom_ingestion", "status": "queued",
+              "_payload": {"topic": "graph neural networks", "limit": 3}}
+    with patch("jobs.backend.active_ingestion_job", return_value=queued):
+        r = client.get("/api/ingestion/progress")
+
+    body = r.json()
+    assert body["status"] == "queued"
+    assert body["running"] is True
+    assert body["topic"] == "graph neural networks"
+    assert body["percent"] > 0
 
 
 def test_compute_endpoints_disabled_when_no_secret():
@@ -101,10 +124,12 @@ def test_trigger_rejects_missing_or_wrong_secret():
         assert client.post(
             "/api/ingestion/trigger", headers={"x-trigger-secret": "nope"}
         ).status_code == 401
-        with patch("ingestion.scheduler.trigger_now"):
-            assert client.post(
+        with patch("jobs.backend.submit", return_value=("job-1", "rq")):
+            r = client.post(
                 "/api/ingestion/trigger", headers={"x-trigger-secret": "s3cret"}
-            ).status_code == 200
+            )
+    assert r.status_code == 202
+    assert r.json()["job_id"] == "job-1"
 
 
 def test_compute_endpoints_require_api_key():
@@ -116,18 +141,86 @@ def test_compute_endpoints_require_api_key():
         ).status_code == 401
         assert client.post("/api/confidence/recalculate").status_code == 401
         assert client.post("/api/experiments/abc/design").status_code == 401
+        assert client.get("/api/jobs/whatever").status_code == 401
 
 
-def test_query_accepts_valid_api_key():
+def test_query_queues_a_job_and_returns_202():
     with patch.multiple("config", API_KEY="k3y", TRIGGER_SECRET=""), \
-         patch("agents.coordinator_v2.run", return_value={
-             "report": "r", "raw": {"confidence_in_answer": "medium"},
-             "iterations": 1, "plan": {"sub_queries": []}, "reflection_log": [],
-         }):
+         patch("jobs.backend.submit", return_value=("job-9", "rq")) as submitted:
         r = client.post(
             "/api/query", json={"question": "hi"}, headers={"x-api-key": "k3y"}
         )
+    assert r.status_code == 202
+    assert r.json() == {"job_id": "job-9", "status": "queued", "backend": "rq"}
+    assert submitted.call_args[0][1] == {"question": "hi"}
+
+
+def test_query_rejects_blank_question_before_queueing():
+    with patch.multiple("config", API_KEY="k3y", TRIGGER_SECRET=""), \
+         patch("jobs.backend.submit") as submitted:
+        r = client.post(
+            "/api/query", json={"question": "   "}, headers={"x-api-key": "k3y"}
+        )
+    assert r.status_code == 400
+    submitted.assert_not_called()
+
+
+def test_ingestion_conflict_returns_409():
+    from jobs.backend import JobConflictError
+
+    with patch.multiple("config", API_KEY="k3y", TRIGGER_SECRET=""), \
+         patch("jobs.backend.submit", side_effect=JobConflictError("already running")):
+        r = client.post("/api/ingestion/custom",
+                        json={"topic": "gnn", "limit": 2},
+                        headers={"x-api-key": "k3y"})
+    assert r.status_code == 409
+
+
+def test_job_status_endpoint_returns_record():
+    record = {"id": "job-1", "kind": "query", "status": "completed",
+              "result": {"report": "done"}, "_payload": {"question": "secret"}}
+    with patch.multiple("config", API_KEY="k3y", TRIGGER_SECRET=""), \
+         patch("jobs.store.get_job_store") as store:
+        store.return_value.get.return_value = record
+        r = client.get("/api/jobs/job-1", headers={"x-api-key": "k3y"})
+
     assert r.status_code == 200
+    body = r.json()
+    assert body["result"] == {"report": "done"}
+    # Internal payloads must never be echoed back to the client.
+    assert "_payload" not in body
+
+
+def test_job_status_endpoint_404s_for_unknown_job():
+    with patch.multiple("config", API_KEY="k3y", TRIGGER_SECRET=""), \
+         patch("jobs.store.get_job_store") as store:
+        store.return_value.get.return_value = None
+        r = client.get("/api/jobs/nope", headers={"x-api-key": "k3y"})
+    assert r.status_code == 404
+
+
+def test_job_list_is_key_guarded_and_clamps_limit():
+    records = [
+        {"id": "job-2", "kind": "query", "status": "queued", "_payload": {}},
+        {"id": "job-1", "kind": "query", "status": "completed"},
+    ]
+    with patch.multiple("config", API_KEY="k3y", TRIGGER_SECRET=""), \
+         patch("jobs.store.get_job_store") as store:
+        store.return_value.list_recent.return_value = records
+
+        r = client.get("/api/jobs", headers={"x-api-key": "k3y"})
+
+        assert r.status_code == 200
+        body = r.json()
+        assert [job["id"] for job in body["jobs"]] == ["job-2", "job-1"]
+        assert all("_payload" not in job for job in body["jobs"])
+
+        # An absurd limit must not be forwarded to the store.
+        client.get("/api/jobs?limit=99999", headers={"x-api-key": "k3y"})
+        assert store.return_value.list_recent.call_args.args[0] == 100
+
+    without_key = client.get("/api/jobs")
+    assert without_key.status_code == 401
 
 
 # ─── Metrics ──────────────────────────────────────────────────────────────────

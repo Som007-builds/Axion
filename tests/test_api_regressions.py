@@ -132,25 +132,54 @@ class TestEvolutionMapping:
 # ─── Ingestion status running flag ────────────────────────────────────────────
 
 class TestIngestionStatus:
+    """Status now comes from the durable job registry, not process counters."""
 
-    def test_running_reflects_scheduler_state(self):
-        with patch("ingestion.scheduler.is_running", return_value=True), \
-             patch("ingestion.scheduler.get_run_log", return_value=[]):
+    @staticmethod
+    def _reset_tracker():
+        from ingestion.progress import progress_tracker
+
+        progress_tracker.reset()
+
+    def test_running_when_an_ingestion_job_is_active(self):
+        self._reset_tracker()
+        active = {"id": "j1", "kind": "ingestion", "status": "running"}
+        with patch("jobs.backend.active_ingestion_job", return_value=active):
             out = ingestion_status()
         assert out["running"] is True
 
     def test_idle_when_nothing_running(self):
-        with patch("ingestion.scheduler.is_running", return_value=False), \
-             patch("ingestion.scheduler.get_run_log", return_value=[]):
+        self._reset_tracker()
+        with patch("jobs.backend.active_ingestion_job", return_value=None), \
+             patch("jobs.store.get_job_store") as store:
+            store.return_value.list_recent.return_value = []
             out = ingestion_status()
         assert out["running"] is False
         assert out["last_run"] is None
 
-    def test_reports_last_run_stats(self):
-        fake_log = [{"timestamp": "2026-10-16T00:00:00", "papers_added": 3, "claims_added": 12}]
-        with patch("ingestion.scheduler.is_running", return_value=False), \
-             patch("ingestion.scheduler.get_run_log", return_value=fake_log):
+    def test_reports_last_completed_run_stats(self):
+        self._reset_tracker()
+        record = {
+            "id": "j1",
+            "kind": "custom_ingestion",
+            "status": "completed",
+            "finished_at": 1750000000.0,
+            "result": {"papers_added": 3, "claims_added": 12},
+        }
+        with patch("jobs.backend.active_ingestion_job", return_value=None), \
+             patch("jobs.store.get_job_store") as store:
+            store.return_value.list_recent.return_value = [record]
             out = ingestion_status()
         assert out["new_papers"] == 3
         assert out["new_claims"] == 12
-        assert out["last_run"] == "2026-10-16T00:00:00"
+        assert out["last_run"].startswith("2025-")
+
+    def test_failed_job_does_not_report_as_last_run(self):
+        self._reset_tracker()
+        record = {"id": "j1", "kind": "ingestion", "status": "failed",
+                  "finished_at": 1750000000.0, "result": None}
+        with patch("jobs.backend.active_ingestion_job", return_value=None), \
+             patch("jobs.store.get_job_store") as store:
+            store.return_value.list_recent.return_value = [record]
+            out = ingestion_status()
+        assert out["last_run"] is None
+        assert out["new_papers"] == 0

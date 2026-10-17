@@ -84,6 +84,31 @@ export interface CoordinatorOutput {
   sources: string[]
 }
 
+// ─── Background jobs ──────────────────────────────────────────────────────────
+// Queries and ingestion run as queued jobs: POST returns a job id, and the
+// client polls GET /api/jobs/{id} until the status is terminal.
+
+export type JobStatus = 'queued' | 'running' | 'completed' | 'failed'
+
+export interface JobSubmitResponse {
+  job_id: string
+  status: JobStatus
+  /** 'rq' when a worker will pick the job up, 'inline' in single-process dev. */
+  backend?: 'rq' | 'inline'
+}
+
+export interface JobRecord<T> {
+  id: string
+  kind: string
+  status: JobStatus
+  created_at: number
+  started_at: number | null
+  finished_at: number | null
+  result: T | null
+  error: string | null
+  backend?: 'rq' | 'inline'
+}
+
 export interface IngestionStatus {
   new_papers: number
   new_claims: number
@@ -158,7 +183,16 @@ export interface GraphData {
 }
 
 export interface CustomIngestionProgress {
-  status: 'idle' | 'searching' | 'processing' | 'contradiction' | 'confidence' | 'completed' | 'failed'
+  // 'queued' is reported while a job is waiting for the worker to claim it.
+  status:
+    | 'idle'
+    | 'queued'
+    | 'searching'
+    | 'processing'
+    | 'contradiction'
+    | 'confidence'
+    | 'completed'
+    | 'failed'
   topic: string
   limit: number
   current_index: number

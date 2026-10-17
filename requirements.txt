@@ -26,6 +26,13 @@ requests==2.33.1
 # ── Scheduling ────────────────────────────────────────────────
 APScheduler==3.11.2            # ingestion/scheduler.py
 
+# ── Background job queue ──────────────────────────────────────
+# Redis + RQ back the durable job queue (ingestion, research queries).
+# Optional at runtime: without REDIS_URL the API falls back to in-process
+# threads, so these packages are only required to run a worker.
+redis==8.1.0                   # jobs/redis_conn.py
+rq==2.12.0                     # jobs/backend.py, jobs/worker.py
+
 # ── UI ────────────────────────────────────────────────────────
 streamlit==1.57.0
 pyvis==0.3.2                   # ui/graph_viz.py

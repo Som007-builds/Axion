@@ -8,11 +8,10 @@ Run with: uvicorn api.main:app --reload --port 8000
 import logging
 import os
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Request, Header, Depends
+from fastapi import FastAPI, HTTPException, Request, Header, Depends
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
-import json
 import secrets
 import config
 
@@ -32,7 +31,7 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from api.models import (
     GraphStats, ClaimsResponse, ContradictionsResponse, ContradictionModel,
-    ExperimentModel, GapsResponse, CoordinatorOutput, IngestionSummary,
+    ExperimentModel, GapsResponse, IngestionSummary,
     ConfidenceDistribution, ChangedClaim, TemporalEvolution, DisputeTimeline
 )
 
@@ -395,66 +394,61 @@ def get_gaps(source: Optional[str] = None):
 
 # ─── Coordinator ──────────────────────────────────────────────────────────────
 
-@app.post("/api/query", response_model=CoordinatorOutput)
+@app.post("/api/query", status_code=202)
 @limiter.limit("10/minute")
 def run_query(body: dict, request: Request, _auth: None = Depends(require_write_access)):
     """
-    Run the coordinator v2 on a research question.
+    Queue a research query and return a job id immediately.
+
+    The multi-iteration coordinator loop is far too slow to hold an HTTP
+    request open (and would be lost on restart), so it runs as a background
+    job. Poll `GET /api/jobs/{job_id}` until `status` is `completed`.
+
     Body: {"question": "your question here"}
     """
-    question = body.get("question", "")
-    question = question.strip()
+    question = str(body.get("question", "")).strip()
     if not question:
         raise HTTPException(status_code=400, detail="question is required")
     if len(question) > 500:
         raise HTTPException(status_code=422, detail="Question must not exceed 500 characters")
 
-    from agents.coordinator_v2 import run
-    output = run(question, verbose=False)
-    
-    # Extract confidence mapping
-    raw_result = output.get("raw", {})
-    conf_str = raw_result.get("confidence_in_answer", "medium").lower()
-    conf_map = {"high": 0.9, "medium": 0.6, "low": 0.3}
-    confidence_num = conf_map.get(conf_str, 0.6)
-    
-    # Extract unique cited sources (arxiv IDs)
-    sources = set()
-    for item in raw_result.get("consensus", []):
-        for cit in item.get("citations", []):
-            if cit:
-                sources.add(str(cit))
-    for item in raw_result.get("disputed", []):
-        pa = item.get("position_a", {})
-        pb = item.get("position_b", {})
-        if isinstance(pa, dict) and pa.get("paper"):
-            sources.add(str(pa["paper"]))
-        if isinstance(pb, dict) and pb.get("paper"):
-            sources.add(str(pb["paper"]))
-            
-    # Format plan as list of string subqueries for the frontend
-    raw_plan = output.get("plan", {})
-    sub_queries = raw_plan.get("sub_queries", [])
-    
-    # Map reflection log to match ReflectionStep schema
-    reflection_log = []
-    for step in output.get("reflection_log", []):
-        reflection_log.append({
-            "step": step.get("iteration", 1),
-            "action": f"Iteration {step.get('iteration', 1)} reflection",
-            "observation": step.get("assessment", ""),
-            "reasoning": f"Query refined: {step.get('refined_query')}" if step.get("refined_query") else "Context marked sufficient"
-        })
-        
-    return {
-        "report": output.get("report", ""),
-        "raw": json.dumps(raw_result),
-        "iterations": output.get("iterations", 1),
-        "plan": sub_queries,
-        "reflection_log": reflection_log,
-        "confidence": confidence_num,
-        "sources": list(sources)
-    }
+    from jobs.backend import JOB_QUERY, submit
+    job_id, backend = submit(JOB_QUERY, {"question": question})
+    return {"job_id": job_id, "status": "queued", "backend": backend}
+
+
+# ─── Background jobs ──────────────────────────────────────────────────────────
+
+@app.get("/api/jobs")
+def list_jobs(limit: int = 20, _auth: None = Depends(require_write_access)):
+    """
+    Most recent background jobs, newest first.
+
+    `limit` is clamped to 1–100. Key-guarded like the single-job route, because
+    a job record carries its result (research answers, ingestion summaries).
+    """
+    from jobs.store import get_job_store, public_view
+
+    limit = max(1, min(limit, 100))
+    records = get_job_store().list_recent(limit)
+    return {"jobs": [public_view(record) for record in records]}
+
+
+@app.get("/api/jobs/{job_id}")
+def get_job(job_id: str, _auth: None = Depends(require_write_access)):
+    """
+    Status and result of a background job.
+
+    Returns `{id, kind, status, created_at, started_at, finished_at, result}`;
+    `status` is one of `queued`, `running`, `completed`, `failed`. Requires the
+    API key so job results are not readable with a guessed id.
+    """
+    from jobs.store import get_job_store, public_view
+
+    record = get_job_store().get(job_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return public_view(record)
 
 
 # ─── Temporal Reasoning ───────────────────────────────────────────────────────
@@ -584,56 +578,84 @@ def recalculate_confidence(request: Request, _auth: None = Depends(require_write
 
 # ─── Ingestion ────────────────────────────────────────────────────────────────
 
+def _iso(timestamp: Optional[float]) -> Optional[str]:
+    """Epoch seconds → ISO-8601 string (None-safe)."""
+    if timestamp is None:
+        return None
+    from datetime import datetime
+    return datetime.fromtimestamp(timestamp).isoformat()
+
+
+def _latest_ingestion_job(store, status: str) -> Optional[dict]:
+    """Most recent ingestion job in the given terminal status."""
+    from jobs.backend import INGESTION_KINDS
+
+    for record in store.list_recent(25):
+        if record.get("kind") in INGESTION_KINDS and record.get("status") == status:
+            return record
+    return None
+
+
 @app.get("/api/ingestion/status", response_model=IngestionSummary)
 def ingestion_status():
-    from ingestion.scheduler import get_run_log, is_running
+    """
+    Summary of the last ingestion run and whether one is in flight.
+
+    Reads the durable job registry rather than process-local counters, so it
+    stays accurate when ingestion runs in a separate worker process.
+    """
     from ingestion.progress import progress_tracker
+    from jobs.backend import active_ingestion_job
+    from jobs.store import STATUS_COMPLETED, get_job_store
 
-    running = is_running() or progress_tracker.get_progress().get("running", False)
+    running = (
+        active_ingestion_job() is not None
+        or progress_tracker.get_progress().get("running", False)
+    )
 
-    log = get_run_log()
-    if not log:
-        return {
-            "new_papers": 0,
-            "new_claims": 0,
-            "last_run": None,
-            "running": running
-        }
-    last = log[-1]
+    last = _latest_ingestion_job(get_job_store(), STATUS_COMPLETED)
+    if not last:
+        return {"new_papers": 0, "new_claims": 0, "last_run": None, "running": running}
+
+    result = last.get("result") or {}
     return {
-        "new_papers": last.get("papers_added", 0),
-        "new_claims": last.get("claims_added", 0),
-        "last_run": last.get("timestamp"),
-        "running": running
+        "new_papers": result.get("papers_added", 0),
+        "new_claims": result.get("claims_added", 0),
+        "last_run": _iso(last.get("finished_at")),
+        "running": running,
     }
 
 
-@app.post("/api/ingestion/trigger")
+@app.post("/api/ingestion/trigger", status_code=202)
 @limiter.limit("2/minute")
-def trigger_ingestion(background_tasks: BackgroundTasks, request: Request, _auth: None = Depends(require_write_access)):
-    """Trigger an ingestion cycle in the background (requires an API key)."""
+def trigger_ingestion(request: Request, _auth: None = Depends(require_write_access)):
+    """
+    Queue an ingestion cycle across the configured topics (requires an API key).
 
-    from ingestion.scheduler import trigger_now
-    background_tasks.add_task(trigger_now)
-    return {"status": "ingestion started in background"}
+    Returns a job id; poll `GET /api/jobs/{job_id}` for completion.
+    """
+    from jobs.backend import JOB_INGESTION, JobConflictError, submit
+
+    try:
+        job_id, backend = submit(JOB_INGESTION)
+    except JobConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
+    return {"status": "queued", "job_id": job_id, "backend": backend}
 
 
-@app.post("/api/ingestion/custom")
+@app.post("/api/ingestion/custom", status_code=202)
 @limiter.limit("5/minute")
 def trigger_custom_ingestion(
     body: dict,
-    background_tasks: BackgroundTasks,
     request: Request,
     _auth: None = Depends(require_write_access)
 ):
-    """Trigger a custom ingestion cycle with a specific topic and paper count limit (requires an API key)."""
+    """
+    Queue an ingestion cycle for a specific topic and paper limit (requires an API key).
 
-    from ingestion.progress import progress_tracker
-    from ingestion.scheduler import is_running
-    if is_running() or progress_tracker.get_progress()["running"]:
-        raise HTTPException(status_code=409, detail="An ingestion pipeline is already running")
-
-    topic = body.get("topic", "").strip()
+    Returns a job id; live counters are on `GET /api/ingestion/progress`.
+    """
+    topic = str(body.get("topic", "")).strip()
     limit = body.get("limit", 5)
 
     if not topic:
@@ -642,19 +664,55 @@ def trigger_custom_ingestion(
         limit = int(limit)
         if limit <= 0 or limit > 50:
             raise ValueError()
-    except ValueError:
+    except (TypeError, ValueError):
         raise HTTPException(status_code=422, detail="limit must be an integer between 1 and 50")
 
-    from ingestion.scheduler import run_custom_ingestion
-    background_tasks.add_task(run_custom_ingestion, topic, limit)
-    return {"status": "custom ingestion started in background"}
+    from jobs.backend import JOB_CUSTOM_INGESTION, JobConflictError, submit
+
+    try:
+        job_id, backend = submit(JOB_CUSTOM_INGESTION, {"topic": topic, "limit": limit})
+    except JobConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
+    return {"status": "queued", "job_id": job_id, "backend": backend}
 
 
 @app.get("/api/ingestion/progress")
 def get_custom_ingestion_progress():
-    """Retrieve the real-time status and logs of the active custom ingestion run."""
+    """
+    Real-time status and logs of the active ingestion run.
+
+    Works across processes: when ingestion runs in the worker, the counters are
+    read from Redis. If a job is queued but no worker has claimed it yet, a
+    synthetic `queued` snapshot is returned so clients do not fall back to an
+    idle view in the gap between submit and start. Internal error text is not
+    echoed to clients (full detail is in the server logs), matching the API's
+    error-handling policy.
+    """
     from ingestion.progress import progress_tracker
-    return progress_tracker.get_progress()
+    from jobs.backend import active_ingestion_job
+
+    progress = progress_tracker.get_progress()
+
+    if progress.get("status") == "idle":
+        job = active_ingestion_job()
+        if job:
+            payload = job.get("_payload") or {}
+            progress = {
+                **progress,
+                "status": "queued",
+                "topic": payload.get("topic", ""),
+                "limit": payload.get("limit", 0),
+                "current_step": "Waiting for a worker to pick up the job",
+                "percent": 5,
+                "running": True,
+                "logs": [
+                    f"Queued as job {job.get('id', '')} — waiting for the ingestion worker."
+                ],
+            }
+
+    if progress.get("error_message"):
+        progress["error_message"] = "Ingestion failed. Check the server logs for details."
+    return progress
 
 
 # ─── Knowledge Graph ──────────────────────────────────────────────────────────

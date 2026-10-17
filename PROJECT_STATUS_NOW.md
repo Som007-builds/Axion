@@ -1,137 +1,500 @@
-# Project Status Report (`PROJECT_STATUS_NOW.md`)
-**Generated at:** 2026-08-10 (Current Workspace Snapshot)
+# Axion — Full System Guide (right now)
 
-> ⚠️ **SUPERSEDED.** This is a point-in-time snapshot from 2026-08-10. The eval
-> dataset has changed since (see §8 of [`PROJECT_INFO.md`](PROJECT_INFO.md) and
-> [`eval/README.md`](eval/README.md)): `eval/Data/Labeled_pairs.csv` is now
-> 0 bytes and the harness was rewritten. Do not rely on the row counts below.
-> Authoritative inventory: [`PROJECT_INFO.md`](PROJECT_INFO.md).
+**Snapshot:** 2026-10-17 · `main` @ `c5afca9` · this file replaces the previous
+point-in-time status report.
+
+This is the operational guide to Axion **as it exists today**: what the system
+is, what is in it, how to start it, verify it and troubleshoot it — and what is
+honestly *not* true yet. It is written for whoever has to run or review the
+system, not to sell it.
+
+Companion documents:
+
+| Document | Authoritative for |
+| :--- | :--- |
+| `PROJECT_INFO.md` | Full capability inventory, data model, product/technical limitations |
+| `README.md` | User-facing overview, install steps, API and configuration reference |
+| `progress.md` | Remediation tracker — every done/todo item with evidence |
+| `eval/README.md` | Evaluation harness usage, dataset caveats, targets |
+| **this file** | The system *right now*: run it, verify it, operate it |
 
 ---
 
-## 1. DATASET STATE
+## 1. What Axion is
 
-### File List & Row Counts (`eval/Data/`)
+Axion turns a set of research papers into a **queryable, connected map of what
+they claim** — and where those claims conflict. It fetches papers from arXiv,
+extracts atomic claims with provenance (section, evidence span, structured
+fields), stores them in a graph (Neo4j) and a vector index (ChromaDB), then uses
+an LLM to judge which cross-paper claim pairs *support*, *contradict*, or are
+*unrelated* to each other. From that graph it derives research gaps,
+contradiction-resolving experiment proposals, consensus evolution over time, and
+citation-weighted confidence.
 
-| File Name | Size | Line/Row Count | Label / Column Summary |
+Two things make it more than a document Q&A bot: everything is **claim-level with
+provenance**, and the headline workflow is **contradiction-first** — surface the
+conflict, explain it, and propose the minimal experiment that would settle it.
+
+**Honest posture:** the pipeline works end to end and is deployed, tested and
+authenticated; the statistics of the contradiction classifier are *not* yet
+trustworthy (see §11), and the system is a self-hosted prototype, not a
+multi-tenant product (§13).
+
+---
+
+## 2. Right-now snapshot (verified 2026-10-17)
+
+| Area | State |
+| :--- | :--- |
+| **Live corpus** | 48 papers · 2,389 claims · 2,389 vectors · 224 `CONTRADICTS` · 132 `SUPPORTS` · 93 `RELATED_TO` · 18 gaps · 36 experiment designs |
+| **Stack** | 5 containers (`neo4j`, `redis`, `api`, `worker`, `web`), all healthy |
+| **API** | 23 routes (22 under `/api` + `/healthz`), OpenAPI at `/docs` |
+| **Auth** | Shared `AXION_API_KEY` on every write/compute route **and** job polling; fail-closed |
+| **Background work** | Durable RQ + Redis queue, separate `worker` process; `202` + `GET /api/jobs/{id}`; cross-process verified |
+| **LLM chain** | `groq` (`openai/gpt-oss-20b`) → `gemini` (`gemini-3.8-flash`, thinking disabled); Claude available, not in the chain |
+| **Tests** | **229 passed / 12 deselected** offline; integration suite needs live services; CI on every push |
+| **Frontend** | Next.js 16.2.6 (standalone), React 19, TS 5.7, Tailwind v4; `pnpm lint` 0 errors (2 known warnings) |
+| **Eval** | `axion_pairs.csv` (286 pairs: 4/11/271); baselines recorded; retrieval gate measured; **post-change LLM run blocked on quota** |
+| **Blocker** | `GROQ_API_KEY` / `GEMINI_API_KEY` must be reissued — both free tiers are exhausted (200k tokens/day Groq; 20 requests/day Gemini) |
+
+---
+
+## 3. Start it
+
+### 3.1 Docker Compose — the supported path
+
+```bash
+cp .env.example .env          # then fill in the values below
+docker compose up -d --build  # build both images and start all five services
+docker compose ps             # expect: neo4j/redis/api/web healthy, worker up
+```
+
+Required in `.env` before first start:
+
+| Variable | Why |
+| :--- | :--- |
+| `NEO4J_PASSWORD` | Neo4j refuses to start without it |
+| `AXION_API_KEY` | Write/compute routes fail **closed** (503) without it |
+| `GROQ_API_KEY` and/or `GEMINI_API_KEY` | Without one, ingestion and queries fail on the first LLM call |
+
+Endpoints once up: API `http://localhost:8000` (`/docs` for OpenAPI), web UI
+`http://localhost:3000`, Neo4j Browser `http://localhost:7474` (bolt `7887`),
+Redis `127.0.0.1:6389`. Neo4j and Redis are loopback-bound; the API and web are
+published on all interfaces.
+
+Frontend notes: `NEXT_PUBLIC_API_URL` is baked in at **build** time; changing it
+needs `docker compose build web`. The web server also needs its own
+`AXION_API_URL=http://api:8000` and `AXION_API_KEY` (both set by Compose from the
+root `.env`) so its server-side proxy can attach the key.
+
+### 3.2 Local development (no Docker)
+
+```bash
+python -m venv venv && venv\Scripts\activate      # Windows
+pip install -r requirements.txt -r requirements-dev.txt
+docker compose up -d neo4j redis                  # datastores only
+python -m uvicorn api.main:app --reload --port 8000
+cd axion && pnpm install && pnpm dev              # separate terminal
+```
+
+Optional: `python -m jobs.worker` in a third terminal to consume queued jobs
+locally. On Windows the worker automatically uses RQ's `SimpleWorker` (no
+`os.fork`), so per-job timeouts are not enforced there. Without `REDIS_URL` the
+API runs all jobs in-process instead — fine for development, but jobs are then
+lost on restart and invisible to other processes.
+
+### 3.3 CLI — batch operations
+
+```bash
+python main.py --mode ingest --query "chain of thought prompting" --n 10
+python main.py --mode contradict     # judge claim pairs + recalc confidence
+python main.py --mode gaps           # discover research gaps
+python main.py --mode experiments    # design experiments for contradictions
+python main.py --mode query          # run a coordinator query from the shell
+python main.py --mode confidence     # recompute confidence
+python main.py --mode citations      # refresh citation weights
+python main.py --mode schedule       # run one scheduler cycle in the foreground
+python main.py --mode backup         # Neo4j backup (host-side, shells out to Docker)
+```
+
+### 3.4 Verify the deployment
+
+```bash
+python scripts/queue_smoke.py     # auth on job routes + submits a query, reports
+                                  # whether the worker claims it (queued -> running)
+python eval/measure_gate.py       # offline: replays the retrieval gate over the
+                                  # live vector index; no LLM, no writes
+pytest                            # the offline suite (229 tests)
+```
+
+The smoke script needs the API key (reads `AXION_API_KEY` or the repo-root
+`.env`) and submits a **real** query, so it consumes LLM quota.
+
+---
+
+## 4. Architecture
+
+### 4.1 Services (docker-compose.yml, project `axion`)
+
+| Service | Image | Port(s) | Role |
 | :--- | :--- | :--- | :--- |
-| `candidate_pairs.csv` | 35.7 MB | **2,227 rows** | Raw exported semantic candidate claim pairs (top-8 neighbors). |
-| `candidate_pairs_backfill.csv` | 85.2 KB | **247 rows** | Candidates sorted by cosine distance for backfilling dataset. |
-| `labeled_pairs.csv` | 5.08 MB | **300 rows** | Full expert-annotated claim pairs dataset (300 pairs). |
-| `labeled_pairs_cleaned.csv` | 1.05 MB | **68 rows** | Filtered dataset with intra-paper (same `arxiv_id`) pairs removed. |
-| `train.csv` | 3.57 MB | **210 rows** | Stratified training split (70% of `labeled_pairs.csv`). |
-| `val.csv` | 756.8 KB | **45 rows** | Stratified validation split (15% of `labeled_pairs.csv`). |
-| `test.csv` | 758.2 KB | **45 rows** | Stratified test split (15% of `labeled_pairs.csv`). |
-| `pairs_text_only.txt` | 140.2 KB | **1,800 lines** | Text formatted view of `labeled_pairs.csv` for human inspection. |
-| `embeddings_cache.pkl` | 0 bytes | **0 rows** | Empty pickle cache file. |
+| `neo4j` | `neo4j:5.18-community` | `127.0.0.1:7887` bolt, `7474` browser | Graph store; APOC enabled; schema initialised on boot |
+| `redis` | `redis:7.4-alpine` | `127.0.0.1:6389` | Durable job registry + queue + cross-process progress mirror |
+| `api` | root `Dockerfile` | `8000` | FastAPI, single Uvicorn worker, reads/writes the graph, enqueues jobs, every request path except heavy work |
+| `worker` | same image as `api` | — | `python -m jobs.worker`; executes ingestion and research-query jobs |
+| `web` | `axion/Dockerfile` | `3000` | Next.js standalone UI + server-side proxy that holds the API key |
+
+State lives outside the containers: Neo4j in the `neo4j_data` volume, ChromaDB
+vectors and downloaded PDFs in the bind-mounted `./data`, and Hugging Face model
+weights in the `hf_cache` volume. Job state lives in Redis (TTL-bounded).
+
+> ChromaDB is opened by two processes (API reads, worker writes) over `./data`.
+> SQLite/WAL handles that, but keep the **worker at 1 replica** while
+> `SCHEDULER_ENABLED=true`, and treat the graph as the source of truth.
+
+### 4.2 One ingestion cycle, step by step
+
+1. **Fetch** (`ingestion/arxiv_client.py`) — topic search on arXiv, PDF download
+   with retry/backoff.
+2. **Parse** (`ingestion/pdf_parser.py`) — text extraction, section split,
+   chunking (800 chars, 100 overlap).
+3. **Chunk embeddings** — `paper_chunks` collection in ChromaDB.
+4. **Extract claims** (`agents/reader.py`, LLM, ≤ 8 per section, ≥ 20 chars) —
+   structured claim + evidence span + section, persisted to Neo4j with
+   `EXTRACTED_FROM`, and embedded into the `claims` collection.
+5. **Retrieve candidates** (`embeddings/store.py`) — top-8 nearest claims by
+   cosine distance; same-paper and same-claim pairs are skipped, and only pairs
+   within `CONTRADICTION_MAX_DISTANCE` (0.35) reach the judge.
+6. **Judge** (`agents/contradiction.py`, LLM + deterministic guard) — returns
+   `CONTRADICTS` / `SUPPORTS` / `UNRELATED` with an explanation, confidence, and a
+   three-part decomposition; a `CONTRADICTS` verdict is **demoted** unless all
+   three decomposition flags are true.
+7. **Persist relationships** — non-`UNRELATED` verdicts become `CONTRADICTS` /
+   `SUPPORTS` edges in Neo4j.
+8. **Gaps** (`agents/gap_finder.py`, LLM) — open questions from future-work and
+   limitation sections, linked to claims by `RELATED_TO`.
+9. **Experiments** (`agents/experiment_recommender.py`, LLM) — a minimal
+   experiment design stored as JSON on the contradiction edge.
+10. **Confidence** (`agents/confidence_updater.py`) — heuristic propagation
+    (`base + 0.08·supports − 0.12·contradictions`).
+
+A **research query** (Coordinator v2) plans → retrieves → reflects (≤ 3
+iterations) → synthesises a cited report; it runs as a queued job, never inside
+the HTTP request.
+
+### 4.3 Component map
+
+| Component | Path | Responsibility | LLM? |
+| :--- | :--- | :--- | :--: |
+| arXiv client | `ingestion/arxiv_client.py` | topic search, PDF download | ❌ |
+| PDF parser | `ingestion/pdf_parser.py` | text, sections, chunks | ❌ |
+| Scheduler | `ingestion/scheduler.py` | periodic/custom ingestion; **enqueues** when a queue exists | ❌ |
+| Progress tracker | `ingestion/progress.py` | status + logs for the UI, mirrored via Redis | ❌ |
+| Reader | `agents/reader.py` | structured claim extraction + provenance | ✅ |
+| Contradiction agent | `agents/contradiction.py` | candidate gate + relationship adjudication + demotion guard | ✅ |
+| Gap finder | `agents/gap_finder.py` | gaps from future work + claim clusters | ✅ |
+| Experiment recommender | `agents/experiment_recommender.py` | minimal resolving-experiment design | ✅ |
+| Confidence updater | `agents/confidence_updater.py` | heuristic propagation | ❌ |
+| Temporal agent | `agents/temporal.py` | consensus evolution, dispute timelines | ✅ |
+| Citation agent | `agents/citation.py` | Semantic Scholar counts + weighting helper | ❌ |
+| Coordinator v2 | `agents/coordinator_v2.py` (+ planner/reflector/synthesizer) | multi-step question answering | ✅ |
+| Graph layer | `graph/neo4j_client.py`, `neo4j_queries.py`, `neo4j_schema.py` | driver, Cypher, schema | ❌ |
+| Vector layer | `embeddings/store.py` | `claims` + `paper_chunks` collections | ❌ |
+| Job queue | `jobs/` (`backend`, `store`, `tasks`, `worker`, `redis_conn`) | durable queue + worker, in-process fallback | ❌ |
+| LLM router | `llm.py` | provider chain, retries, cooldown, optional cache | — |
+| API | `api/main.py`, `api/models.py` | 22 `/api` routes + `/healthz` | — |
+| Frontend | `axion/` | six-view workspace + server-side proxy | — |
 
 ---
 
-### Label Distributions (Labeled Files)
+## 5. Data model
 
-* **`labeled_pairs.csv`** (n = 300)
-  * `UNRELATED`: 177 (59.0%)
-  * `SUPPORTS`: 118 (39.3%)
-  * `CONTRADICTS`: 5 (1.7%)
+### 5.1 Neo4j (graph store)
 
-* **`labeled_pairs_cleaned.csv`** (n = 68; same-paper pairs removed)
-  * `UNRELATED`: 68 (100.0%)
-  * `SUPPORTS`: 0 (0.0%)
-  * `CONTRADICTS`: 0 (0.0%)
-  * *Note: All 118 `SUPPORTS` and 5 `CONTRADICTS` pairs in the original `labeled_pairs.csv` were intra-paper pairs (from the exact same paper).*
+- **Nodes:** `Paper` (unique `arxiv_id`), `Claim` (unique `claim_id`),
+  `Gap` (unique `gap_id`); `Benchmark` / `Dataset` / `Method` constraints exist
+  but **no code populates those nodes**.
+- **Edges:** `EXTRACTED_FROM` (claim → paper), `CONTRADICTS`, `SUPPORTS`,
+  `RELATED_TO` (claim ↔ claim / gap).
+- **Claim properties:** text, `section`, `evidence_span`, `base_confidence`,
+  `confidence`, `paper_year`, structured fields (`subject`, `metric`,
+  `direction`, …), and provenance links.
+- **Experiment designs** are stored as JSON on the `CONTRADICTS` edge, not as
+  separate nodes.
+- Indexes cover year, section, confidence, subject, metric and direction.
+- Schema is created idempotently at startup (`graph/neo4j_schema.py`).
 
-* **`train.csv`** (n = 210; 70% stratified split)
-  * `UNRELATED`: 124 (59.0%)
-  * `SUPPORTS`: 83 (39.5%)
-  * `CONTRADICTS`: 3 (1.4%)
+### 5.2 Redis (queue + shared job state)
 
-* **`val.csv`** (n = 45; 15% stratified split)
-  * `UNRELATED`: 27 (60.0%)
-  * `SUPPORTS`: 17 (37.8%)
-  * `CONTRADICTS`: 1 (2.2%)
+| Key | Contents |
+| :--- | :--- |
+| `rq:queue:axion` | pending jobs (RQ) |
+| `axion:job:<id>` | job record: `{id, kind, status, created_at, started_at, finished_at, result, error}` |
+| `axion:jobs:index` | ZSET of job ids by creation time |
+| ingestion progress keys | the UI progress mirror |
 
-* **`test.csv`** (n = 45; 15% stratified split)
-  * `UNRELATED`: 26 (57.8%)
-  * `SUPPORTS`: 18 (40.0%)
-  * `CONTRADICTS`: 1 (2.2%)
+Job records expire after `JOB_TTL_SECONDS` (default 1 day). The API and the
+worker share this state, which is why job polling survives an API restart.
 
----
+### 5.3 ChromaDB (vector store) and files
 
-### Stage 1 Ingestion Status & Neo4j Verification
-
-* **Status:** **FULLY COMPLETED** (Stage 1 ingestion successfully finished).
-* **Paper Count:** **48 papers** in Neo4j (increased from 9 baseline papers to 48 papers).
-* **Claim Nodes in Neo4j:** **2,389 claims**.
-* **Vector Embeddings in ChromaDB:** **2,389 vectors**.
-* **Neo4j Relationships:**
-  * `EXTRACTED_FROM`: 2,389
-  * `CONTRADICTS`: 224
-  * `SUPPORTS`: 132
-  * `RELATED_TO`: 93
+- `claims` — one 384-dim embedding per claim (`all-MiniLM-L6-v2`, computed locally).
+- `paper_chunks` — section chunks used for retrieval during synthesis.
+- `data/papers/` downloaded PDFs · `data/db/chroma/` vector store ·
+  `data/backups/` Neo4j backups.
 
 ---
 
-## 2. CODE STATE
+## 6. API surface
 
-### Modifiability & Integration Audits
+Base URL `http://localhost:8000`. OpenAPI: `/docs`, `/redoc`, `/openapi.json`.
+🔑 = requires `X-API-Key: <AXION_API_KEY>`; if the key is unset the route
+returns **503** (fail-closed), and a wrong/missing key returns **401**. The
+legacy `X-Trigger-Secret` header is still accepted on the ingestion triggers.
+Global rate limit 60/min per IP, with tighter per-route limits below.
 
-* **`agents/contradiction.py` Status:** **Unmodified / Baseline State.**
-  * `git status` confirms zero working directory modifications.
-  * Uses standard prompt-based LLM classification (`check_pair` calling `call_llm`).
-  * No classifier model, hybrid cascade, or local model integration has been attempted inside this file.
+| Method | Path | Purpose | Auth | Limit |
+| :--- | :--- | :--- | :--: | :--- |
+| GET | `/healthz` | liveness; always 200 while serving | — | — |
+| GET | `/api/health` | readiness; 503 if Neo4j/Chroma unreachable | — | — |
+| GET | `/api/metrics` | in-memory metrics summary | — | — |
+| GET | `/api/stats` | graph counts | — | — |
+| GET | `/api/claims` | list claims (`limit`, `offset`) | — | — |
+| GET | `/api/claims/{id}/provenance` | full provenance chain for a claim | — | — |
+| GET | `/api/contradictions` | contradictions (`min_confidence`, `limit`) | — | — |
+| GET | `/api/experiments/{contradiction_id}` | stored experiment design | — | — |
+| POST | `/api/experiments/{contradiction_id}/design` | design + store an experiment | 🔑 | 5/min |
+| GET | `/api/gaps` | gaps (`?source=`) | — | — |
+| POST | `/api/query` | **enqueue** a research query → `202 {job_id}` | 🔑 | 10/min |
+| GET | `/api/jobs` | recent jobs, newest first (`limit` ≤ 100) | 🔑 | — |
+| GET | `/api/jobs/{job_id}` | job status + result | 🔑 | — |
+| GET | `/api/temporal/evolution` | consensus evolution (`topic`, years) | — | — |
+| GET | `/api/temporal/disputes` | dispute timeline (`topic`) | — | — |
+| GET | `/api/confidence/distribution` | confidence histogram | — | — |
+| GET | `/api/confidence/most-changed` | biggest confidence moves | — | — |
+| POST | `/api/confidence/recalculate` | recompute confidence for all claims | 🔑 | 2/min |
+| GET | `/api/ingestion/status` | last run + running flag (queue-aware) | — | — |
+| GET | `/api/ingestion/progress` | live progress + logs (Redis-mirrored) | — | — |
+| POST | `/api/ingestion/trigger` | **enqueue** one ingestion cycle → `202` | 🔑 | 2/min |
+| POST | `/api/ingestion/custom` | **enqueue** `{topic, limit}` (1–50) → `202` | 🔑 | 5/min |
+| GET | `/api/graph` | nodes/edges for the graph canvas | — | — |
 
-* **Classifier & Model Directory Status:**
-  * Directory `eval/classifier/`: **Does NOT exist.**
-  * Directory `eval/models/`: **Exists but is empty** (0 files / 0 trained model weights).
-
----
-
-### Script Inventory (`eval/` & `eval/Data/`)
-
-1. **`eval/baseline_llm_eval.py`**: Evaluates baseline LLM prediction performance on `eval/data/test.csv` using `agents.contradiction.check_pair()` and outputs latency/accuracy metrics to `eval/results/baseline_llm.json`.
-2. **`eval/run_eval.py`**: Empty script placeholder (0 bytes).
-3. **`eval/Data/apply_labels.py`**: Applies expert annotation dictionary to 300 candidate pairs in `labeled_pairs.csv`.
-4. **`eval/Data/clean_and_backfill.py`**: Removes intra-paper pairs (`claim_a_arxiv_id == claim_b_arxiv_id`) from `labeled_pairs.csv` to generate `labeled_pairs_cleaned.csv` and outputs top un-labeled candidate pairs to `candidate_pairs_backfill.csv`.
-5. **`eval/Data/export_candidate_pairs.py`**: Searches ChromaDB for top-8 semantic claim neighbors across papers and exports candidate claim pairs with embeddings to CSV.
-6. **`eval/Data/extract_text.py`**: Exports formatted text representation of `labeled_pairs.csv` into `pairs_text_only.txt` for manual inspection.
-7. **`eval/Data/inspect_pairs.py`**: Helper script printing shape, column list, and non-null count for `labeled_pairs.csv`.
-8. **`eval/Data/print_stats.py`**: Displays top 15 most similar pairs and summary distance stats for `candidate_pairs_backfill.csv`.
-9. **`eval/Data/print_v2_stats.py`**: Helper script printing top 20 pairs and distance statistics for `candidate_pairs_v2.csv`.
-10. **`eval/Data/run_export_v2.py`**: Wrapper script executing `export_candidate_pairs()` targeted at `eval/data/candidate_pairs_v2.csv`.
-11. **`eval/Data/split_dataset.py`**: Executes stratified random splitting (70% train / 15% val / 15% test) on `labeled_pairs.csv`.
-
----
-
-## 3. RESULTS STATE
-
-### Evaluation Summary (`eval/results/`)
-
-* **File Present:** `eval/results/baseline_llm.json`
-* **Timestamp:** `2026-08-02T08:38:51Z`
-* **Version Status:** **OLD CONTAMINATED VERSION.**
-  * Generated on August 2 on the uncleaned dataset.
-  * Contains `latency_ms: 0.0` for all intra-paper pairs (same `arxiv_id`) because `check_pair()` immediately returned `None` when checking same-paper pairs, which defaulted to `UNRELATED` in early metrics.
-  * Has **NOT** been re-run on the cleaned dataset (`labeled_pairs_cleaned.csv`) or the newly expanded 48-paper graph.
-
-* **Recorded Baseline Metrics:**
-  * **Accuracy:** `0.4889`
-  * **Precision (Macro):** `0.1789`
-  * **Recall (Macro):** `0.2821`
-  * **F1 (Macro):** `0.2189`
-  * **Average Latency:** `216.25 ms`
-  * **P50 Latency:** `0.00 ms`
-  * **P95 Latency:** `1,037.75 ms`
+The frontend never sees the key. Write/compute calls go through the Next.js
+route handler `axion/app/api/backend/[...path]/route.ts`, which matches an
+explicit **method + path allowlist** (5 POST patterns + `GET jobs/{id}`),
+attaches the key server-side, and returns 404 for anything else — so it cannot
+be used as an open proxy. Read-only endpoints are called directly from the
+browser.
 
 ---
 
-## 4. LAST KNOWN ACTION
+## 7. Background jobs — the contract
 
-* **Last Action Before Hang / Restart:**
-  * The ingestion pipeline (Stage 1) for fetching overlapping arXiv papers was launched in the background, followed by initiating `run_export_v2.py` for exporting updated candidate pairs from the 48-paper graph.
+Every long operation is a job. The request returns immediately; the client polls.
 
-* **State of Partial Writes & Databases:**
-  * **Neo4j Graph Database:** **Complete and Consistent.** All 48 paper nodes, 2,389 claim nodes, and 2,838 graph relationships are completely written and indexed.
-  * **ChromaDB Vector Index:** **Complete and Consistent.** All 2,389 claim vector embeddings are indexed and in sync with Neo4j.
-  * **CSV Exports:** `candidate_pairs_v2.csv` was not created before the restart, leaving no corrupted partial CSV file.
-  * **Existing Data Splits:** `train.csv`, `val.csv`, `test.csv`, `labeled_pairs.csv`, and `labeled_pairs_cleaned.csv` are intact and uncorrupted.
-  * **Conclusion:** No cleanup or manual database repair is required. The system is in a clean, consistent state ready for next steps.
+```bash
+# submit (also used by ingestion triggers)
+curl -X POST http://localhost:8000/api/query \
+  -H "Content-Type: application/json" -H "X-API-Key: $AXION_API_KEY" \
+  -d '{"question": "Do larger models benefit more from chain-of-thought prompting?"}'
+# -> {"job_id":"...","status":"queued","backend":"rq"}
+
+# poll
+curl http://localhost:8000/api/jobs/<job_id> -H "X-API-Key: $AXION_API_KEY"
+# -> {"id","kind","status","created_at","started_at","finished_at","result","error","backend"}
+```
+
+- `status` ∈ `queued` · `running` · `completed` · `failed`.
+- **Two backends, one contract:** `backend: "rq"` when `REDIS_URL` is set (jobs
+  are durable and executed by the worker process); `backend: "inline"` otherwise
+  (thread pool in the API process — development only).
+- **Failure text is sanitized:** clients see
+  `"Job failed. Check the server logs for details."`; the full exception is
+  logged (`docker compose logs worker`).
+- **Ingestion exclusivity:** the scheduler enqueues instead of running, and
+  `active_ingestion_job()` reads the shared registry, so a second ingestion
+  request gets `409` while one is active — across processes.
+- **Retries:** RQ re-queues a job whose worker was killed mid-flight; a job
+  killed while `running` is retried when a worker returns.
+- **Timeouts:** `JOB_TIMEOUT_SECONDS` (1800) is handed to RQ; per-job timeout
+  enforcement requires `os.fork` (Linux containers), not Windows `SimpleWorker`.
+- Internal `_payload` is stripped from every API response (`public_view`), so job
+  polling cannot leak the submitted question payload beyond the job's own result.
+
+---
+
+## 8. LLM layer
+
+| Setting | Value today |
+| :--- | :--- |
+| Chain | `["groq", "gemini"]` (Claude is configured but not in the chain) |
+| Groq model | `openai/gpt-oss-20b` (reasoning models run with `reasoning_effort=low`) |
+| Gemini model | `gemini-3.8-flash` with `GEMINI_THINKING_BUDGET=0` (Gemini 3.x otherwise burns ~110–130 hidden thought tokens per call) |
+| Transient errors | retried on a short schedule (2 s / 5 s / 10 s) |
+| Rate limits | fall through to the next provider |
+| Hard failures | provider is **benched** for `LLM_PROVIDER_COOLDOWN_SECONDS` (300 s), so a dead provider does not cost retry time on every call |
+| Cache | optional in-process `LLM_CACHE_ENABLED` (default off) |
+| Observable via | `/api/metrics` (calls, tokens, timings) and structured logs |
+
+If **every** provider is unavailable the chain raises
+`All LLM providers exhausted after retries. Chain tried: [...]` → the job fails
+cleanly and the error is logged. That is exactly what happens today, because
+both free-tier quotas are exhausted (§2).
+
+---
+
+## 9. Configuration
+
+All of it comes from `.env` (loaded by `config.py`). The values that matter:
+
+| Variable | Default | Meaning |
+| :--- | :--- | :--- |
+| `NEO4J_URI` / `NEO4J_USERNAME` / `NEO4J_PASSWORD` | `bolt://localhost:7887` / `neo4j` / — | graph connection (password required) |
+| `GROQ_API_KEY` / `GEMINI_API_KEY` / `ANTHROPIC_API_KEY` | — | LLM credentials |
+| `GEMINI_MODEL` / `GEMINI_THINKING_BUDGET` | `gemini-3.8-flash` / `0` | Gemini model + thinking budget |
+| `LLM_PROVIDER_COOLDOWN_SECONDS` | `300` | provider bench time after a hard failure |
+| `LLM_CACHE_ENABLED` | `false` | in-process response cache |
+| `AXION_API_KEY` | — (fail-closed) | shared secret for write/compute **and** job routes |
+| `TRIGGER_SECRET` | — | legacy `X-Trigger-Secret` alias |
+| `REDIS_URL` | — (⇒ in-process jobs) | queue + shared job state (Compose sets the bundled Redis) |
+| `JOB_TTL_SECONDS` / `JOB_TIMEOUT_SECONDS` | `86400` / `1800` | job retention / job timeout |
+| `CONTRADICTION_MAX_DISTANCE` | `0.35` | max cosine distance that reaches the LLM judge |
+| `SCHEDULER_ENABLED` / `SCHEDULER_INTERVAL_HOURS` / `SCHEDULER_PAPERS_PER_RUN` | `false` / `6` / `5` | periodic ingestion in the API process (single process only) |
+| `ALLOWED_ORIGINS` | `http://localhost:3000,http://localhost:5173` | CORS allow-list |
+| `NEXT_PUBLIC_API_URL` | `http://localhost:8000` | browser → API base (build-time, public) |
+| `AXION_API_URL` | `http://localhost:8000` | web server → API base (runtime, e.g. `http://api:8000` in Compose) |
+| `LOG_LEVEL` / `LOG_FORMAT` | `INFO` / `text` | logging |
+
+Non-env constants in `config.py`: embedding model `all-MiniLM-L6-v2`,
+`CHUNK_SIZE=800`, `CHUNK_OVERLAP=100`, `MAX_CLAIMS_PER_PAPER=8`,
+`GROQ_MODEL=openai/gpt-oss-20b`, the scheduler topics (all LLM-related).
+
+---
+
+## 10. Testing and CI
+
+```bash
+pytest                  # offline suite: 229 passed, 12 deselected (no services needed)
+pytest -m integration   # opt-in: needs live Neo4j + ChromaDB (and sometimes LLM)
+pytest tests/test_jobs.py -q          # queue + worker policy
+pytest tests/test_llm_router.py -q    # provider fallback, cooldown, retries
+cd axion; pnpm lint; pnpm build       # frontend: 0 lint errors, type-checked build
+```
+
+CI (`.github/workflows/ci.yml`) runs the offline backend suite and a frontend
+production build on every push/PR to `main`. Coverage is not measured.
+
+What is **not** covered: view-level frontend tests, a load/soak test, and any
+test that needs real provider quota.
+
+---
+
+## 11. Evaluation state (the honest version)
+
+Two different questions, two different answers:
+
+**Retrieval — measured, deterministic.** `eval/measure_gate.py` replays the
+production top-8 search over all 2,389 claims (11,602 unique pairs):
+
+| Gate | Pairs sent to the judge | Claims with a candidate |
+| ---: | ---: | ---: |
+| `0.95` (previous) | **100 %** — the gate was inert | 100 % |
+| `0.35` (current) | **42.6 %** (57.4 % fewer judge calls) | 80.2 % |
+
+Pair distances: min 0.000, p50 0.379, p90 0.538, p99 0.652, max 0.769.
+
+**Judging — not measured on the new prompt.** `eval/Data/axion_pairs.csv`
+(286 reviewed cross-paper pairs: 4 `CONTRADICTS` / 11 `SUPPORTS` / 271
+`UNRELATED`) with these recorded baselines:
+
+| Predictor | Accuracy | Macro F1 | `CONTRADICTS` P / R |
+| :--- | ---: | ---: | ---: |
+| majority (all `UNRELATED`) | 0.9476 | 0.3244 | 0.00 / 0.00 |
+| random (fixed seed) | 0.3706 | 0.2191 | 0.13 / 0.38 |
+| LLM (prefix baseline, pre-change prompt) | 0.8427 | 0.4822 | 0.15 / 0.50 |
+
+The re-run against the **new prompt + demotion guard** died at pair 10/286 when
+both free tiers ran out (Groq 200k tokens/day; Gemini 20 `gemini-3.8-flash`
+requests/day). No post-change metric is claimed anywhere in this repository. The
+fixes are covered by unit tests and a 6-pair hand-built probe (6/6 agreement),
+which is *not* a benchmark. The human audit of the existing graph found only
+**4 of 224** auto-detected contradictions to be real (~1.8 % precision) — that
+number is why the gate and prompt work happened.
+
+To finish this: reissue the two LLM keys, expand the reviewed `CONTRADICTS` set
+(4 positives cannot support a precision claim), then run
+`python eval/run_eval.py --predictor llm --dataset axion_pairs.csv`.
+
+---
+
+## 12. Security posture
+
+- **Shared-key auth**, not accounts. One `AXION_API_KEY` gates everything that
+  spends tokens, mutates the graph, or returns job results; it fails closed.
+- **The key stays server-side.** It is held by the Next.js server and injected
+  by the proxy route; it is never part of the browser bundle. Verified: no secret
+  in any served JS chunk.
+- **Datastores are loopback-bound** (Neo4j, Redis). The API and web UI are not.
+- **Errors are generic** to clients and detailed in logs.
+- **Rotations done:** `AXION_API_KEY`, `TRIGGER_SECRET`, Neo4j password.
+  **Outstanding:** `GROQ_API_KEY` and `GEMINI_API_KEY` must be reissued (they
+  were exposed in a config dump and are currently rate-capped anyway).
+- **Not present:** TLS/reverse proxy, per-user identity, quotas, secret manager,
+  scheduled backups, APOC restriction.
+
+Do not expose this stack to an untrusted network as-is.
+
+---
+
+## 13. What is not true yet (do not claim it)
+
+1. **No trustworthy contradiction-quality number.** The new prompt's precision
+   and recall are unmeasured (§11); only the retrieval gate is measured.
+2. **No per-user auth or multi-tenancy.** One shared key, no accounts, roles, or
+   quotas.
+3. **No production deployment story.** Plain HTTP, no reverse proxy, no domain,
+   backups are manual and host-side.
+4. **No durable metrics/observability.** `/api/metrics` resets on restart; no
+   tracing, alerting or persistent store.
+5. **Single-process ingestion.** The scheduler and metrics are process-local; the
+   worker must stay at 1 replica while the scheduler is enabled.
+6. **No human-in-the-loop correction** — nothing can be accepted, rejected or
+   edited from the UI, and no feedback reaches the system.
+7. **Feature gaps:** no export (PDF/Markdown/CSV), no notifications, no
+   collaboration, no mobile/offline mode, no multilingual support, query history
+   is browser-local, gaps carry no stored confidence.
+8. **Coverage is ML/LLM-flavoured** (the default scheduler topics are all
+   LLM-related); no domain guarantees.
+9. **No migration framework** — schema changes are ad-hoc scripts.
+10. **Live LLM features are down until keys are reissued** (quota exhausted).
+
+---
+
+## 14. Troubleshooting
+
+| Symptom | Check |
+| :--- | :--- |
+| Compute routes return **503** | `AXION_API_KEY` unset on the server — it fails closed by design |
+| Compute routes return **401** in the UI | The web server's `AXION_API_KEY` differs from the API's |
+| Jobs stay **queued** forever | `docker compose logs worker` — it needs `REDIS_URL` and prints `*** Listening on axion`; run `python scripts/queue_smoke.py` |
+| A job is **running** but never finishes | LLM retries/cooldowns; with every provider dead it fails after several minutes. Check `docker compose logs worker` for the real error |
+| Query returns a generic failure | The full exception is only in the worker logs (client text is sanitized on purpose) |
+| `/api/health` returns 503 | Neo4j or ChromaDB unreachable; check `docker compose ps` and `NEO4J_PASSWORD` |
+| Frontend cannot reach the API | `NEXT_PUBLIC_API_URL` is baked in at build time — rebuild the `web` image |
+| `pytest` fails on collection | You're running integration tests without services; use plain `pytest` (they're deselected) |
+| Port conflicts | Host ports in use: 7887, 7474, 8000, 6389, 3000 |
+| Worker crash-loops with `'str' object has no attribute 'decode'` | Fixed — upgrade past commit `82526c3` (the Redis client must run in bytes mode) |
+
+---
+
+## 15. Ownership of facts
+
+If this file and another doc disagree, trust them in this order:
+`PROJECT_INFO.md` (inventory) → `README.md` (usage) → this file (current
+operation) → `progress.md` (history/checklist). Anything about evaluation
+semantics and targets lives in `eval/README.md`.
+
+Finally: the on-disk folder is still named `schimesh` while the project, the
+GitHub repository and every artefact are **Axion**; the old
+`scimesh_neo4j_data` volume still exists with data under the retired password
+and should not be deleted without a decision.

@@ -219,7 +219,7 @@ flowchart TD
 | Coordinator v2 | `agents/coordinator_v2.py` (+ `planner`/`reflector`/`synthesizer`) | Multi-step question answering | ✅ |
 | Graph layer | `graph/neo4j_client.py`, `neo4j_queries.py`, `neo4j_schema.py` | Driver, Cypher queries, schema setup | ❌ |
 | Vector layer | `embeddings/store.py` | ChromaDB collections for claims and chunks | ❌ |
-| API | `api/main.py`, `api/models.py` | 22 HTTP routes and response models | — |
+| API | `api/main.py`, `api/models.py` | 22 `/api` routes + `/healthz`, response models | — |
 | Frontend | `axion/` | Six-view research workspace | — |
 | LLM router | `llm.py` | Provider fallback, transient retry, provider cooldown, optional cache | — |
 

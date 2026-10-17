@@ -206,8 +206,9 @@ flowchart TD
 | :--- | :--- | :--- | :--: |
 | arXiv client | `ingestion/arxiv_client.py` | Topic search and PDF download (retry with backoff) | ❌ |
 | PDF parser | `ingestion/pdf_parser.py` | Text extraction, section splitting, chunking | ❌ |
-| Scheduler | `ingestion/scheduler.py` | Periodic/custom ingestion; overlap guard; run log | ❌ |
-| Progress tracker | `ingestion/progress.py` | In-process ingestion status and logs for the UI | ❌ |
+| Scheduler | `ingestion/scheduler.py` | Periodic/custom ingestion; overlap guard; run log; **enqueues** when a queue exists | ❌ |
+| Job queue | `jobs/` (`backend`, `store`, `tasks`, `worker`) | Durable RQ + Redis queue and worker; in-process threads when Redis is absent | ❌ |
+| Progress tracker | `ingestion/progress.py` | Ingestion status and logs for the UI, mirrored through Redis across processes | ❌ |
 | Reader | `agents/reader.py` | Structured claim extraction and provenance stamping | ✅ |
 | Contradiction agent | `agents/contradiction.py` | Candidate retrieval + relationship adjudication | ✅ |
 | Gap finder | `agents/gap_finder.py` | Gaps from future work and claim clusters | ✅ |
@@ -218,9 +219,9 @@ flowchart TD
 | Coordinator v2 | `agents/coordinator_v2.py` (+ `planner`/`reflector`/`synthesizer`) | Multi-step question answering | ✅ |
 | Graph layer | `graph/neo4j_client.py`, `neo4j_queries.py`, `neo4j_schema.py` | Driver, Cypher queries, schema setup | ❌ |
 | Vector layer | `embeddings/store.py` | ChromaDB collections for claims and chunks | ❌ |
-| API | `api/main.py`, `api/models.py` | 21 HTTP routes and response models | — |
+| API | `api/main.py`, `api/models.py` | 22 HTTP routes and response models | — |
 | Frontend | `axion/` | Six-view research workspace | — |
-| LLM router | `llm.py` | Provider fallback, retry/backoff, optional cache | — |
+| LLM router | `llm.py` | Provider fallback, transient retry, provider cooldown, optional cache | — |
 
 > The graph store and the vector store are **independent systems kept roughly in
 > sync by the ingestion code**. Writing a claim to Neo4j does not guarantee the
@@ -238,8 +239,9 @@ flowchart TD
 | Vector store | ChromaDB | `chromadb==1.5.9`, local persistent |
 | Embeddings | sentence-transformers `all-MiniLM-L6-v2` | 384-dim, runs locally |
 | PDF parsing | PyMuPDF | `PyMuPDF==1.27.2.3` |
-| LLM SDKs | Groq, Google GenAI, Anthropic | `llama-3.1-8b-instant`, `gemini-2.0-flash`, `claude-sonnet-4-20250514` |
-| Scheduling | APScheduler | in-process, single-worker only |
+| LLM SDKs | Groq, Google GenAI, Anthropic | `openai/gpt-oss-20b`, `gemini-3.8-flash`, `claude-sonnet-4-20250514` |
+| Background jobs | RQ + Redis, thread fallback | one `worker` sidecar; jobs survive API restarts |
+| Scheduling | APScheduler | in-process; enqueues rather than runs when a queue exists |
 | Frontend | Next.js 16.2.6, React 19, TypeScript 5.7 | App Router, single route |
 | Styling | Tailwind CSS v4, shadcn/ui primitives | `@tailwindcss/postcss` |
 | Data fetching | SWR | polling for status/progress |
@@ -269,12 +271,19 @@ steps can be reproduced exactly and which cannot.
    `evidence_span`, linked by an `EXTRACTED_FROM` edge; the same text is embedded
    into ChromaDB with `arxiv_id`/`paper_year` metadata.
 5. **Retrieve candidate related claims** *(deterministic)* — for each claim,
-   `find_similar_claims()` returns the nearest vectors; only pairs whose distance
-   is `≤ CONTRADICTION_THRESHOLD` (0.95) are considered. Same-paper and same-claim
-   pairs are skipped.
-6. **Assess potential relationships** *(LLM-assisted)* — the candidate pair is
-   sent to an LLM that returns `CONTRADICTS`, `SUPPORTS`, or `UNRELATED` plus a
-   one-sentence explanation and a confidence value.
+   `find_similar_claims()` returns the 8 nearest vectors; only pairs whose cosine
+   distance is `≤ CONTRADICTION_MAX_DISTANCE` reach the judge, and same-paper /
+   same-claim pairs are skipped. Measured on the current 2,389-claim index with
+   `eval/measure_gate.py`: the previous `0.95` threshold let **100 %** of the
+   11,602 retrieved pairs through (it was inert), whereas `0.35` passes
+   **42.6 %** — 57.4 % fewer LLM judgements — while 80 % of claims still keep at
+   least one candidate.
+6. **Assess potential relationships** *(LLM-assisted, guarded)* — the candidate
+   pair is sent to an LLM that returns `CONTRADICTS`, `SUPPORTS`, or `UNRELATED`
+   with an explanation, a confidence value, and a three-part decomposition
+   (`same_phenomenon`, `comparable_measurement`, `opposite_outcome`). A
+   `CONTRADICTS` verdict is **demoted deterministically** unless all three are
+   true, so a confident-but-unjustified call cannot become an edge.
 7. **Store graph relationships** *(deterministic)* — non-`UNRELATED` verdicts
    become `CONTRADICTS`/`SUPPORTS` edges with `explanation` and `confidence`.
 8. **Discover possible gaps** *(LLM-assisted)* — future-work/limitation sections
@@ -320,9 +329,9 @@ Additional surfaces: a **dashboard stats** panel fed by `/api/stats`, a global
 
 Honest notes on current UI behaviour:
 
-- The query view shows a **static list of the pipeline stages** while a request is
-  in flight. The code deliberately does *not* animate completed stages, because
-  `/api/query` runs synchronously and reports no per-stage progress.
+- The query view shows a **static list of the pipeline stages** while a job runs.
+  The code deliberately does *not* animate completed stages, because the queued
+  job reports no per-stage progress — only `queued` → `running` → `completed`.
 - Query history is stored in **browser `localStorage` only** — it is not saved
   server-side and is lost across devices.
 - There is **no export** (PDF/Markdown/CSV) and **no streaming** of responses.
@@ -478,7 +487,7 @@ move between views.
 | `ServiceUnavailable` / Neo4j connection errors | Neo4j is not up or the password is wrong. Check `docker compose ps`, the `NEO4J_PASSWORD` value, and that the host port is `7887`. |
 | `/api/health` returns `503` | Neo4j and/or ChromaDB is unreachable. `/healthz` returning `200` is expected even when degraded. |
 | First ingestion is slow / downloads a model | sentence-transformers downloads `all-MiniLM-L6-v2` on first use; it needs network access once. |
-| LLM calls hang, then fail | The router retries rate limits with backoff up to **300 s per attempt** before switching providers; check your keys and quotas. |
+| LLM calls hang, then fail | The router retries transient 5xx/timeouts briefly, switches providers on rate limits, and **benches** a provider that fails hard for `LLM_PROVIDER_COOLDOWN_SECONDS` (default 300 s). Check your keys and quotas — with every provider exhausted, a job fails rather than hangs. |
 | Ingestion/compute endpoints return `503` | `AXION_API_KEY` is unset on the server. The API fails **closed** by design. |
 | Compute endpoints return `401` in the UI | The web server's `AXION_API_KEY` does not match the backend's. Set the same value in the root `.env` and `axion/.env.local`. |
 | CORS errors in the browser | Add the frontend origin to `ALLOWED_ORIGINS` and restart the API. |
@@ -488,12 +497,14 @@ move between views.
 
 ## Docker deployment
 
-`docker-compose.yml` defines a three-service stack.
+`docker-compose.yml` defines a five-service stack.
 
 | Service | Image / build | Port(s) | Notes |
 | :--- | :--- | :--- | :--- |
 | `neo4j` | `neo4j:5.18-community` | `127.0.0.1:7887` (Bolt), `127.0.0.1:7474` (Browser) | APOC enabled; password from `NEO4J_PASSWORD`; loopback-bound; healthchecked via `cypher-shell`. |
+| `redis` | `redis:7.4-alpine` | `127.0.0.1:6389` | Job queue + shared job records; loopback-bound; healthchecked; `appendonly` off (jobs are recoverable, the graph is the source of truth). |
 | `api` | build from root `Dockerfile` | `8000:8000` | Python 3.11-slim, CPU-only PyTorch, pinned `requirements.txt`, **single Uvicorn worker**, `/healthz` healthcheck, mounts `./data`. |
+| `worker` | same image as `api` | — | `python -m jobs.worker`; consumes the queue, runs ingestion and research queries. Scale only if the scheduler is disabled. |
 | `web` | build from `axion/Dockerfile` | `3000:3000` | Multi-stage Node 20 + pnpm, Next.js **standalone** output, non-root user, healthcheck. |
 
 **Named volumes:** `neo4j_data`, `neo4j_logs`, `hf_cache` (sentence-transformers
@@ -541,16 +552,23 @@ docker compose logs -f neo4j      # database
   restart.
 - **Ingestion/compute calls return `401` or `503`** — set `AXION_API_KEY` in `.env`
   (both the `api` and `web` services read it) and rebuild/restart the stack.
-- **Port conflicts** — the stack uses host ports `7887`, `7474`, `8000`, and
-  `3000`; adjust the mappings if any are taken.
+- **Jobs stay `queued` forever** — the worker is not consuming: check
+  `docker compose logs worker` and run `python scripts/queue_smoke.py` (submits a
+  query and reports whether the worker claims it). The worker needs `REDIS_URL`
+  and prints `*** Listening on axion` when healthy. A job left `running` after a
+  hard kill is retried by RQ when the worker comes back.
+- **Port conflicts** — the stack uses host ports `7887`, `7474`, `8000`, `6389`,
+  and `3000`; adjust the mappings if any are taken.
 
-> **Verified:** the full stack builds and runs — `axion_neo4j`, `axion_api`, and
-> `axion_web` all report healthy, the graph survives restarts, and a real LLM
-> query succeeds end-to-end through the frontend proxy. This is still **not** a
-> production deployment: there is no reverse proxy, TLS, or per-user
-> authentication. The single shared `AXION_API_KEY` gates write/compute
-> endpoints; add a real identity layer before exposing the app to untrusted
-> users.
+> **Verified:** the full stack builds and runs — `axion_neo4j`, `axion_redis`,
+> `axion_api`, `axion_worker`, and `axion_web` all report healthy; the graph
+> survives restarts; a research query is accepted by the API (`202`), executed by
+> the **separate worker process**, and its status observed changing from `queued`
+> to `running` via `GET /api/jobs/{id}`; and the same flow works through the
+> frontend proxy. This is still **not** a production deployment: there is no
+> reverse proxy, TLS, or per-user authentication. The single shared
+> `AXION_API_KEY` gates write/compute endpoints; add a real identity layer before
+> exposing the app to untrusted users.
 
 ---
 
@@ -574,6 +592,13 @@ All variables are read from `.env` (loaded by `config.py` / `python-dotenv`).
 | `SCHEDULER_ENABLED` | Run periodic ingestion inside the API process | `false` | No | Backend (single worker) |
 | `SCHEDULER_INTERVAL_HOURS` | Scheduler cadence in hours | `6` | No | Backend |
 | `SCHEDULER_PAPERS_PER_RUN` | Papers fetched per topic per run | `5` | No | Backend |
+| `REDIS_URL` | Redis used for the durable job queue and cross-process progress; empty ⇒ in-process thread pool | — (empty) | No | Backend + worker |
+| `JOB_TTL_SECONDS` | How long a finished job record is kept | `86400` | No | Backend + worker |
+| `JOB_TIMEOUT_SECONDS` | Per-job timeout handed to the queue | `1800` | No | Backend + worker |
+| `CONTRADICTION_MAX_DISTANCE` | Max cosine distance for a claim pair to reach the LLM judge | `0.35` | No | Backend |
+| `GEMINI_MODEL` | Gemini model id | `gemini-3.8-flash` | No | Backend |
+| `GEMINI_THINKING_BUDGET` | Gemini thinking-token budget (`0` disables it) | `0` | No | Backend |
+| `LLM_PROVIDER_COOLDOWN_SECONDS` | How long a hard-failing provider is benched | `300` | No | Backend |
 | `AXION_API_KEY` | Shared secret for write/compute endpoints (`X-API-Key`); empty ⇒ those endpoints return `503` | — (empty) | **Yes** for query/ingestion | Backend + web server |
 | `TRIGGER_SECRET` | Legacy alias still accepted via `X-Trigger-Secret` on ingestion triggers | — (empty) | No | Backend |
 | `AXION_API_URL` | Backend address used by the Next.js server-side proxy | `http://localhost:8000` | In Compose | Web server |
@@ -588,10 +613,12 @@ All variables are read from `.env` (loaded by `config.py` / `python-dotenv`).
 > attached by the frontend's server-side proxy at
 > `axion/app/api/backend/[...path]/route.ts`.
 
-Non-environment settings live in `config.py` and are not user-configurable via
-`.env`: the embedding model (`all-MiniLM-L6-v2`), `CHUNK_SIZE=800`,
-`CHUNK_OVERLAP=100`, `MAX_CLAIMS_PER_PAPER=8`, `CONTRADICTION_THRESHOLD=0.95`,
-the provider chain, and the five default `SCHEDULER_TOPICS` (all LLM-related).
+Non-environment settings live in `config.py`: the embedding model
+(`all-MiniLM-L6-v2`), `CHUNK_SIZE=800`, `CHUNK_OVERLAP=100`,
+`MAX_CLAIMS_PER_PAPER=8`, `LLM_PROVIDER` / `LLM_PROVIDER_CHAIN`, and the five
+default `SCHEDULER_TOPICS` (all LLM-related). Everything else — including
+`CONTRADICTION_MAX_DISTANCE`, `REDIS_URL`, `GEMINI_MODEL` and the job timeouts —
+is an `.env` value listed in the table above.
 
 ---
 
@@ -602,9 +629,10 @@ Interactive OpenAPI documentation is generated automatically at **`/docs`**
 (Swagger UI), with ReDoc at **`/redoc`** and the raw schema at
 **`/openapi.json`**. Request/response models are defined in `api/models.py`.
 
-Almost every route is **unauthenticated**. Only the two ingestion endpoints
-require a secret; everything else is open to anyone who can reach the service
-(see [Security considerations](#security-considerations)).
+Read-only routes are **unauthenticated**. Everything that spends LLM tokens,
+mutates the graph, or submits/follows a background job requires the shared
+`AXION_API_KEY`; if the key is unset those routes fail closed with `503` (see
+[Security considerations](#security-considerations)).
 
 ### Health and status
 
@@ -615,11 +643,16 @@ require a secret; everything else is open to anyone who can reach the service
 | GET | `/api/metrics` | In-memory metrics summary (LLM calls, ingestion, writes, cache) | — |
 | GET | `/api/stats` | Graph counts: papers, claims, contradictions, gaps, experiments | — |
 
-### Research queries
+### Research queries and background jobs
+
+Long work is **never** run inline on the request thread: the API creates a job
+record, hands it to the queue, and returns immediately with `202 Accepted`.
 
 | Method | Path | Description | Auth | Rate limit |
 | :--- | :--- | :--- | :--: | :--- |
-| POST | `/api/query` | Run Coordinator v2 on `{"question": "..."}` (≤ 500 chars) | — | 10/min |
+| POST | `/api/query` | Submit Coordinator v2 (≤ 500 chars) → `202 {job_id, status, backend}` | 🔑 | 10/min |
+| GET | `/api/jobs/{job_id}` | Poll one job (`queued`/`running`/`completed`/`failed` + result) | 🔑 | — |
+| GET | `/api/jobs` | Most recent jobs, newest first | 🔑 | — |
 
 ### Claims and provenance
 
@@ -663,8 +696,8 @@ require a secret; everything else is open to anyone who can reach the service
 | :--- | :--- | :--- | :--: | :--- |
 | GET | `/api/ingestion/status` | Last run summary and running flag | — | — |
 | GET | `/api/ingestion/progress` | Live custom-ingestion progress and logs | — | — |
-| POST | `/api/ingestion/trigger` | Trigger one ingestion cycle in the background | 🔑 | 2/min |
-| POST | `/api/ingestion/custom` | Ingest by `{"topic", "limit"}` (1–50) in the background | 🔑 | 5/min |
+| POST | `/api/ingestion/trigger` | Enqueue one ingestion cycle → `202` | 🔑 | 2/min |
+| POST | `/api/ingestion/custom` | Enqueue `{"topic", "limit"}` ingestion (1–50) → `202` | 🔑 | 5/min |
 
 ### Graph access
 
@@ -735,14 +768,22 @@ consensus point should cite at least one arXiv ID.
 
 ### Ask the API directly
 
+Both examples enqueue work: the response is `202` with a `job_id`, and the result
+is fetched by polling the job.
+
 ```bash
+# 1. submit
 curl -X POST http://localhost:8000/api/query \
   -H "Content-Type: application/json" \
   -H "X-API-Key: $AXION_API_KEY" \
   -d '{"question": "Do larger models benefit more from chain-of-thought prompting?"}'
+# {"job_id":"b0fae4af…","status":"queued","backend":"rq"}
+
+# 2. poll until finished
+curl http://localhost:8000/api/jobs/b0fae4af… -H "X-API-Key: $AXION_API_KEY"
 ```
 
-Triggering a custom ingestion (same key):
+Triggering a custom ingestion (same key, same `202` + job id shape):
 
 ```bash
 curl -X POST http://localhost:8000/api/ingestion/custom \
@@ -750,6 +791,11 @@ curl -X POST http://localhost:8000/api/ingestion/custom \
   -H "X-API-Key: $AXION_API_KEY" \
   -d '{"topic": "instruction tuning language models", "limit": 5}'
 ```
+
+Job records are shared through Redis, so `GET /api/jobs/{id}` works from any API
+process and survives an API restart; RQ also retries a job whose worker was
+killed mid-flight. Without `REDIS_URL` the same API works in-process, but jobs
+are lost on restart.
 
 ---
 
@@ -759,32 +805,27 @@ curl -X POST http://localhost:8000/api/ingestion/custom \
 
 | Item | State |
 | :--- | :--- |
-| Offline suite | **154 passed, 12 deselected** (verified locally for this document) |
+| Offline suite | **229 passed, 12 deselected** (verified locally for this document) |
 | Integration tests | `tests/test_neo4j.py`, `tests/test_claims.py` need a live Neo4j/ChromaDB; marked `integration` and excluded by default |
 | CI | `.github/workflows/ci.yml` runs the offline backend suite and a frontend production build on every push/PR to `main` |
 | Coverage | Not measured |
 | Frontend lint | ESLint via `pnpm lint`: 0 errors, 2 intentional hydration warnings in `query-panel.tsx` / `app/page.tsx` |
 
-Run the offline tests (no Neo4j, ChromaDB, or LLM required):
+Run the offline tests (no Neo4j, ChromaDB, Redis, or LLM required):
 
 ```bash
-pytest                       # 120 passed, 12 deselected
+pytest                       # 229 passed, 12 deselected
 pytest -m integration        # opt-in: requires live Neo4j / ChromaDB
 ```
-
-> `tests/test_phase4.py` and `tests/test_phase5.py` are integration-oriented
-> suites: phase 4 contributes 1 integration test and phase 5 contributes 14
-> tests (9 offline, 5 integration). The integration ones are deselected by
-> default and only run with `-m integration`.
 
 ### Evaluation harness
 
 The harness lives in `eval/` with a single entry point:
 
 ```bash
-python eval/run_eval.py --predictor majority            # offline smoke run (used by CI)
+python eval/run_eval.py --predictor majority                        # offline smoke run (used by CI)
 python eval/run_eval.py --predictor random --seed 7
-python eval/run_eval.py --predictor llm --dataset test.csv   # needs LLM keys + network
+python eval/run_eval.py --predictor llm --dataset axion_pairs.csv   # needs LLM quota + network
 ```
 
 It evaluates `agents/contradiction.check_pair` on labelled claim pairs and writes
@@ -793,51 +834,58 @@ headline metric), weighted F1, per-class precision/recall/F1, a confusion matrix
 latency stats, dataset composition, and explicit `warnings`. Full details are in
 [`eval/README.md`](./eval/README.md).
 
-### ⚠️ The current dataset cannot measure production contradiction detection
+### The current dataset: `axion_pairs.csv`
 
-This is the most important caveat in the repository, so it is stated plainly:
+`eval/Data/axion_pairs.csv` is the reviewed set the harness reports on — 286
+cross-paper pairs that the production agent would actually score:
 
-- **Every `SUPPORTS` and `CONTRADICTS` label in `train.csv`, `val.csv`, and
-  `test.csv` is a same-paper pair** (both claims share an `arxiv_id`).
-- The production agent **refuses to compare two claims from the same paper**, so
-  after the harness's production-aligned same-paper exclusion, the test split
-  becomes **100% `UNRELATED`**.
-- Consequently the majority baseline scores **accuracy 1.0 / macro F1 0.33** on
-  the default run. The `1.0` is an artifact of a single-class, production-
-  inapplicable slice — **it is not evidence that contradiction detection works.**
+| CONTRADICTS | SUPPORTS | UNRELATED |
+| ---: | ---: | ---: |
+| 4 | 11 | 271 |
 
-| split | CONTRADICTS | SUPPORTS | UNRELATED | cross-paper rows |
-| :--- | ---: | ---: | ---: | ---: |
-| train | 3 | 83 | 124 | 48 (all UNRELATED) |
-| val | 1 | 17 | 27 | 10 (all UNRELATED) |
-| test | 1 | 18 | 26 | 10 (all UNRELATED) |
+Recorded baselines (`eval/results/`, 2026-08):
 
-Additional dataset problems:
+| predictor | accuracy | macro F1 | CONTRADICTS P / R |
+| :--- | ---: | ---: | ---: |
+| majority (all `UNRELATED`) | 0.9476 | 0.3244 | 0.00 / 0.00 |
+| random (fixed seed) | 0.3706 | 0.2191 | 0.13 / 0.38 |
+| LLM (`llm_axion_pairs_prefix_baseline.json`) | 0.8427 | 0.4822 | 0.15 / 0.50 |
 
-- `eval/Data/Labeled_pairs.csv` is **0 bytes** (the source dataset is missing), so
-  the splits cannot be regenerated.
-- `eval/Data/labeled_pairs_cleaned.csv` is **100% UNRELATED** and must not be used
-  as an eval set.
-- `eval/results/baseline_llm.json` (2026-08-02) was produced by a script that
-  conflated same-paper pairs, `UNRELATED` verdicts, and parse failures, so its
-  denominator is wrong; it is kept for history only.
-- `check_pair()` collapses `UNRELATED`, same-paper pairs, and JSON parse failures
-  into the same `None` return, so a silent parse failure is indistinguishable from
-  a genuine negative.
+The `CONTRADICTS` class is thin: **4 positive pairs** make its precision and recall
+noisy, so every `CONTRADICTS` figure below is indicative, not measured. The older
+`train.csv` / `val.csv` / `test.csv` splits are obsolete — their positives are
+same-paper pairs the agent refuses to score, and `eval/Data/Labeled_pairs.csv` is
+0 bytes, so they cannot be regenerated — and are kept for history only.
 
-**What the harness can demonstrate today:** that the plumbing runs, that metrics
-are computed correctly, and that offline predictors work in CI. **What it cannot
-demonstrate:** the real-world precision, recall, or macro F1 of the production
-contradiction detector. No trustworthy accuracy figure for that classifier exists
-in this repository, and none is claimed here.
+### The retrieval gate is measured; the judge is not (yet)
+
+The two halves of contradiction detection need two different measurements:
+
+- **Candidate retrieval is deterministic and measured.** `eval/measure_gate.py`
+  (offline: no LLM, no writes) replays the production top-8 search over all 2,389
+  claims and reports, for a range of gate values, how many of the 11,602 unique
+  neighbour pairs would reach the judge. The previous value (`0.95`) passed
+  **100 %** of them — the gate was inert; the current
+  `CONTRADICTION_MAX_DISTANCE=0.35` passes **42.6 %** (57.4 % fewer judge calls)
+  while 80 % of claims still keep at least one candidate. Pair distances: min
+  0.000, p50 0.379, p90 0.538, p99 0.652, max 0.769.
+- **The LLM judge itself is not measured on the new prompt yet.** That needs a
+  full `--predictor llm` run, which requires provider quota. The run is currently
+  **blocked**: the free tiers allow 200,000 Groq tokens/day and **20
+  `gemini-3.8-flash` requests/day**, both exhausted. No post-change LLM metrics
+  are claimed anywhere in this document. The code-level changes (stricter prompt
+  with a worked example, three-part decomposition guard, distance gate) are
+  described under [How the research pipeline works](#how-the-research-pipeline-works),
+  covered by unit tests, and sanity-checked by a hand-built 6-pair probe with 6/6
+  agreement.
 
 ### What a valid evaluation requires
 
-A meaningful evaluation needs a **new, properly labelled dataset of cross-paper
-claim pairs** carrying real positive `CONTRADICTS`/`SUPPORTS` labels — pairs the
-production agent would actually score. Until that exists, report `f1_macro`
-(rather than accuracy), always print the class mix and warnings, and never cite a
-single run as proof of quality. Proposed (currently unverified) targets are
+A meaningful benchmark needs **more reviewed positives** — 4 `CONTRADICTS` pairs
+cannot support a precision claim — and a paid (or generously limited) LLM key so
+the full set can be re-run after any prompt change. Until then, report `f1_macro`
+(rather than accuracy), always print the class mix and `warnings`, and never cite
+a single run as proof of quality. Proposed (currently unverified) targets are
 documented in `eval/README.md`: macro F1 ≥ 0.55 and `CONTRADICTS` recall ≥ 0.60.
 
 ---
@@ -849,11 +897,20 @@ deliberately not hidden.
 
 ### Correctness and evaluation
 
-- **No trustworthy production-aligned contradiction evaluation.** The labelled
-  set's positives are same-paper pairs the agent refuses to score (details above).
+- **No trustworthy production-aligned contradiction evaluation.** The reviewed
+  set (`axion_pairs.csv`) has only **4 `CONTRADICTS` pairs**, and the post-change
+  LLM run is blocked on provider quota — so precision and recall for that class
+  are indicative at best (details in
+  [Evaluation and testing](#evaluation-and-testing)).
 - **LLM relationship judgments can be wrong.** Complementary findings can be
-  flagged as contradictions when parameter scopes differ, and parse failures are
-  indistinguishable from genuine negatives.
+  flagged as contradictions when parameter scopes differ. Mitigations are in
+  place and covered by tests — a stricter prompt, a deterministic
+  three-part-decomposition guard that demotes unjustified `CONTRADICTS` calls,
+  and a distance gate — but they reduce, not eliminate, false positives.
+  `check_pair()` still returns `None` for `UNRELATED`, same-paper pairs, and
+  parse failures alike; callers that pass the optional `diagnostics` dict can
+  tell them apart (the contradiction run records per-verdict flags), while the
+  eval harness does not separate them yet.
 - **Confidence is heuristic, not calibrated.** `base + 0.08·supports −
   0.12·contradictions` is a simple propagation rule, not a probability. The
   citation-weighting helper exists but is not part of the default confidence path.
@@ -868,13 +925,16 @@ deliberately not hidden.
 - **No per-user authentication or multi-tenancy.** A single shared
   `AXION_API_KEY` gates all write/compute endpoints. There are no accounts,
   roles, quotas, or per-user isolation.
-- **In-process, non-durable background work.** Ingestion runs in a background
-  task/thread and state (scheduler, metrics, progress) is process-local; running
-  more than one API worker would duplicate ingestion and desynchronise state.
-  There is **no durable job queue**, so long jobs are lost on restart.
-- **Long-running synchronous research queries.** `/api/query` runs the full
-  multi-iteration LLM loop inside the HTTP request and can block for a long time;
-  LLM back-off can sleep up to 300 s per attempt.
+- **Job durability depends on Redis.** With `REDIS_URL` set, job records live in
+  Redis (TTL-bounded) and a crash of the API or the worker does not lose them;
+  without it the API falls back to an in-process thread pool whose jobs die with
+  the process. Metrics and scheduler state remain process-local, and exactly one
+  process may run ingestion (the scheduler enqueues when a queue exists).
+- **Long-running queries are queued, not streamed.** `/api/query` returns a job
+  id immediately (`202`) and the client polls `GET /api/jobs/{id}`. The job still
+  runs the full multi-iteration LLM loop, and LLM back-off can sleep up to 300 s
+  per attempt, so a query can take minutes; progress is reported at the job level
+  only (`queued` → `running` → `completed`/`failed`), not per pipeline stage.
 - **Incomplete observability and operations.** Metrics are in-memory and reset on
   restart; there is no tracing, alerting, or persistent metrics store. Neo4j
   backups are a **host-side utility that shells out to Docker** and are not
@@ -905,10 +965,11 @@ deliberately not hidden.
 internet.** What exists today:
 
 - **Shared-key authentication on write/compute endpoints.** `/api/query`,
-  `/api/experiments/{id}/design`, `/api/confidence/recalculate`, and the
-  ingestion triggers require `X-API-Key: $AXION_API_KEY` and fail closed (`503`)
-  when the key is unset. Read-only endpoints stay public. The legacy
-  `X-Trigger-Secret` header is still accepted.
+  `/api/experiments/{id}/design`, `/api/confidence/recalculate`, the ingestion
+  triggers, and job polling (`GET /api/jobs…`) require
+  `X-API-Key: $AXION_API_KEY` and fail closed (`503`) when the key is unset.
+  Read-only endpoints stay public. The legacy `X-Trigger-Secret` header is still
+  accepted.
 - **The key is server-side only.** The browser calls a Next.js route handler
   (`/api/backend/...`) that attaches the key; it is never inlined into the client
   bundle.
@@ -955,26 +1016,29 @@ new features.
 - [x] Confidence propagation and temporal analysis
 - [x] Coordinator v2 (plan → retrieve → reflect → synthesize)
 - [x] Six-view Next.js workspace with keyboard navigation
-- [x] Offline test suite (120 passing) and CI for backend tests + frontend build
+- [x] Offline test suite (229 passing) and CI for backend tests + frontend build
 - [x] Dockerfiles, full-stack Compose, healthchecks, `/healthz` liveness
+- [x] Shared-key auth on write/compute routes; job polling is key-guarded too
+- [x] Durable job queue (RQ + Redis) with `202` + `GET /api/jobs/{id}` polling
 - [x] MIT license
 
 **Planned / in progress**
 
-1. **Production-aligned evaluation** — build a cross-paper labelled dataset with
-   real positive examples; re-run the LLM baseline; set and verify thresholds.
+1. **Production-aligned evaluation** — the harness, dataset, and baselines exist
+   (`eval/`), but `axion_pairs.csv` holds only 4 reviewed `CONTRADICTS` pairs, so
+   per-class numbers are noisy; the post-change end-to-end run is currently
+   **blocked on provider quota** (Groq 200k tokens/day, Gemini 20 requests/day on
+   the free tier).
 2. **Claim quality and evidence-aware adjudication** — make parse failures
    distinguishable from genuine negatives and improve structured extraction.
 3. **Researcher verification and correction workflows** — let users accept,
    reject, or edit claims, relationships, and experiments, and feed that back.
-4. **API security** — real authentication and authorization, per-user rate
-   limits, and protection for compute endpoints.
-5. **Durable task execution and persistent state** — a real job queue (Celery/RQ)
-   for ingestion and long queries; cross-process state.
-6. **Observability, backups, and migration discipline** — persistent metrics,
+4. **Real authentication and authorization** — per-user identity, roles, and
+   quotas to replace the single shared `AXION_API_KEY`.
+5. **Observability, backups, and migration discipline** — persistent metrics,
    tracing, alerting; scheduled backups; a real migration framework.
-7. **Frontend correctness and documentation cleanup** — add linting, remove dead
-   dependencies/components, and reconcile remaining docs.
+6. **Frontend correctness and documentation cleanup** — linting is wired up;
+   what remains is view-level test coverage and committed screenshots.
 
 ---
 

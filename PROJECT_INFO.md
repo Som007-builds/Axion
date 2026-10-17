@@ -24,13 +24,13 @@
 | **Datastores** | Neo4j 5.18 (graph), ChromaDB (vectors), filesystem (PDFs/backups) |
 | **LLM providers** | Groq (primary), Google Gemini (fallback), Anthropic Claude (available, not in default chain) |
 | **Embeddings** | `all-MiniLM-L6-v2` (384-dim) via sentence-transformers |
-| **API endpoints** | 21 (20 functional + `/healthz` liveness) |
+| **API endpoints** | 23 (22 under `/api` + `/healthz` liveness) |
 | **UI surfaces** | 6 views + dashboard stats + ingestion sheet |
-| **Tests** | 111 passing offline, 6 integration deselected |
+| **Tests** | 229 passing offline, 12 integration deselected |
 | **Data (verified 2026-10-17)** | 48 papers · 2,389 claims · 224 contradictions · 132 supports · 93 related · 18 gaps · 36 experiments |
-| **Demo readiness** | ~85% |
-| **Product readiness** | ~40% (see §12) |
-| **Licence** | Not specified in repo (⚠️ missing) |
+| **Demo readiness** | ~92% |
+| **Product readiness** | ~50% (see §12) |
+| **Licence** | MIT (`LICENSE`) |
 
 ---
 
@@ -157,12 +157,12 @@ Legend: ✅ works · 🟡 works with caveats · ❌ not implemented / unsupporte
 
 | Capability | Status | Detail |
 | :--- | :--: | :--- |
-| REST API | ✅ | 21 endpoints (see §5.6) |
+| REST API | ✅ | 23 endpoints (see §5.6) |
 | OpenAPI docs | ✅ | `/docs` (FastAPI default) |
 | Web UI (6 views) | ✅ | Next.js; dark glass design system |
-| Real-time query progress | ❌ | fake animation during query load |
+| Real-time query progress | 🟡 | job-level only (`queued` → `running` → `completed`); no per-stage progress |
 | Streaming LLM responses | ❌ | single JSON response |
-| Auth / accounts | ❌ | none (see §9) |
+| Auth / accounts | 🟡 | shared `AXION_API_KEY` on write/compute + job routes; no accounts (see §9) |
 | Persisted query history | 🟡 | `localStorage` only (per-browser) |
 | Export (PDF/Markdown/report download) | ❌ | not implemented |
 | Mobile layout | 🟡 | responsive-ish, not designed for mobile |
@@ -197,11 +197,11 @@ the honest "what not" list.
 
 ### 4.3 Platform / engineering limitations
 
-- **Single API worker only.** The ingestion scheduler, metrics, and ingestion-progress tracker are in-memory and process-local. Running multiple workers duplicates ingestion and desynchronises state.
-- **No durable task queue.** Ingestion runs in a background thread/in-process; long jobs are lost on restart. `README` plans Celery/RQ; it is not built.
-- **Blocking LLM calls inside requests.** `/api/query` runs the entire (multi-iteration) LLM loop synchronously; LLM back-off can `sleep` up to 300 s. A slow query ties up a worker.
+- **Job durability depends on Redis.** With `REDIS_URL` set (the compose default), job records live in Redis and are executed by the `worker` service, so jobs survive an API restart; RQ retries a job whose worker was killed. Without it the API falls back to an in-process thread pool and jobs are lost on restart.
+- **State is mixed, not fully distributed.** The scheduler, in-memory metrics, and the ingestion running-flag remain process-local; ingestion is therefore single-process (the scheduler *enqueues* when a queue exists so the API and worker cannot ingest concurrently), and the worker should stay at 1 replica while `SCHEDULER_ENABLED=true`.
+- **Queries are queued but not streamed.** `/api/query` returns `202` + a job id and the client polls; there is no per-stage progress, no partial output, and no cancellation endpoint.
 - **No persistence for metrics/tracing.** `/api/metrics` is in-memory and resets on restart; no Prometheus, no tracing backend, no alerting.
-- **No auth, no per-user rate limiting.** Rate limiting is a single global bucket (60/min by IP), with tighter limits on a few endpoints.
+- **Shared-key auth only, no per-user rate limiting.** Write/compute routes and job polling require `AXION_API_KEY` (fail-closed), but there are no accounts; rate limiting is a single global bucket (60/min by IP) with tighter limits on a few endpoints.
 - **No schema migrations framework.** DB changes are ad-hoc scripts (`graph/migrate_*.py`, `graph/fix_*.py`).
 - **Secrets in a plaintext `.env`.** No secret manager; the rotating policy is manual (and keys currently on disk need rotation).
 - **Windows-oriented paths in a few legacy scripts** (fixed in the eval harness; some data-prep scripts still assume repo-root CWD).
@@ -240,7 +240,7 @@ the honest "what not" list.
         └───────────────────────────┬──────────────────────────────┘
                                     ▼
                         ┌────────────────────────┐
-                        │ FastAPI (api/main.py)  │  21 endpoints
+                        │ FastAPI (api/main.py)  │  23 endpoints
                         └───────────┬────────────┘
                                     ▼
                         ┌────────────────────────┐
@@ -323,7 +323,7 @@ Embeddings live in `embeddings/store.py`; graph access in `graph/neo4j_*.py`.
 | Legacy SQLite | `data/db/axion.db` | retired; migration archived under `archive/` |
 | HF model cache | `~/.cache/huggingface` (container volume `hf_cache`) | sentence-transformers model |
 
-### 5.6 API reference (21 endpoints)
+### 5.6 API reference (23 endpoints)
 
 | Method | Path | Purpose | Auth | Rate limit |
 | :--- | :--- | :--- | :--: | :--- |
@@ -337,16 +337,18 @@ Embeddings live in `embeddings/store.py`; graph access in `graph/neo4j_*.py`.
 | GET | `/api/experiments/{contradiction_id}` | stored experiment design | — | global |
 | POST | `/api/experiments/{contradiction_id}/design` | design experiment on demand | 🔑 | 5/min |
 | GET | `/api/gaps` | gaps (`?source=`) | — | global |
-| POST | `/api/query` | full research query (coordinator v2) | 🔑 | 10/min |
+| POST | `/api/query` | enqueue a research query (coordinator v2) → `202 {job_id}` | 🔑 | 10/min |
+| GET | `/api/jobs` | recent jobs, newest first (`limit`) | 🔑 | global |
+| GET | `/api/jobs/{job_id}` | job status/result (`queued`/`running`/`completed`/`failed`) | 🔑 | global |
 | GET | `/api/temporal/evolution` | consensus evolution | — | global |
 | GET | `/api/temporal/disputes` | dispute timeline | — | global |
 | GET | `/api/confidence/distribution` | confidence histogram | — | global |
 | GET | `/api/confidence/most-changed` | biggest confidence moves | — | global |
 | POST | `/api/confidence/recalculate` | recompute confidence | 🔑 | 10/min |
-| GET | `/api/ingestion/status` | last run + running flag | — | global |
-| POST | `/api/ingestion/trigger` | run ingestion cycle | 🔑 | 2/min |
-| POST | `/api/ingestion/custom` | run ingestion for a topic | 🔑 | 5/min |
-| GET | `/api/ingestion/progress` | live progress + logs | — | global |
+| GET | `/api/ingestion/status` | last run + running flag (queue-aware) | — | global |
+| POST | `/api/ingestion/trigger` | enqueue an ingestion cycle → `202` | 🔑 | 2/min |
+| POST | `/api/ingestion/custom` | enqueue ingestion for a topic → `202` | 🔑 | 5/min |
+| GET | `/api/ingestion/progress` | live progress + logs (Redis-mirrored) | — | global |
 | GET | `/api/graph` | nodes/edges for the graph canvas | — | global |
 
 🔑 = requires an `X-API-Key` header matching `AXION_API_KEY` (the legacy
@@ -363,15 +365,15 @@ Global rate limit: `60/minute` per client IP (slowapi).
 - **API client:** `lib/api-client.ts` — direct fetches to `NEXT_PUBLIC_API_URL` for read-only endpoints; write/compute calls go through the server-side proxy `app/api/backend/[...path]/route.ts`, which attaches `X-API-Key` from `AXION_API_KEY` (never bundled into the client).
 - **Types:** `types/axion.ts` mirrors API response models.
 - **Design system:** dark "glass" theme, skeletons, empty/error states, `⌘K` command bar, keyboard nav.
-- **Known dead weight:** ~51 unused `components/ui/*` primitives, orphaned `styles/globals.css`, duplicate hooks (`use-mobile`, `use-toast`), placeholder assets.
-- **Known rough edges:** hardcoded "System Online" dot, "Neo4j Connected" inferred not checked, fake pipeline animation, an async call in a render body (`experiment-card.tsx`), unused `getClaims`/`getHealth`.
+- **Known dead weight:** none significant — the 47 unused `components/ui/*` primitives, orphaned `styles/globals.css`, duplicate hooks, and placeholder assets were removed; only the 10 used shadcn primitives remain.
+- **Known rough edges:** `getHealth` is unused in `lib/api-client.ts`; `/api/claims/{id}/provenance` and `/api/metrics` are not surfaced in the UI; there are no view-level frontend tests and no committed screenshots.
 
 ### 5.8 LLM layer
 
 - **Providers:** `groq` (primary), `gemini` (fallback), `claude` (available).
 - **Chain:** `LLM_PROVIDER_CHAIN = ["groq", "gemini"]`.
-- **Models:** `openai/gpt-oss-20b` (Groq), `gemini-2.5-flash` (Gemini), `claude-sonnet-4-20250514` (Claude).
-- **Resilience:** exponential back-off with jitter (`5, 15, 45, 120, 300` s), provider fallback on **both** rate-limit and hard errors, empty-response guard, optional in-process cache (`LLM_CACHE_ENABLED`), per-call timing and metrics. Reasoning models (`gpt-oss-*`, `qwen3-*`) run with `reasoning_effort="low"`.
+- **Models:** `openai/gpt-oss-20b` (Groq), `gemini-3.8-flash` (Gemini, `GEMINI_MODEL`), `claude-sonnet-4-20250514` (Claude).
+- **Resilience:** transient errors (5xx/timeouts) retry on a short schedule (`2, 5, 10` s); rate limits and hard failures fall through to the next provider; a provider that fails hard is **benched** for `LLM_PROVIDER_COOLDOWN_SECONDS` (300 s) instead of being retried on every call; empty-response guard, optional in-process cache (`LLM_CACHE_ENABLED`), per-call timing and metrics. Reasoning models (`gpt-oss-*`, `qwen3-*`) run with `reasoning_effort="low"`; Gemini 3.x runs with `GEMINI_THINKING_BUDGET=0` (it otherwise spends ~110–130 hidden thought tokens per call).
 - **Rate-limit detection** covers all three providers' error shapes.
 
 ### 5.9 Configuration reference (environment variables)
@@ -387,13 +389,20 @@ Global rate limit: `60/minute` per client IP (slowapi).
 | `SCHEDULER_ENABLED` | `false` | run periodic ingestion in the API process |
 | `SCHEDULER_INTERVAL_HOURS` | `6` | scheduler cadence |
 | `SCHEDULER_PAPERS_PER_RUN` | `5` | papers per scheduler run |
-| `AXION_API_KEY` | — (empty ⇒ write/compute endpoints disabled) | shared secret for query/experiment/confidence/ingestion endpoints (`X-API-Key`) |
+| `AXION_API_KEY` | — (empty ⇒ write/compute endpoints disabled) | shared secret for query/experiment/confidence/ingestion **and job** endpoints (`X-API-Key`) |
 | `TRIGGER_SECRET` | — (empty) | legacy alias accepted via `X-Trigger-Secret` |
+| `REDIS_URL` | — (empty ⇒ in-process thread fallback) | Redis for the durable job queue + cross-process progress |
+| `JOB_TTL_SECONDS` | `86400` | how long finished job records are kept |
+| `JOB_TIMEOUT_SECONDS` | `1800` | per-job timeout handed to the queue |
+| `CONTRADICTION_MAX_DISTANCE` | `0.35` | max cosine distance for a claim pair to reach the LLM judge |
+| `GEMINI_MODEL` | `gemini-3.8-flash` | Gemini model id |
+| `GEMINI_THINKING_BUDGET` | `0` | Gemini thinking-token budget (`0` disables) |
+| `LLM_PROVIDER_COOLDOWN_SECONDS` | `300` | how long a hard-failing provider is benched |
 | `NEXT_PUBLIC_API_URL` | `http://localhost:8000` | frontend → API base URL (build-time) |
 | `AXION_API_URL` | `http://localhost:8000` | backend address used by the Next.js server-side proxy |
 | `LOG_LEVEL` | `INFO` | logging |
 
-Non-env config (in `config.py`): embedding model, chunk size/overlap, `MAX_CLAIMS_PER_PAPER=8`, `CONTRADICTION_THRESHOLD=0.95`, `SCHEDULER_TOPICS` (5 LLM-related topics).
+Non-env config (in `config.py`): embedding model, chunk size/overlap, `MAX_CLAIMS_PER_PAPER=8`, `GROQ_MODEL=openai/gpt-oss-20b`, `SCHEDULER_TOPICS` (5 LLM-related topics).
 
 ---
 
@@ -549,7 +558,7 @@ Validated: `docker compose config` parses; frontend standalone bundle builds.
 ### 10.2 Operational gaps (still open)
 
 - No reverse proxy / TLS / domain setup.
-- No durable queue; ingestion lost on restart; multi-worker unsafe.
+- Durable queue ✅ (RQ + Redis + `worker` service, verified live); the scheduler, metrics, and progress-flag remain process-local.
 - No persistent metrics/tracing/alerting.
 - Neo4j backup utility is host-only (shells out to Docker), not scheduled in compose.
 - No migration framework; ad-hoc scripts only.
@@ -573,19 +582,20 @@ Consolidated (details and checkboxes in `progress.md`):
 - 4 frontend type errors; `ignoreBuildErrors` removed.
 - Eval harness rewritten; `eval/data` case bugs fixed.
 - Eval dataset rebuilt (`eval/Data/axion_pairs.csv`); parse failures now instrumented.
-- LLM router health: the configured Groq model was decommissioned and non-rate-limit errors aborted the whole fallback chain — now `openai/gpt-oss-20b` / `gemini-2.5-flash` with full fallback and an empty-response guard.
+- LLM router health: the configured Groq model was decommissioned and non-rate-limit errors aborted the whole fallback chain — now `openai/gpt-oss-20b` / `gemini-3.8-flash` with full fallback, transient retry, an empty-response guard, and a 300 s provider cooldown.
+- Contradiction retrieval gate was inert (`0.95` passed 100 % of pairs) → `CONTRADICTION_MAX_DISTANCE=0.35` (passes 42.6 %), measured by `eval/measure_gate.py`.
+- Job queue shipped (RQ + Redis + worker); `/api/query` and ingestion triggers return `202` + job id, `GET /api/jobs…` is key-guarded.
+- Redis client `decode_responses=True` crashed every RQ worker on startup (`'str' object has no attribute 'decode'`) → bytes mode + regression tests.
 
 **Open**
 - No per-user accounts (single shared `AXION_API_KEY`); no TLS.
-- Evaluation now exists, but CONTRADICTS has only 4 examples — expand the reviewed set; macro F1 0.48 is the current honest number.
-- Scheduler + progress/metrics not multi-process safe; no task queue.
-- Blocking LLM work inside `/api/query`.
+- Post-change LLM eval **blocked on provider quota** (Groq 200k tokens/day, Gemini 20 requests/day); CONTRADICTS has only 4 examples — expand the reviewed set. Macro F1 0.48 (prefix baseline) is the current honest number.
+- Scheduler + metrics remain process-local; the worker must stay at 1 replica while the scheduler is enabled.
+- No job cancellation or per-stage progress.
 - Ingestion state `/api/ingestion/status` correctness now reported, but in-memory.
 - Gaps have no stored confidence.
-- Legacy Streamlit/pyvis/plotly deps still listed; frontend trimmed to the 10 used shadcn primitives.
-- Docs/branding contradictions (three names, conflicting stats, references to deleted files).
-- Untracked docs + `eval/` not in git; `Labeled_pairs.csv` 0 bytes.
-- No license; no Python-version marker; no hash-pinned deps.
+- Untracked docs + `eval/` now committed; `eval/Data/Labeled_pairs.csv` remains 0 bytes (historical).
+- No Python-version marker; no hash-pinned deps.
 
 ---
 
@@ -593,28 +603,29 @@ Consolidated (details and checkboxes in `progress.md`):
 
 | Target | Estimate | What's left |
 | :--- | :--- | :--- |
-| **Founder/demo** | **~90%** | Polish; the core loop works and looks finished |
-| **Self-hosted MVP** | **~80–85%** | Auth ✅ + deployment ✅; remaining: durable queue, observability, ops docs |
-| **Multi-tenant SaaS** | **~45%** | Identity/tenancy, durable jobs, observability, valid eval, billing — 2–3+ months |
+| **Founder/demo** | **~92%** | Polish; the core loop works and looks finished |
+| **Self-hosted MVP** | **~88–90%** | Auth ✅ + deployment ✅ + durable queue ✅; remaining: observability, ops docs, a defensible contradiction-quality measurement |
+| **Multi-tenant SaaS** | **~50%** | Identity/tenancy, observability, valid eval, billing — 2–3+ months |
 
-**Verdict:** everything needed for a compelling demo exists, and the stack is no
-longer trivially abusable (write/compute endpoints require a server-held key).
-Shipping a *product* is now blocked mainly on **operational durability (queue,
-observability)** and a **larger, valid evaluation** — not on features.
+**Verdict:** everything needed for a compelling demo exists, the stack is no
+longer trivially abusable (write/compute endpoints require a server-held key),
+and long work is durable and isolated from the request path. Shipping a *product*
+is now blocked mainly on **observability/ops** and a **larger, valid evaluation
+with provider quota** — not on features.
 
 ---
 
 ## 13. Roadmap to production (ordered)
 
-1. **P0 correctness/security** — ✅ done this session (stats, temporal, fail-closed secret, error leak, placeholders, degraded boot).
-2. **Offline-green tests + CI** — ✅ done (111 tests, GitHub Actions, type-checked build).
-3. **Deployment** — ✅ done this session (Dockerfiles, full-stack compose, healthchecks).
-4. **Valid evaluation** — ✅ reference set rebuilt + baselines recorded (`axion_pairs.csv`, macro F1 0.48); ⏳ expand CONTRADICTS positives before setting thresholds.
+1. **P0 correctness/security** — ✅ done (stats, temporal, fail-closed secret, error leak, placeholders, degraded boot).
+2. **Offline-green tests + CI** — ✅ done (229 tests, GitHub Actions, type-checked build).
+3. **Deployment** — ✅ done (Dockerfiles, full-stack compose, healthchecks).
+4. **Valid evaluation** — ✅ reference set rebuilt + baselines recorded (`axion_pairs.csv`, macro F1 0.48) and the retrieval gate measured; ⏳ the post-change LLM run is blocked on provider quota and CONTRADICTS needs more reviewed positives.
 5. **Auth + multi-user** — shared-key auth on compute endpoints ✅ done; real accounts, per-user rate limits still open.
-6. **Durable task queue** — Celery/RQ for ingestion + long queries; make state cross-process.
+6. **Durable task queue** — ✅ done (RQ + Redis + `worker` service, cross-process verified); metrics/scheduler state still process-local.
 7. **Observability** — persistent metrics, tracing, alerting, structured logs.
-8. **Docs/branding** — unify on **Axion**, reconcile stats, retire stale docs, add LICENSE.
-9. **Frontend cleanup** — delete dead code, wire or remove unused API calls, real health indicators.
+8. **Docs/branding** — ✅ unified on **Axion**, stats reconciled, LICENSE added, side docs banner-ed; folder rename outstanding.
+9. **Frontend cleanup** — ✅ dead code deleted, health indicators real; provenance/metrics views and frontend tests still open.
 
 ---
 
@@ -622,7 +633,8 @@ observability)** and a **larger, valid evaluation** — not on features.
 
 - **Canonical name:** **Axion** (decided and applied 2026-10-16).
 - Rename pass **complete** in code, config, and docs: `config.py`, `api/main.py`, `main.py`, `embeddings/store.py`, `agents/synthesizer.py`, `archive/coordinator_v1.py`, `graph/migrate_to_neo4j.py`, `requirements.txt`, `axion/types/axion.ts`, `.env.example`, `docker-compose.yml` (container `axion_neo4j`), `tests/test_axion.py`, README, and all side docs. The legacy SQLite file was renamed to `data/db/axion.db`.
-- Remaining out-of-band artifact: the **on-disk folder** (`schimesh`) and the **GitHub repo** (`AetherGraph`) keep their old names; rename those to match, then the README clone URL (`.../Axion`) resolves.
+- The **GitHub repo** was renamed to `Axion` (2026-10-17) and the `origin` remote re-pointed.
+- Remaining out-of-band artifact: the **on-disk folder** (`schimesh`).
 
 ---
 
@@ -630,7 +642,8 @@ observability)** and a **larger, valid evaluation** — not on features.
 
 ```
 schimesh/
-├─ api/                 main.py (21 endpoints), models.py
+├─ api/                 main.py (23 endpoints), models.py
+├─ jobs/                backend, store, tasks, worker, redis_conn (durable queue)
 ├─ agents/              reader, contradiction, gap_finder, experiment_recommender,
 │                       confidence_updater, temporal, citation, planner, reflector,
 │                       synthesizer, coordinator_v2
@@ -642,7 +655,7 @@ schimesh/
 ├─ planner/             (planner-related package)
 ├─ axion/               Next.js frontend (app/, components/axion/, lib/, types/)
 ├─ eval/                run_eval.py, metrics.py, dataset.py, predictors.py, Data/, results/, README.md
-├─ tests/               111 offline tests + integration tests
+├─ tests/               229 offline tests + integration tests
 ├─ .github/workflows/   ci.yml
 ├─ Dockerfile           backend image
 ├─ axion/Dockerfile     frontend image

@@ -10,14 +10,16 @@
 
 | Target | Estimate | State |
 | :--- | :--- | :--- |
-| Research / founder demo | ~1–2 weeks | **~90%** — core loop works, UI looks finished |
-| Public self-hosted MVP | ~4–6 weeks | **~80–85%** — auth + deployment done; needs queue, ops, bigger eval |
-| Multi-tenant SaaS | 2–3+ months | **~45%** — accounts/tenancy, queue, observability still missing |
+| Research / founder demo | ~1–2 weeks | **~92%** — core loop works, UI looks finished |
+| Public self-hosted MVP | ~4–6 weeks | **~88–90%** — auth + deployment + durable queue done; needs ops, bigger eval, contradiction quality proof |
+| Multi-tenant SaaS | 2–3+ months | **~50%** — accounts/tenancy and observability still missing |
 
 **Bottom line:** ingestion → graph → reasoning → API → UI works end to end, the
-stack is containerized and verified, and write/compute endpoints now require a
-server-held API key. Remaining work is the durable queue, observability,
-contradiction quality, and a larger reviewed eval set — not new features.
+stack is containerized and verified, write/compute endpoints require a server-held
+API key, and long work now runs through a durable Redis-backed queue with a
+separate worker process. Remaining work is observability, contradiction-quality
+evidence (needs quota + more reviewed positives), and ops hardening — not new
+features.
 
 ---
 
@@ -37,14 +39,14 @@ contradiction quality, and a larger reviewed eval set — not new features.
 - [x] Citation weighting via Semantic Scholar (`agents/citation.py`)
 - [x] Coordinator v2: plan → retrieve → reflect (≤3 iters) → synthesize (`agents/coordinator_v2.py`, `planner/reflector/synthesizer`)
 - [x] LLM provider chain with retry/backoff: groq → gemini, optional cache (`llm.py`)
-- [x] FastAPI surface: all 20 functional endpoints wired (`api/main.py`) + `/healthz` liveness probe
+- [x] FastAPI surface: all 22 functional routes wired (`api/main.py`) + `/healthz` liveness probe
 - [x] Next.js workspace: 6 views (research, knowledge graph, contradictions, gaps, timeline, evolution) + ingestion sheet
 - [x] Design system v2.0: dark shell, glass surfaces, skeletons, error/empty states, ⌘K, keyboard nav, canvas force graph
 - [x] Persistent query history (localStorage), custom ingestion sheet, targeted contradiction checks
 - [x] Logging, in-memory metrics, ingestion progress tracking, Neo4j backup utility
 - [x] Pinned Python deps (all `==`), complete `.env.example`
 - [x] 48 papers / 2,389 claims / 224 contradictions / 132 supports / 93 related / 18 gaps / 36 experiments ingested (live-verified 2026-10-17)
-- [x] 94 test functions written (~89 properly mocked unit tests)
+- [x] 94 test functions written (~89 properly mocked unit tests) → now **229 passed / 12 deselected** offline (2026-10-17)
 
 ---
 
@@ -58,7 +60,11 @@ contradiction quality, and a larger reviewed eval set — not new features.
 - [x] **API boots degraded** instead of crashing when Neo4j/Chroma are down (`/api/health` returns 503) — verified with TestClient.
 - [x] **Config/port drift fixed**: defaults + `.env.example` now match compose (`7887`, `axion_neo4j`); compose publishes only `127.0.0.1`, added healthcheck, dropped obsolete `version:`.
 - [x] **Local env wired** for the new fail-closed secret: generated secret appended to untracked `.env`, created `axion/.env.local` (both gitignored via new `.gitignore` rules).
-- [~] **Rotate secrets** — ✅ `AXION_API_KEY` + `TRIGGER_SECRET` regenerated and the Neo4j password rotated to a 32-char value on 2026-10-17 (verified: stack healthy after recreate). ⏳ Still owed **manually**: `GEMINI_API_KEY` and `GROQ_API_KEY` must be reissued in the Google/Groq consoles (they were exposed in a `docker compose config` dump and no CLI can rotate them).
+- [~] **Rotate secrets** — ✅ `AXION_API_KEY` + `TRIGGER_SECRET` regenerated and the Neo4j password rotated to a 32-char value on 2026-10-17 (verified: stack healthy after recreate). ⏳ Still owed **manually**: `GEMINI_API_KEY` and `GROQ_API_KEY` must be reissued in the Google/Groq consoles (they were exposed in a `docker compose config` dump and no CLI can rotate them) — now doubly urgent, because the current Groq org is at its daily token cap and the Gemini free tier allows 20 `gemini-3.8-flash` requests/day, which is what blocks the item-3 measurement.
+
+### P0 #3 + #4 — requested 2026-10-17
+- [~] **P0 #3 contradiction precision** — engineering + measurement done, end-to-end LLM evidence **blocked on quota** (details in Tracks A and D): distance gate fixed and measured (100 % → 42.6 % of pairs reach the judge), prompt rewritten with a decomposition guard, 6/6 sanity probe, no post-change benchmark number claimed.
+- [x] **P0 #4 durable queue** — done: RQ + Redis behind a single job API (`202` + `GET /api/jobs/{id}`), separate `worker` container, cross-process verified live, regression-tested bytes-mode fix, in-process fallback when `REDIS_URL` is unset (details in Track E).
 
 ### P0 test hygiene — ✅ DONE 2026-10-16
 - [x] `tests/test_claims.py` no longer breaks collection (rewritten as an `integration` test).
@@ -75,9 +81,10 @@ contradiction quality, and a larger reviewed eval set — not new features.
 ### A. Correctness / backend (P0–P1)
 - [x] Start scheduler from the API — env-gated via `SCHEDULER_ENABLED` (default off), started/shut down in FastAPI startup/shutdown, with a single-worker warning. `.env.example` updated.
 - [x] Accurate ingestion running state (`ingestion.scheduler.is_running()`, overlapping-run guard; `/api/ingestion/status` + custom-ingestion 409 now use it)
-- [ ] Make ingestion state cross-process safe (in-memory `IngestionProgressTracker` + `is_running` are per-process → need Redis/DB or a real queue; current design is single-worker only)
-- [ ] Offload blocking work: LLM `time.sleep` backoff up to 300s, citation 1.5s/request sleep, `/api/query` runs the full LLM loop inside the HTTP request
+- [x] **Make ingestion state cross-process safe** — ✅ 2026-10-17: the scheduler now **enqueues** (`_dispatch_ingestion`) when a queue exists, the job registry is shared via Redis, and `/api/ingestion/status`/`progress` read it, so the API and worker cannot ingest concurrently. `is_running` remains the in-process guard for the no-Redis case.
+- [x] **Offload blocking work** — ✅ 2026-10-17: `/api/query` and both ingestion triggers return `202` + `job_id`; the RQ worker (separate process/container) runs the LLM loops, citation sleeps, etc. `GET /api/jobs/{id}` reports status/result. Verified live cross-process on the compose stack.
 - [x] **Confirmed 2026-10-17 against live Neo4j 5.18** — `COUNT {}` returns papers 48 / claims 2,389 / contradictions 224 with no aggregation pitfalls.
+- [x] **Contradiction detection measured + hardened** — ✅ 2026-10-17: measured the retrieval gate (`eval/measure_gate.py`: the old `0.95` passed 100 % of pairs; `0.35` passes 42.6 %), rewrote the judge prompt (same phenomenon + comparable measurement + opposite outcome + explicit non-contradiction list + worked example), added a deterministic three-part decomposition guard that demotes unjustified `CONTRADICTS`, and recorded per-verdict flags in `diagnostics`. See Track D for the (quota-blocked) end-to-end measurement.
 
 ### B. Security (P0–P1) — ✅ AUTH DONE 2026-10-17
 - [x] **Auth layer** — `AXION_API_KEY` + `require_write_access` guard on `/api/query`, `/api/experiments/{id}/design`, `/api/confidence/recalculate`, `/api/ingestion/trigger`, `/api/ingestion/custom`; fail-closed (503 unset, 401 invalid), constant-time compare, `X-Trigger-Secret` kept as a legacy alias. Read-only endpoints stay public by design.
@@ -109,7 +116,10 @@ contradiction quality, and a larger reviewed eval set — not new features.
 - [x] **Headline data finding:** the review found only **4 of 224** auto-detected contradictions are real (11 SUPPORTS, 209 UNRELATED) — production contradiction precision is **~1.8%** on that sample.
 - [x] Recorded reference baselines on `axion_pairs.csv`: majority acc 0.9476 / macro F1 0.3244; random 0.3706 / 0.2191; **llm (groq `openai/gpt-oss-20b`) acc 0.8427 / macro F1 0.4822** (CONTRADICTS P 0.154 / R 0.500). Results in `eval/results/*_axion_pairs.json`.
 - [x] **Instrumented `check_pair`** with an optional `diagnostics` out-param: `SAME_CLAIM` / `SAME_PAPER` / `UNRELATED` / `PARSE_FAILURE` / verdict. The LLM predictor tallies statuses and the JSON result carries `predictor_diagnostics`; the harness warns when parse failures occur. Also fixed a latent crash (non-dict JSON) and the blank-arxiv-ids-count-as-same-paper bug.
-- [x] **Fixed the LLM router (`llm.py`) and models (`config.py`)** — production-blocking: the configured Groq model (`llama-3.1-8b-instant`) is decommissioned, and a non-rate-limit error aborted the whole fallback chain instead of trying the next provider. Now `openai/gpt-oss-20b` + `gemini-2.5-flash`, non-rate-limit errors fall through, empty responses are treated as failures, and reasoning models run with `reasoning_effort="low"`.
+- [x] **Fixed the LLM router (`llm.py`) and models (`config.py`)** — production-blocking: the configured Groq model (`llama-3.1-8b-instant`) is decommissioned, and a non-rate-limit error aborted the whole fallback chain instead of trying the next provider. Now `openai/gpt-oss-20b` + `gemini-3.8-flash`, non-rate-limit errors fall through, empty responses are treated as failures, and reasoning models run with `reasoning_effort="low"`.
+- [x] **Router hardening (2026-10-17)** — `GEMINI_MODEL=gemini-3.8-flash` with `GEMINI_THINKING_BUDGET=0` (Gemini 3.x spends ~110–130 hidden thought tokens per call otherwise), `max_output_tokens` is forwarded, empty responses raise a clear error, transient 5xx/timeouts retry on a short schedule (`[2, 5, 10] s`) instead of aborting, and a hard-failing provider is benched for `LLM_PROVIDER_COOLDOWN_SECONDS` (300) instead of costing ~185 s of retries on every call. `tests/test_llm_router.py`.
+- [x] **`eval/measure_gate.py` — retrieval gate measured** (offline, deterministic, no LLM): on the live 2,389-claim index, the old `CONTRADICTION_THRESHOLD=0.95` passed **100 %** of the 11,602 unique top-8 pairs (inert gate), while `CONTRADICTION_MAX_DISTANCE=0.35` passes **42.6 %** and still gives 80.2 % of claims a candidate. Distance distribution p50 0.379 / p90 0.538 / p99 0.652 / max 0.769.
+- [ ] **Post-change LLM eval — BLOCKED on provider quota (2026-10-17).** The `--predictor llm` re-run died at pair 10/286: Groq `openai/gpt-oss-20b` hit its 200,000 token/day limit and the Gemini free tier allows only **20 `gemini-3.8-flash` requests/day** (both exhausted). No post-change LLM number is claimed anywhere; only the prefix baseline (`llm_axion_pairs_prefix_baseline.json`) and the deterministic gate measurement exist. Needs reissued keys and/or paid quota.
 - [x] `eval/Data/labeled_pairs_cleaned.csv` (68 rows, all UNRELATED) — folded into `axion_pairs.csv` as tagged negatives; not used alone.
 - [x] Decision: **drop** the empty `eval/models/` + `eval/classifier/` plan (never populated; documented in `eval/README.md`).
 - [ ] `eval/Data/Labeled_pairs.csv` is still 0 bytes (Windows case collision) so `split_dataset.py` cannot regenerate the old train/val/test; superseded by `axion_pairs.csv`, so this is now historical only.
@@ -119,7 +129,7 @@ contradiction quality, and a larger reviewed eval set — not new features.
 ### E. Deployment / ops (P2)
 - [x] **Dockerized + full-stack compose — DONE 2026-10-16.** Root `Dockerfile` (python:3.11-slim, CPU-only torch, pinned deps, `/healthz` healthcheck, single worker); `axion/Dockerfile` (multi-stage Node 20 + pnpm, Next.js `output: "standalone"`, non-root, healthcheck); `docker-compose.yml` now `neo4j` + `api` + `web` (health-gated startup, `./data` bind mount, `hf_cache` volume, `.env` interpolation, project name `axion`); `.dockerignore` (root + frontend). Added `GET /healthz` liveness (distinct from readiness `/api/health`). Validated: `docker compose config` parses, frontend standalone bundle builds. `next.config.mjs` gained `output: "standalone"`.
 - [x] **Verified end-to-end 2026-10-17 (Docker 29.4.3).** Both images build; `docker compose up` brings neo4j+api+web to healthy; the containerized API serves the real graph (papers 48 / claims 2,389 / contradictions 224) and web returns 200. Three deployment-breaking defects found and fixed: (1) frontend image failed `ERR_PNPM_LOCKFILE_CONFIG_MISMATCH` — Corepack pulled pnpm 12, which ignores `pnpm.overrides`; pinned `packageManager: pnpm@10.22.0`; (2) `NEO4J_PASSWORD` on the neo4j container was parsed as a config setting → startup crash; the healthcheck now derives the password from `NEO4J_AUTH`; (3) `arxiv` was missing from `requirements.txt` → `/api/ingestion/status` returned 500 in-container. Integration suite: 12 passed against live services.
-- [ ] Durable task queue (README already plans Celery/RQ)
+- [x] **Durable task queue — ✅ DONE 2026-10-17.** New `jobs/` package: `store.py` (Redis registry under `axion:job:*` with TTL + in-memory fallback), `backend.py` (`submit`, `backend_name`, `JobConflictError`, ingestion exclusivity), `tasks.py` (`run_job`, `job_query`, `job_ingestion`, `job_custom_ingestion`), `worker.py` (`python -m jobs.worker`, `SimpleWorker` where `os.fork` is unavailable), `redis_conn.py`. `/api/query` and both ingestion triggers now return `202 {job_id}`; `GET /api/jobs/{id}` and `GET /api/jobs` are key-guarded. Compose gained `redis` (loopback `6389`) + `worker` services; `ingestion/progress.py` mirrors progress through Redis. **Verified live:** submitted via the API, claimed and executed by the separate worker container (`queued` → `running` → `failed` on exhausted quota), error sanitized for clients and logged in full. **Found + fixed a real bug:** the shared Redis client used `decode_responses=True`, which crashes RQ's worker on startup (`'str' object has no attribute 'decode'`) — now bytes mode, with regression tests.
 - [ ] Persistent metrics/tracing/alerting (currently in-memory only)
 - [ ] Data validation + migration discipline (retire ad-hoc `graph/migrate_*.py`, `fix_*.py`)
 - [ ] Reproducible env: Python version marker, hash pinning, tracked eval data
@@ -159,7 +169,9 @@ contradiction quality, and a larger reviewed eval set — not new features.
 4. ~~**Re-run eval** on real cleaned data, record honest numbers~~ ✅ done 2026-10-17 (rebuilt `axion_pairs.csv`; baselines recorded)
 5. ~~**Dockerize API + frontend**, fix port mismatch, boot degraded~~ ✅ done 2026-10-16
 6. ~~**Auth on compute endpoints** before any multi-user use~~ ✅ done 2026-10-17 (shared key + server-side proxy)
-7. **Durable task queue** before any multi-user use
+7. ~~**Durable task queue** before any multi-user use~~ ✅ done 2026-10-17 (RQ + Redis + worker service, verified cross-process)
+8. **Reissue the Groq/Gemini keys and re-run the LLM eval** — the last gap between the current state and a defensible contradiction-quality claim; also expand the reviewed `CONTRADICTS` set beyond 4 pairs
+9. **Observability + ops** — persistent metrics/tracing, scheduled backups, reverse proxy/TLS
 
 ---
 
@@ -176,4 +188,7 @@ contradiction quality, and a larger reviewed eval set — not new features.
 - `2026-10-17` — **Docker verification pass (Track E).** Started the daemon, built both images, brought neo4j+api+web up healthy, and confirmed the containerized API returns the real graph (48 / 2,389 / 224). Fixed three deployment-breaking bugs: pnpm version pin, Neo4j `NEO4J_PASSWORD` config collision, missing `arxiv` dependency. Commits: `72319f9` (tests + lint + lifespan), `e5af0a7` (Docker fixes). Open: live `/api/stats` reports gaps 18 / experiments 36 vs docs' 30 / 12 — reconcile.
 - `2026-10-17` — **Track D rebuild (eval).** Built `eval/Data/axion_pairs.csv` (286 cross-paper pairs; 4/11/271) from the reviewed `contradicts_review_labeled.csv` + cleaned negatives, via new `eval/Data/build_reference_set.py`. Instrumented `check_pair` with a `diagnostics` out-param (parse failures now distinct from UNRELATED); the LLM predictor tallies statuses into `predictor_diagnostics` and the harness warns on parse failures. **Found ~1.8% production contradiction precision** in the human audit. Recorded real baselines (majority 0.9476/0.3244; llm `openai/gpt-oss-20b` 0.8427 / macro F1 0.4822). Also fixed two production-blocking LLM bugs: decommissioned Groq model + non-rate-limit errors aborting the fallback chain. Tests 149 passed / 12 deselected (+7).
 - `2026-10-17` — Docs committed + pushed (`ca95d99`); GitHub repo renamed to `Axion` and the `origin` remote re-pointed; live stats reconciled to 48 / 2,389 / 224 / 132 / 93 / 18 / 36.
-- `2026-10-17` — **P0 auth shipped.** Added `AXION_API_KEY` + `require_write_access` (fail-closed) on `/api/query`, `/api/experiments/{id}/design`, `/api/confidence/recalculate`, and both ingestion triggers; `X-Trigger-Secret` remains a legacy alias. Removed the public `NEXT_PUBLIC_TRIGGER_SECRET`; added the Next.js server-side proxy `axion/app/api/backend/[...path]/route.ts` (path allowlist, injects `X-API-Key`, returns 503 when unconfigured). Docker: `web` now takes `AXION_API_URL=http://api:8000` + `AXION_API_KEY` at runtime instead of a build arg. Rotated `AXION_API_KEY`, legacy `TRIGGER_SECRET` and the Neo4j password (32 chars, verified after a full recreate). Verified live: 9/9 checks — anonymous/wrong-key compute calls 401, proxy reaches the API, allowlist 404s, **no secret in any of 13 served JS chunks**, and a real LLM query through the proxy returned a cited report. Tests 154 passed / 12 deselected (+4).
+- `2026-10-17` — **P0 auth shipped.** Added `AXION_API_KEY` + `require_write_access` (fail-closed) on `/api/query`, `/api/experiments/{id}/design`, `/api/confidence/recalculate`, and both ingestion triggers; `X-Trigger-Secret` remains a legacy alias. Removed the public `NEXT_PUBLIC_TRIGGER_SECRET`; added the Next.js server-side proxy `axion/app/api/backend/[...path]/route.ts` (path allowlist, injects `X-API-Key`, returns 503 when unconfigured). Docker: `web` now takes `AXION_API_URL=http://api:8000` + `AXION_API_KEY` at runtime instead of a build arg. Rotated `AXION_API_KEY`, legacy `TRIGGER_SECRET` and the Neo4j password (32 chars, verified after a full recreate). Verified live: 9/9 checks — anonymous/wrong-key compute calls 401, proxy reaches the API, allowlist 404s, **no secret in any of 13 served JS chunks**, and a real LLM query through the proxy returned a cited report. Tests 154 passed / 12 deselected (+4). Commit `ffc222a`, pushed.
+- `2026-10-17` — **Contradiction precision (P0 #3), part 1 — measured the gate.** Wrote `eval/measure_gate.py` and ran it on the live index: the `0.95` threshold was **inert** (100 % of the 11,602 top-8 pairs passed); replaced with `CONTRADICTION_MAX_DISTANCE=0.35` (passes 42.6 %). Rewrote the judge prompt (required: same phenomenon + comparable measurement + opposite outcome; explicit non-contradiction list; conservative default; worked example that fixed a measured recall miss), added `_as_bool` + a three-part decomposition guard that demotes unjustified `CONTRADICTS` (`STATUS_DEMOTED`), a self-pair skip, and `diagnostics["flags"]` on every verdict. Sanity probe: 6/6 agreement on 6 hand-built pairs. **Part 2 (end-to-end LLM measurement) is blocked:** both free tiers are exhausted (Groq 200 k tokens/day; Gemini 20 requests/day for `gemini-3.8-flash`) — the run died at pair 10/286, so no post-change metric is claimed.
+- `2026-10-17` — **Durable queue (P0 #4) shipped and verified.** New `jobs/` package (store/backend/tasks/worker/redis_conn) behind one contract: RQ + Redis when `REDIS_URL` is set, in-process threads otherwise. `/api/query`, `/api/ingestion/trigger`, `/api/ingestion/custom` → `202 {job_id, status, backend}`; new key-guarded `GET /api/jobs/{id}` + `GET /api/jobs`; `/api/ingestion/status` reads the registry and `/api/ingestion/progress` mirrors through Redis. Compose gained `redis` (loopback `6389`) and `worker`; the scheduler enqueues rather than runs when a queue exists. **Fixed a real deployment bug found by testing:** the shared Redis client had `decode_responses=True`, which makes RQ's worker crash-loop on startup (`'str' object has no attribute 'decode'`); it now runs in bytes mode with the store decoding explicitly, plus regression tests. Live proof on the compose stack: `GET /api/jobs/x` → 401 without key / 404 with key, `POST /api/query` → 202, worker claimed it within 3 s (`queued` → `running`), and the job later failed cleanly on the exhausted LLM quota with a sanitized client error. `jobs/worker.py` falls back to `SimpleWorker` where `os.fork` is missing (Windows dev). LLM router hardening: `gemini-3.8-flash` + `thinking_budget=0`, transient retry, provider cooldown. Tests 229 passed / 12 deselected.
+- `2026-10-17` — **Docs reconciled with the shipped queue/contradiction work.** README: pipeline steps 5–6 (gate + guard), five-service compose table, `202` + job polling in the API reference and curl examples, new env rows (`REDIS_URL`, `JOB_*`, `CONTRADICTION_MAX_DISTANCE`, `GEMINI_*`, `LLM_PROVIDER_COOLDOWN_SECONDS`), rewritten evaluation section (dataset, baselines, the measured gate, the quota-blocked LLM run), updated limitations/roadmap. `.env.example` gained the contradiction + Gemini + cooldown settings.

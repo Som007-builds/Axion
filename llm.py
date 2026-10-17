@@ -15,14 +15,15 @@ from __future__ import annotations
 
 import logging
 import random
+import threading
 import time
 
 import config
 from config import (
     ANTHROPIC_API_KEY, CLAUDE_MODEL,
-    GEMINI_API_KEY, GEMINI_MODEL,
+    GEMINI_API_KEY, GEMINI_MODEL, GEMINI_THINKING_BUDGET,
     GROQ_API_KEY, GROQ_MODEL,
-    LLM_PROVIDER_CHAIN, LLM_CACHE_ENABLED,
+    LLM_PROVIDER_CHAIN, LLM_CACHE_ENABLED, LLM_PROVIDER_COOLDOWN_SECONDS,
 )
 
 logger = logging.getLogger(__name__)
@@ -30,6 +31,42 @@ logger = logging.getLogger(__name__)
 # Exponential back-off: attempt index → seconds to wait before retry.
 # Jitter of ±3 seconds is added per attempt to avoid thundering-herd.
 _RETRY_DELAYS = [5, 15, 45, 120, 300]
+
+# Transient server errors clear quickly, so they get a shorter schedule.
+_TRANSIENT_RETRY_DELAYS = [2, 5, 10]
+
+# Providers that just failed hard (quota spent, decommissioned model, bad key)
+# are skipped for a cooldown window.
+#
+# Why: exhausting the retry schedule above costs ~185s per call. A provider on a
+# free-tier daily cap would therefore add ~3 minutes to *every* LLM call in the
+# application, for the rest of the day, even though the fallback provider is
+# healthy. Measured live on 2026-10-17: with Groq capped, a 286-pair eval run
+# would have taken hours instead of minutes.
+_cooldown_until: dict[str, float] = {}
+_cooldown_lock = threading.Lock()
+
+
+def _in_cooldown(provider: str) -> bool:
+    with _cooldown_lock:
+        until = _cooldown_until.get(provider, 0.0)
+    return time.monotonic() < until
+
+
+def _start_cooldown(provider: str, reason: str) -> None:
+    """Skip `provider` for the cooldown window after a hard failure."""
+    with _cooldown_lock:
+        _cooldown_until[provider] = time.monotonic() + LLM_PROVIDER_COOLDOWN_SECONDS
+    logger.warning(
+        f"[llm] [{provider}] taken out of rotation for "
+        f"{LLM_PROVIDER_COOLDOWN_SECONDS}s ({reason})."
+    )
+
+
+def reset_cooldowns() -> None:
+    """Clear the cooldown state (tests, and after a config/key change)."""
+    with _cooldown_lock:
+        _cooldown_until.clear()
 
 
 # ─── Rate-limit detection ─────────────────────────────────────────────────────
@@ -42,6 +79,26 @@ def _is_rate_limit(exc: Exception) -> bool:
             "rate_limit", "rate limit", "ratelimit",
             "429", "too many requests",
             "quota", "resource_exhausted",
+        )
+    )
+
+
+def _is_transient(exc: Exception) -> bool:
+    """
+    Return True for server-side hiccups that are worth retrying.
+
+    Providers return these routinely under load (e.g. Gemini
+    "503 UNAVAILABLE: this model is currently experiencing high demand").
+    Treating them as permanent ended the whole fallback chain on a single
+    unlucky response.
+    """
+    msg = str(exc).lower()
+    return any(
+        kw in msg for kw in (
+            "503", "502", "504", "500",
+            "unavailable", "overloaded", "internal error", "internal server",
+            "timeout", "timed out", "connection reset", "connection aborted",
+            "service unavailable", "try again later",
         )
     )
 
@@ -66,12 +123,35 @@ def _call_groq(prompt: str, max_tokens: int) -> str:
 
 def _call_gemini(prompt: str, max_tokens: int) -> str:
     from google import genai
+
     client = genai.Client(api_key=GEMINI_API_KEY)
     response = client.models.generate_content(
         model=GEMINI_MODEL,
         contents=prompt,
+        config=_gemini_generation_config(max_tokens),
     )
+    if not response.text:
+        # Blocked or thought-only completion. Raise instead of letting
+        # `None.strip()` escape as an AttributeError so the fallback chain
+        # treats this as a provider failure.
+        reason = None
+        if response.candidates:
+            reason = getattr(response.candidates[0], "finish_reason", None)
+        raise ValueError(f"[gemini] returned no text (finish_reason={reason})")
     return response.text.strip()
+
+
+def _gemini_generation_config(max_tokens: int):
+    """Build the Gemini generation config for a short-answer call."""
+    from google.genai import types
+
+    kwargs = {"max_output_tokens": max_tokens}
+    if not GEMINI_MODEL.startswith(("gemini-2.0", "gemini-1.5")):
+        # 2.5+/3.x models support thinking control; 2.0 and older reject it.
+        kwargs["thinking_config"] = types.ThinkingConfig(
+            thinking_budget=GEMINI_THINKING_BUDGET
+        )
+    return types.GenerateContentConfig(**kwargs)
 
 
 def _call_claude(prompt: str, max_tokens: int) -> str:
@@ -139,8 +219,18 @@ def call_llm(
 
     last_error: Exception | None = None
 
+    # Skip providers that are in a post-failure cooldown — unless that would
+    # leave nothing to try, in which case run the chain as-is (better a slow
+    # attempt than a guaranteed failure).
+    active_chain = [p for p in chain if not _in_cooldown(p)]
+    if not active_chain:
+        active_chain = chain
+    elif len(active_chain) < len(chain):
+        skipped = [p for p in chain if p not in active_chain]
+        logger.info(f"{tag} Skipping {skipped} (in cooldown after a recent failure).")
+
     # ── Provider fallback loop ────────────────────────────────────────────────
-    for provider in chain:
+    for provider in active_chain:
         caller = _PROVIDERS.get(provider)
         if caller is None:
             logger.warning(f"{tag} Unknown provider '{provider}', skipping.")
@@ -176,36 +266,49 @@ def call_llm(
             except Exception as exc:
                 elapsed_ms = (time.perf_counter() - t0) * 1000
 
-                if _is_rate_limit(exc):
-                    if _metrics:
+                rate_limited = _is_rate_limit(exc)
+                # Server-side hiccups (503/502/504, timeouts, dropped
+                # connections) are retried on a short back-off: they usually
+                # clear in seconds, and treating them as permanent used to fail
+                # the whole chain on a single "model is experiencing high
+                # demand" response.
+                transient = (not rate_limited) and _is_transient(exc)
+
+                if rate_limited or transient:
+                    if rate_limited and _metrics:
                         _metrics.record_rate_limit(provider)
 
                     if attempt < retries - 1:
-                        base_delay = _RETRY_DELAYS[min(attempt, len(_RETRY_DELAYS) - 1)]
+                        schedule = _RETRY_DELAYS if rate_limited else _TRANSIENT_RETRY_DELAYS
+                        base_delay = schedule[min(attempt, len(schedule) - 1)]
                         jitter = random.uniform(-3.0, 3.0)
                         delay = max(1.0, base_delay + jitter)
                         logger.warning(
-                            f"{tag} [{provider}] Rate-limited. "
-                            f"Retry {attempt + 1}/{retries} in {delay:.0f}s…"
+                            f"{tag} [{provider}] "
+                            f"{'Rate-limited' if rate_limited else 'Temporarily unavailable'}"
+                            f" ({exc}). Retry {attempt + 1}/{retries} in {delay:.0f}s…"
                         )
                         time.sleep(delay)
                         continue
-                    else:
-                        logger.warning(
-                            f"{tag} [{provider}] Rate-limit retries exhausted "
-                            f"({retries} attempts). Trying next provider."
+
+                    reason = "rate limit" if rate_limited else "provider unavailable"
+                    logger.warning(
+                        f"{tag} [{provider}] retries exhausted after {retries} attempts "
+                        f"({reason}). Trying next provider."
+                    )
+                    if _metrics:
+                        _metrics.record_llm_call(
+                            provider=provider,
+                            duration_ms=elapsed_ms,
+                            success=False,
+                            rate_limited=rate_limited,
                         )
-                        if _metrics:
-                            _metrics.record_llm_call(
-                                provider=provider,
-                                duration_ms=elapsed_ms,
-                                success=False,
-                                rate_limited=True,
-                            )
-                        break   # move to next provider
+                    last_error = exc
+                    _start_cooldown(provider, reason)
+                    break   # move to next provider
 
                 else:
-                    # Non-rate-limit error (dead model name, bad key, malformed
+                    # Permanent error (dead model name, bad key, malformed
                     # request…): this provider is unusable right now, so fall
                     # through to the next provider instead of failing the whole
                     # chain — one stale model name must not take down every
@@ -220,10 +323,11 @@ def call_llm(
                             success=False,
                         )
                     last_error = exc
+                    _start_cooldown(provider, "non-retriable error")
                     break   # move to next provider
 
     raise Exception(
         f"All LLM providers exhausted after retries. "
-        f"Chain tried: {chain}. "
+        f"Chain tried: {active_chain}. "
         f"Consider checking API keys or rate limit quotas."
     ) from last_error

@@ -51,6 +51,18 @@ class TestConfig:
         from config import CONTRADICTION_THRESHOLD
         assert 0.0 < CONTRADICTION_THRESHOLD <= 1.0
 
+    def test_max_distance_gate_is_actually_selective(self):
+        """The gate must be below the observed distance range (max ~0.63),
+        otherwise it admits every neighbour and the LLM judges noise."""
+        from config import CONTRADICTION_MAX_DISTANCE
+        assert 0.0 < CONTRADICTION_MAX_DISTANCE <= 0.5, (
+            "a gate above ~0.5 re-admits essentially all neighbours"
+        )
+
+    def test_threshold_alias_matches_max_distance(self):
+        from config import CONTRADICTION_MAX_DISTANCE, CONTRADICTION_THRESHOLD
+        assert CONTRADICTION_THRESHOLD == CONTRADICTION_MAX_DISTANCE
+
     def test_neo4j_defaults(self):
         from config import NEO4J_URI, NEO4J_USER
         assert NEO4J_URI.startswith("bolt://")
@@ -535,7 +547,10 @@ class TestContradiction:
 
     def test_contradiction_result_returned(self):
         resp = json.dumps({"relationship": "CONTRADICTS", "confidence": 0.85,
-                           "explanation": "opposite results"})
+                           "explanation": "opposite results",
+                           "same_phenomenon": True,
+                           "comparable_measurement": True,
+                           "opposite_outcome": True})
         with patch("agents.contradiction.call_llm", return_value=resp):
             from agents.contradiction import check_pair
             a = self._make_claim("1", "2301.00001", "Paper A", "Claim A")
@@ -543,6 +558,44 @@ class TestContradiction:
             result = check_pair(a, b)
         assert result["relationship"] == "CONTRADICTS"
         assert result["confidence"] == pytest.approx(0.85)
+
+    def test_contradiction_without_decomposition_is_demoted(self):
+        """A bare CONTRADICTS verdict no longer counts — the model must justify it."""
+        resp = json.dumps({"relationship": "CONTRADICTS", "confidence": 1.0,
+                           "explanation": "looks contradictory"})
+        diag = {}
+        with patch("agents.contradiction.call_llm", return_value=resp):
+            from agents.contradiction import STATUS_DEMOTED, check_pair
+            a = self._make_claim("1", "2301.00001", "Paper A", "Claim A")
+            b = self._make_claim("2", "2302.00002", "Paper B", "Claim B")
+            assert check_pair(a, b, diagnostics=diag) is None
+        assert diag["status"] == STATUS_DEMOTED
+
+    def test_partial_decomposition_is_demoted(self):
+        resp = json.dumps({"relationship": "CONTRADICTS", "confidence": 0.9,
+                           "explanation": "partially justified",
+                           "same_phenomenon": True,
+                           "comparable_measurement": True,
+                           "opposite_outcome": False})
+        with patch("agents.contradiction.call_llm", return_value=resp):
+            from agents.contradiction import check_pair
+            a = self._make_claim("1", "2301.00001", "Paper A", "Claim A")
+            b = self._make_claim("2", "2302.00002", "Paper B", "Claim B")
+            assert check_pair(a, b) is None
+
+    def test_decomposition_accepts_string_booleans(self):
+        resp = json.dumps({"relationship": "CONTRADICTS", "confidence": 0.8,
+                           "explanation": "justified",
+                           "same_phenomenon": "true",
+                           "comparable_measurement": "yes",
+                           "opposite_outcome": 1})
+        with patch("agents.contradiction.call_llm", return_value=resp):
+            from agents.contradiction import check_pair
+            a = self._make_claim("1", "2301.00001", "Paper A", "Claim A")
+            b = self._make_claim("2", "2302.00002", "Paper B", "Claim B")
+            result = check_pair(a, b)
+        assert result is not None
+        assert result["relationship"] == "CONTRADICTS"
 
     def test_markdown_fenced_json_stripped(self):
         resp = "```json\n" + json.dumps({
@@ -625,6 +678,40 @@ class TestContradiction:
             diag = {}
             assert check_pair(a, b, diagnostics=diag) is None
         assert diag["status"] == STATUS_PARSE_FAILURE
+
+
+class TestRetrievalGate:
+    """The distance gate must actually filter — it previously admitted 100%."""
+
+    def _claims(self):
+        return [
+            {"id": "1", "arxiv_id": "2301.00001", "paper_title": "A", "text": "Claim A"},
+            {"id": "2", "arxiv_id": "2302.00002", "paper_title": "B", "text": "Claim B"},
+        ]
+
+    def _run(self, distance, threshold):
+        a, b = self._claims()
+        similar = [{"doc_id": "claim_2", "distance": distance}]
+        with patch("agents.contradiction.get_all_claims", return_value=[a, b]), \
+             patch("agents.contradiction.find_similar_claims", return_value=similar), \
+             patch("agents.contradiction.check_pair") as mock_check, \
+             patch("agents.contradiction.CONTRADICTION_MAX_DISTANCE", threshold), \
+             patch("agents.contradiction.insert_relationship") as mock_insert, \
+             patch("agents.confidence_updater.recalculate_all",
+                   return_value={"total_updated": 0, "boosted": 0,
+                                 "penalized": 0, "unchanged": 0}):
+            from agents.contradiction import run_contradiction_detection
+            run_contradiction_detection()
+        return mock_check, mock_insert
+
+    def test_distant_neighbour_is_skipped_before_the_llm(self):
+        mock_check, mock_insert = self._run(distance=0.60, threshold=0.35)
+        mock_check.assert_not_called()
+        mock_insert.assert_not_called()
+
+    def test_close_neighbour_reaches_the_llm(self):
+        mock_check, _ = self._run(distance=0.20, threshold=0.35)
+        mock_check.assert_called_once()
 
 
 # ═══════════════════════════════════════════════════════════════

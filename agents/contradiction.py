@@ -7,7 +7,7 @@ PHASE 6 CHANGE:
 """
 import json
 import logging
-from config import CONTRADICTION_THRESHOLD
+from config import CONTRADICTION_MAX_DISTANCE
 from graph.neo4j_queries import get_all_claims, insert_relationship, get_contradictions
 from embeddings.store import find_similar_claims
 from llm import call_llm
@@ -15,7 +15,7 @@ from llm import call_llm
 logger = logging.getLogger(__name__)
 
 
-CONTRADICTION_PROMPT = """You are a research analyst determining whether two scientific claims contradict each other.
+CONTRADICTION_PROMPT = """You are a strict research analyst deciding whether two scientific claims are in direct conflict.
 
 Claim A (from paper: {paper_a}):
 "{claim_a}"
@@ -23,25 +23,44 @@ Claim A (from paper: {paper_a}):
 Claim B (from paper: {paper_b}):
 "{claim_b}"
 
-Think carefully. Two claims CONTRADICT if:
-- They make opposite predictions about the same phenomenon
-- They report significantly different results on the same setup
-- Accepting one as true logically requires rejecting the other
+A CONTRADICTION requires ALL THREE of the following to hold clearly:
+  1. SAME PHENOMENON — both claims concern the same intervention or variable
+     acting on the same outcome.
+  2. COMPARABLE MEASUREMENT — both report the same metric or evaluation setup.
+  3. OPPOSITE OUTCOME — one asserts a benefit/higher result where the other
+     asserts no effect or a harmful/lower result.
 
-Two claims SUPPORT each other if:
-- They agree on the same finding
-- One provides evidence for the other
+If any of the three does not clearly hold, the claims are NOT contradictory.
+Specifically, none of the following is a contradiction on its own:
+  - different numbers, datasets, model sizes, or experimental setups
+  - different metrics or evaluation protocols
+  - a merely loose topical overlap, or the absence of agreement
+  - one claim being broader or more specific than the other
 
-They are UNRELATED if:
-- They are about different phenomena
-- They don't logically interact
+Claims that both report a positive effect SUPPORT each other. Claims about
+different phenomena, or with no logical interaction, are UNRELATED.
+
+Worked example — this IS a contradiction:
+  Claim A: "Retrieval augmentation improves factual accuracy on open-domain QA."
+  Claim B: "Retrieval augmentation degrades factual accuracy on open-domain QA."
+  Same intervention, same measured quantity, opposite directions, so all three
+  booleans are true and the relationship is CONTRADICTS. A different dataset or
+  model size would not change that: what matters is the quantity being measured
+  and the direction claimed, not the exact experiment.
+
+Be conservative: when the relationship is arguable, answer UNRELATED.
 
 Return ONLY valid JSON, no other text:
 {{
+  "same_phenomenon": false,
+  "comparable_measurement": false,
+  "opposite_outcome": false,
   "relationship": "CONTRADICTS or SUPPORTS or UNRELATED",
   "confidence": 0.0,
   "explanation": "one sentence explaining your judgment"
 }}
+
+Set "relationship" to CONTRADICTS only when all three booleans are true.
 """
 
 
@@ -53,6 +72,24 @@ STATUS_SAME_CLAIM = "SAME_CLAIM"
 STATUS_SAME_PAPER = "SAME_PAPER"
 STATUS_UNRELATED = "UNRELATED"
 STATUS_PARSE_FAILURE = "PARSE_FAILURE"
+# The model said CONTRADICTS but failed to justify it with the required
+# decomposition (same phenomenon + comparable measurement + opposite outcome).
+# Recorded separately so the eval harness can see over-calling being corrected.
+STATUS_DEMOTED = "DEMOTED_BY_DECOMPOSITION"
+
+# The three booleans the model must set for a CONTRADICTS verdict to count.
+DECOMPOSITION_KEYS = ("same_phenomenon", "comparable_measurement", "opposite_outcome")
+
+
+def _as_bool(value) -> bool:
+    """Tolerant boolean coercion for LLM JSON (True/"true"/"yes"/1 → True)."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return value != 0
+    if isinstance(value, str):
+        return value.strip().lower() in ("true", "yes", "1")
+    return False
 
 
 def _parse_json_object(raw: str) -> dict | None:
@@ -95,9 +132,16 @@ def check_pair(claim_a: dict, claim_b: dict, diagnostics: dict | None = None) ->
     harness) can distinguish a JSON parse failure from a genuine UNRELATED
     verdict.
     """
-    def _mark(status: str) -> None:
-        if diagnostics is not None:
-            diagnostics["status"] = status
+    def _mark(status: str, data: dict | None = None) -> None:
+        if diagnostics is None:
+            return
+        diagnostics["status"] = status
+        if data is not None:
+            # Keep the decomposition visible for UNRELATED/demoted verdicts so
+            # over- and under-calling can be told apart during evaluation.
+            diagnostics["flags"] = {
+                key: _as_bool(data.get(key)) for key in DECOMPOSITION_KEYS
+            }
 
     id_a = str(claim_a.get("id", "") or "").strip()
     id_b = str(claim_b.get("id", "") or "").strip()
@@ -129,10 +173,22 @@ def check_pair(claim_a: dict, claim_b: dict, diagnostics: dict | None = None) ->
 
     relationship = str(data["relationship"]).strip().upper()
     if relationship == STATUS_UNRELATED:
-        _mark(STATUS_UNRELATED)
+        # Record the decomposition too: when a known contradiction is judged
+        # UNRELATED this is the only way to see which criterion failed.
+        _mark(STATUS_UNRELATED, data)
         return None
 
-    _mark(relationship)
+    # Deterministic guard: a CONTRADICTS verdict only counts when the model
+    # actually justified it with all three decomposition booleans. Without this
+    # the model over-calls CONTRADICTS at high confidence (96 of the 224
+    # production edges carried confidence 1.0 while only 4 survived audit).
+    if relationship == "CONTRADICTS" and not all(
+        _as_bool(data.get(key)) for key in DECOMPOSITION_KEYS
+    ):
+        _mark(STATUS_DEMOTED, data)
+        return None
+
+    _mark(relationship, data)
     return data
 
 
@@ -157,13 +213,18 @@ def run_contradiction_detection(limit_to_claim_ids: list[str] = None) -> int:
             # Neo4j 5+ returns string elementIds — do NOT cast to int
             other_claim_id = sim["doc_id"].replace("claim_", "")
 
+            # The vector search can return the claim's own embedding; skip it
+            # rather than burning an iteration on a guaranteed no-op.
+            if other_claim_id == str(claim["id"]):
+                continue
+
             # Both ids are strings — sorted() is safe
             pair_key = tuple(sorted([str(claim["id"]), other_claim_id]))
             if pair_key in pairs_checked:
                 continue
             pairs_checked.add(pair_key)
 
-            if sim["distance"] > CONTRADICTION_THRESHOLD:
+            if sim["distance"] > CONTRADICTION_MAX_DISTANCE:
                 continue
 
             other_claims = [c for c in all_claims if str(c["id"]) == other_claim_id]

@@ -152,7 +152,9 @@ The scheduler uses:
 - MAX_CLAIMS_PER_PAPER
 - CONTRADICTION_THRESHOLD
 - ALLOWED_ORIGINS
-- TRIGGER_SECRET
+- AXION_API_KEY        (write/compute endpoint auth; X-API-Key header)
+- AXION_API_URL        (backend address for the Next.js server-side proxy)
+- TRIGGER_SECRET       (legacy alias for ingestion triggers)
 
 ---
 

@@ -56,6 +56,7 @@ services:
       - GROQ_API_KEY=${GROQ_API_KEY:-}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - AXION_API_KEY=${AXION_API_KEY:-}
       - TRIGGER_SECRET=${TRIGGER_SECRET:-}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000}
       - SCHEDULER_ENABLED=${SCHEDULER_ENABLED:-false}
@@ -84,9 +85,15 @@ services:
       dockerfile: Dockerfile
       args:
         # Build-time inlining — the browser calls the API on the exposed port.
+        # NOTE: never pass secrets as NEXT_PUBLIC_* build args: they are
+        # embedded in the client bundle and readable by anyone.
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
-        NEXT_PUBLIC_TRIGGER_SECRET: ${NEXT_PUBLIC_TRIGGER_SECRET:-}
     container_name: axion_web
+    environment:
+      # Server-side proxy target (inside the compose network) and the API key
+      # it injects. Both stay on the server; neither reaches the browser.
+      - AXION_API_URL=${AXION_API_URL:-http://api:8000}
+      - AXION_API_KEY=${AXION_API_KEY:-}
     depends_on:
       - api
     ports:

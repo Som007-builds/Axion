@@ -405,8 +405,10 @@ Then edit `.env` and set at minimum:
 - `GROQ_API_KEY` **and/or** `GEMINI_API_KEY` (the default provider chain is
   `groq → gemini`)
 - `NEO4J_PASSWORD` (must match the password Compose uses)
-- `TRIGGER_SECRET` (required to enable the ingestion triggers; see
-  [Security considerations](#security-considerations))
+- `AXION_API_KEY` (required to enable the write/compute endpoints — query,
+  experiment design, confidence recalculation, ingestion; see
+  [Security considerations](#security-considerations)).
+  Generate one with `python -c "import secrets; print(secrets.token_urlsafe(36))"`.
 
 See the [configuration reference](#configuration-reference) for every variable.
 Never commit `.env`.
@@ -447,8 +449,8 @@ python main.py --mode gaps              # discover research gaps
 ```
 
 …or start the backend and use the **Ingestion** sheet in the UI (which needs
-`TRIGGER_SECRET` set on the server and `NEXT_PUBLIC_TRIGGER_SECRET` set in the
-frontend).
+`AXION_API_KEY` set on both the backend and the frontend server — the Next.js
+proxy attaches it, so it never reaches the browser).
 
 ### 7. Start the frontend
 
@@ -456,7 +458,7 @@ Create `axion/.env.local`:
 
 ```bash
 NEXT_PUBLIC_API_URL=http://localhost:8000
-NEXT_PUBLIC_TRIGGER_SECRET=<same value as TRIGGER_SECRET in the root .env>
+AXION_API_KEY=<same value as AXION_API_KEY in the root .env>
 ```
 
 ```bash
@@ -477,9 +479,10 @@ move between views.
 | `/api/health` returns `503` | Neo4j and/or ChromaDB is unreachable. `/healthz` returning `200` is expected even when degraded. |
 | First ingestion is slow / downloads a model | sentence-transformers downloads `all-MiniLM-L6-v2` on first use; it needs network access once. |
 | LLM calls hang, then fail | The router retries rate limits with backoff up to **300 s per attempt** before switching providers; check your keys and quotas. |
-| Ingestion triggers return `503` | `TRIGGER_SECRET` is unset on the server. The API fails **closed** by design. |
+| Ingestion/compute endpoints return `503` | `AXION_API_KEY` is unset on the server. The API fails **closed** by design. |
+| Compute endpoints return `401` in the UI | The web server's `AXION_API_KEY` does not match the backend's. Set the same value in the root `.env` and `axion/.env.local`. |
 | CORS errors in the browser | Add the frontend origin to `ALLOWED_ORIGINS` and restart the API. |
-| `pnpm lint` fails | ESLint is referenced in `package.json` but not installed; there is no lint setup yet. |
+| `pnpm lint` reports hydration warnings | Two intentional `localStorage` hydration effects in `app/page.tsx` and `query-panel.tsx`; kept as warnings. |
 
 ---
 
@@ -497,10 +500,15 @@ move between views.
 model cache). The `api` service bind-mounts `./data` so ChromaDB vectors and
 downloaded PDFs persist on the host.
 
-**Build-time environment (frontend):** `NEXT_PUBLIC_API_URL` and
-`NEXT_PUBLIC_TRIGGER_SECRET` are **inlined into the client bundle at build time**
-(via Compose `build.args`). Changing them requires rebuilding the `web` image,
-not just restarting it.
+**Build-time environment (frontend):** only `NEXT_PUBLIC_API_URL` is inlined into
+the client bundle at build time (via Compose `build.args`); changing it requires
+rebuilding the `web` image, not just restarting it. **Never** pass secrets as
+`NEXT_PUBLIC_*` build args — they end up readable by every visitor.
+
+**Runtime secrets (server-side only):** the `api` service reads `AXION_API_KEY`
+to authorize write/compute endpoints, and the `web` service reads the same value
+plus `AXION_API_URL` (the internal `http://api:8000` address) to proxy those
+calls. Neither value reaches the browser.
 
 ### Start and stop
 
@@ -531,17 +539,18 @@ docker compose logs -f neo4j      # database
 - **Frontend cannot reach the API** — confirm `NEXT_PUBLIC_API_URL` was set before
   `docker compose build web`; a value baked into a stale image will not update on
   restart.
-- **Ingestion controls return `503`** — set `TRIGGER_SECRET` in `.env` and
-  rebuild/restart the API.
+- **Ingestion/compute calls return `401` or `503`** — set `AXION_API_KEY` in `.env`
+  (both the `api` and `web` services read it) and rebuild/restart the stack.
 - **Port conflicts** — the stack uses host ports `7887`, `7474`, `8000`, and
   `3000`; adjust the mappings if any are taken.
 
-> **Verified vs. unverified:** `docker compose config` **parses successfully**
-> (validated locally for this README). The container **images have not been built
-> and the running stack has not been exercised end-to-end** — the Docker daemon
-> was unavailable in the environment where this was validated. Treat the compose
-> definition as configuration-validated, not battle-tested. This is **not** a
-> production deployment: there is no reverse proxy, TLS, or authentication.
+> **Verified:** the full stack builds and runs — `axion_neo4j`, `axion_api`, and
+> `axion_web` all report healthy, the graph survives restarts, and a real LLM
+> query succeeds end-to-end through the frontend proxy. This is still **not** a
+> production deployment: there is no reverse proxy, TLS, or per-user
+> authentication. The single shared `AXION_API_KEY` gates write/compute
+> endpoints; add a real identity layer before exposing the app to untrusted
+> users.
 
 ---
 
@@ -565,18 +574,19 @@ All variables are read from `.env` (loaded by `config.py` / `python-dotenv`).
 | `SCHEDULER_ENABLED` | Run periodic ingestion inside the API process | `false` | No | Backend (single worker) |
 | `SCHEDULER_INTERVAL_HOURS` | Scheduler cadence in hours | `6` | No | Backend |
 | `SCHEDULER_PAPERS_PER_RUN` | Papers fetched per topic per run | `5` | No | Backend |
-| `TRIGGER_SECRET` | Shared secret for the two ingestion trigger endpoints; empty ⇒ triggers disabled | — (empty) | **Yes** for ingestion | Backend |
+| `AXION_API_KEY` | Shared secret for write/compute endpoints (`X-API-Key`); empty ⇒ those endpoints return `503` | — (empty) | **Yes** for query/ingestion | Backend + web server |
+| `TRIGGER_SECRET` | Legacy alias still accepted via `X-Trigger-Secret` on ingestion triggers | — (empty) | No | Backend |
+| `AXION_API_URL` | Backend address used by the Next.js server-side proxy | `http://localhost:8000` | In Compose | Web server |
 | `LOG_LEVEL` | Logging level (`INFO`, `DEBUG`, …) | `INFO` | No | Backend |
 | `LOG_FORMAT` | `text` or `json` structured logging | `text` | No | Backend |
 | `HF_HOME` | Hugging Face cache dir (set to a volume in Compose) | — | No | Backend / container |
 | `NEXT_PUBLIC_API_URL` | Base URL the browser uses to reach the API | `http://localhost:8000` | **Yes** | Frontend **build** |
-| `NEXT_PUBLIC_TRIGGER_SECRET` | Frontend copy of `TRIGGER_SECRET` for ingestion calls | — | For ingestion | Frontend **build** |
 
 > ⚠️ **`NEXT_PUBLIC_*` values are public.** Next.js inlines them into the
-> JavaScript bundle served to every visitor, so they are **not secret**. Anything
-> in `NEXT_PUBLIC_TRIGGER_SECRET` can be read by anyone who loads the app. Before
-> exposing the app to untrusted users, move ingestion authorization behind a real
-> authenticated backend instead of a public shared secret.
+> JavaScript bundle served to every visitor, so they are **not secret**. Secrets
+> must live in server-only variables (`AXION_API_KEY`, `TRIGGER_SECRET`) and be
+> attached by the frontend's server-side proxy at
+> `axion/app/api/backend/[...path]/route.ts`.
 
 Non-environment settings live in `config.py` and are not user-configurable via
 `.env`: the embedding model (`all-MiniLM-L6-v2`), `CHUNK_SIZE=800`,
@@ -662,14 +672,17 @@ require a secret; everything else is open to anyone who can reach the service
 | :--- | :--- | :--- | :--: |
 | GET | `/api/graph` | Nodes and edges for the graph canvas (`limit_claims`) | — |
 
-🔑 = requires an `X-Trigger-Secret` header equal to `TRIGGER_SECRET`. If
-`TRIGGER_SECRET` is unset, these endpoints return `503` (fail-closed). A global
+🔑 = requires an `X-API-Key` header equal to `AXION_API_KEY`. If
+`AXION_API_KEY` is unset, these endpoints return `503` (fail-closed). The legacy
+`X-Trigger-Secret` header (`TRIGGER_SECRET`) is still accepted. A global
 rate limit of `60/minute` per client IP applies to all routes, with the tighter
 per-route limits noted above.
 
-> **Security limitation:** apart from the shared-secret ingestion triggers, the
-> API has **no authentication, authorization, or per-user isolation**. Do not
-> expose it to a network you do not trust. See
+> **Security model:** read-only endpoints are public; everything that spends LLM
+> tokens or mutates the graph requires the shared API key. The key is held by the
+> frontend **server** and attached by its proxy, never shipped to the browser. It
+> is still a single shared secret: there is **no per-user identity or
+> authorization**. Do not expose the API to a network you do not trust. See
 > [Security considerations](#security-considerations).
 
 ---
@@ -725,15 +738,16 @@ consensus point should cite at least one arXiv ID.
 ```bash
 curl -X POST http://localhost:8000/api/query \
   -H "Content-Type: application/json" \
+  -H "X-API-Key: $AXION_API_KEY" \
   -d '{"question": "Do larger models benefit more from chain-of-thought prompting?"}'
 ```
 
-Triggering a custom ingestion (requires the secret):
+Triggering a custom ingestion (same key):
 
 ```bash
 curl -X POST http://localhost:8000/api/ingestion/custom \
   -H "Content-Type: application/json" \
-  -H "X-Trigger-Secret: $TRIGGER_SECRET" \
+  -H "X-API-Key: $AXION_API_KEY" \
   -d '{"topic": "instruction tuning language models", "limit": 5}'
 ```
 
@@ -745,11 +759,11 @@ curl -X POST http://localhost:8000/api/ingestion/custom \
 
 | Item | State |
 | :--- | :--- |
-| Offline suite | **120 passed, 12 deselected** (verified locally for this document) |
+| Offline suite | **154 passed, 12 deselected** (verified locally for this document) |
 | Integration tests | `tests/test_neo4j.py`, `tests/test_claims.py` need a live Neo4j/ChromaDB; marked `integration` and excluded by default |
 | CI | `.github/workflows/ci.yml` runs the offline backend suite and a frontend production build on every push/PR to `main` |
 | Coverage | Not measured |
-| Frontend lint | Not configured (ESLint referenced but not installed); the CI frontend job **builds** rather than lints |
+| Frontend lint | ESLint via `pnpm lint`: 0 errors, 2 intentional hydration warnings in `query-panel.tsx` / `app/page.tsx` |
 
 Run the offline tests (no Neo4j, ChromaDB, or LLM required):
 
@@ -851,8 +865,9 @@ deliberately not hidden.
 
 ### Platform and engineering
 
-- **No authentication or multi-tenancy** beyond the two shared-secret ingestion
-  triggers. There are no accounts, roles, or per-user isolation.
+- **No per-user authentication or multi-tenancy.** A single shared
+  `AXION_API_KEY` gates all write/compute endpoints. There are no accounts,
+  roles, quotas, or per-user isolation.
 - **In-process, non-durable background work.** Ingestion runs in a background
   task/thread and state (scheduler, metrics, progress) is process-local; running
   more than one API worker would duplicate ingestion and desynchronise state.
@@ -886,16 +901,21 @@ deliberately not hidden.
 
 ## Security considerations
 
-**Axion is not safe to expose to untrusted users or the public internet in its
-current state.** What exists today:
+**Axion still needs hardening before it is safe to expose to the public
+internet.** What exists today:
 
-- **No authentication.** All read/query endpoints are open; only
-  `/api/ingestion/trigger` and `/api/ingestion/custom` require a shared secret,
-  which fails closed when `TRIGGER_SECRET` is unset.
+- **Shared-key authentication on write/compute endpoints.** `/api/query`,
+  `/api/experiments/{id}/design`, `/api/confidence/recalculate`, and the
+  ingestion triggers require `X-API-Key: $AXION_API_KEY` and fail closed (`503`)
+  when the key is unset. Read-only endpoints stay public. The legacy
+  `X-Trigger-Secret` header is still accepted.
+- **The key is server-side only.** The browser calls a Next.js route handler
+  (`/api/backend/...`) that attaches the key; it is never inlined into the client
+  bundle.
+- **No per-user identity.** One shared secret for everyone: no user accounts,
+  roles, quotas, or per-user rate limits.
 - **No TLS / reverse proxy.** Traffic is plain HTTP.
 - **Secrets live in a plaintext `.env`.** There is no secret manager.
-- **`NEXT_PUBLIC_TRIGGER_SECRET` is public** by design of Next.js build-time
-  inlining: anyone who loads the frontend can read it.
 - **Neo4j is bound to `127.0.0.1`** in Compose, and **APOC is unrestricted**
   (`apoc.*`) inside the database.
 - **Global rate limiting only** (60/min per IP) plus a few tighter route limits;
@@ -911,14 +931,13 @@ Practical guidance:
    gitignored — keep it that way.
 3. **Keep privileged secrets out of client-side code.** Anything prefixed
    `NEXT_PUBLIC_` is browser-visible and must never be a privileged secret.
-4. **Rotate any credentials that may have been exposed** (API keys, the Neo4j
-   password, and the trigger secret), especially before archiving or publishing
+4. **Rotate any credentials that may have been exposed** (LLM API keys, the Neo4j
+   password, and `AXION_API_KEY`), especially before archiving or publishing
    the repository.
 5. **Restrict network access to databases and internal services.** Keep Neo4j and
    ChromaDB off untrusted networks and restrict APOC where possible.
-6. **Add TLS and real authentication** before any shared or multi-user
-   deployment, and replace the public trigger secret with authenticated,
-   server-side authorization.
+6. **Add TLS and a real identity layer** (accounts, sessions, per-user quotas)
+   before any shared or multi-user deployment.
 
 ---
 

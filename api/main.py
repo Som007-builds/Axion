@@ -8,7 +8,7 @@ Run with: uvicorn api.main:app --reload --port 8000
 import logging
 import os
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Request, Header
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Request, Header, Depends
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
@@ -121,21 +121,45 @@ app.add_middleware(
 )
 
 
-def require_trigger_secret(x_trigger_secret: Optional[str]) -> None:
+def _write_secrets() -> tuple:
     """
-    Validate the ingestion trigger secret.
+    Secrets accepted by write/compute endpoints.
 
-    Fail-closed: if TRIGGER_SECRET is not configured on the server, ingestion
-    triggers are disabled entirely rather than left open to anonymous callers.
+    `AXION_API_KEY` (header `X-API-Key`) is the preferred secret;
+    `TRIGGER_SECRET` (header `X-Trigger-Secret`) is still accepted for
+    backwards compatibility with existing deployments.
     """
-    expected = config.TRIGGER_SECRET
+    return tuple(s for s in (config.API_KEY, config.TRIGGER_SECRET) if s)
+
+
+def _secret_matches(supplied: Optional[str], expected: tuple) -> bool:
+    return bool(supplied) and any(secrets.compare_digest(supplied, e) for e in expected)
+
+
+def require_write_access(
+    x_api_key: Optional[str] = Header(None),
+    x_trigger_secret: Optional[str] = Header(None),
+) -> None:
+    """
+    Fail-closed auth guard for write/compute endpoints.
+
+    If the server has neither AXION_API_KEY nor TRIGGER_SECRET configured, the
+    endpoints are disabled entirely (503) rather than left open to anonymous
+    callers. Otherwise a valid key must be supplied (401).
+    """
+    expected = _write_secrets()
     if not expected:
         raise HTTPException(
             status_code=503,
-            detail="Ingestion triggers are disabled: TRIGGER_SECRET is not configured on the server.",
+            detail="Compute endpoints are disabled: AXION_API_KEY is not configured on the server.",
         )
-    if not x_trigger_secret or not secrets.compare_digest(x_trigger_secret, expected):
-        raise HTTPException(status_code=401, detail="Invalid trigger secret")
+    if not (_secret_matches(x_api_key, expected) or _secret_matches(x_trigger_secret, expected)):
+        raise HTTPException(status_code=401, detail="Invalid or missing API key")
+
+
+def require_trigger_secret(x_trigger_secret: Optional[str]) -> None:
+    """Deprecated: prefer `require_write_access`. Kept for compatibility."""
+    require_write_access(x_api_key=None, x_trigger_secret=x_trigger_secret)
 
 
 def format_experiment_for_frontend(exp_dict: dict) -> dict:
@@ -329,7 +353,7 @@ def get_experiment(contradiction_id: str):
 
 @app.post("/api/experiments/{contradiction_id}/design", response_model=ExperimentModel)
 @limiter.limit("5/minute")
-def design_experiment(contradiction_id: str, request: Request):
+def design_experiment(contradiction_id: str, request: Request, _auth: None = Depends(require_write_access)):
     """Design an experiment for a specific contradiction on demand."""
     from graph.neo4j_queries import get_contradictions
     from agents.experiment_recommender import design_experiment, store_experiment
@@ -373,7 +397,7 @@ def get_gaps(source: Optional[str] = None):
 
 @app.post("/api/query", response_model=CoordinatorOutput)
 @limiter.limit("10/minute")
-def run_query(body: dict, request: Request):
+def run_query(body: dict, request: Request, _auth: None = Depends(require_write_access)):
     """
     Run the coordinator v2 on a research question.
     Body: {"question": "your question here"}
@@ -552,7 +576,7 @@ def most_changed(limit: int = 10):
 
 @app.post("/api/confidence/recalculate")
 @limiter.limit("2/minute")
-def recalculate_confidence(request: Request):
+def recalculate_confidence(request: Request, _auth: None = Depends(require_write_access)):
     from agents.confidence_updater import recalculate_all
     summary = recalculate_all()
     return {"updated": summary.get("total_updated", 0)}
@@ -586,9 +610,8 @@ def ingestion_status():
 
 @app.post("/api/ingestion/trigger")
 @limiter.limit("2/minute")
-def trigger_ingestion(background_tasks: BackgroundTasks, request: Request, x_trigger_secret: Optional[str] = Header(None)):
-    """Trigger an ingestion cycle in the background."""
-    require_trigger_secret(x_trigger_secret)
+def trigger_ingestion(background_tasks: BackgroundTasks, request: Request, _auth: None = Depends(require_write_access)):
+    """Trigger an ingestion cycle in the background (requires an API key)."""
 
     from ingestion.scheduler import trigger_now
     background_tasks.add_task(trigger_now)
@@ -601,10 +624,9 @@ def trigger_custom_ingestion(
     body: dict,
     background_tasks: BackgroundTasks,
     request: Request,
-    x_trigger_secret: Optional[str] = Header(None)
+    _auth: None = Depends(require_write_access)
 ):
-    """Trigger a custom ingestion cycle with a specific topic and paper count limit."""
-    require_trigger_secret(x_trigger_secret)
+    """Trigger a custom ingestion cycle with a specific topic and paper count limit (requires an API key)."""
 
     from ingestion.progress import progress_tracker
     from ingestion.scheduler import is_running

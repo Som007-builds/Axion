@@ -11,34 +11,50 @@ from unittest.mock import patch
 import pytest
 from fastapi import HTTPException
 
-from api.main import get_disputes, get_evolution, require_trigger_secret, ingestion_status
+from api.main import (
+    get_disputes,
+    get_evolution,
+    require_trigger_secret,
+    require_write_access,
+    ingestion_status,
+)
 
 
-# ─── Trigger secret (fail-closed) ─────────────────────────────────────────────
+# ─── Write/compute auth (fail-closed) ─────────────────────────────────────────
 
-class TestTriggerSecret:
+class TestWriteAccess:
 
-    def test_unset_secret_disables_triggers(self):
-        with patch("config.TRIGGER_SECRET", ""):
+    def test_no_secrets_configured_disables_endpoints(self):
+        with patch.multiple("config", API_KEY="", TRIGGER_SECRET=""):
+            with pytest.raises(HTTPException) as exc:
+                require_write_access(x_api_key=None, x_trigger_secret=None)
+        assert exc.value.status_code == 503
+
+    def test_missing_key_is_rejected(self):
+        with patch.multiple("config", API_KEY="k3y", TRIGGER_SECRET=""):
+            with pytest.raises(HTTPException) as exc:
+                require_write_access(x_api_key=None, x_trigger_secret=None)
+        assert exc.value.status_code == 401
+
+    def test_wrong_key_is_rejected(self):
+        with patch.multiple("config", API_KEY="k3y", TRIGGER_SECRET=""):
+            with pytest.raises(HTTPException) as exc:
+                require_write_access(x_api_key="nope", x_trigger_secret=None)
+        assert exc.value.status_code == 401
+
+    def test_correct_api_key_passes(self):
+        with patch.multiple("config", API_KEY="k3y", TRIGGER_SECRET=""):
+            require_write_access(x_api_key="k3y", x_trigger_secret=None)  # no raise
+
+    def test_legacy_trigger_secret_still_accepted(self):
+        with patch.multiple("config", API_KEY="", TRIGGER_SECRET="s3cret"):
+            require_write_access(x_api_key=None, x_trigger_secret="s3cret")  # no raise
+
+    def test_legacy_wrapper_still_fails_closed(self):
+        with patch.multiple("config", API_KEY="", TRIGGER_SECRET=""):
             with pytest.raises(HTTPException) as exc:
                 require_trigger_secret(None)
         assert exc.value.status_code == 503
-
-    def test_missing_header_is_rejected(self):
-        with patch("config.TRIGGER_SECRET", "s3cret"):
-            with pytest.raises(HTTPException) as exc:
-                require_trigger_secret(None)
-        assert exc.value.status_code == 401
-
-    def test_wrong_secret_is_rejected(self):
-        with patch("config.TRIGGER_SECRET", "s3cret"):
-            with pytest.raises(HTTPException) as exc:
-                require_trigger_secret("nope")
-        assert exc.value.status_code == 401
-
-    def test_correct_secret_passes(self):
-        with patch("config.TRIGGER_SECRET", "s3cret"):
-            require_trigger_secret("s3cret")  # should not raise
 
 
 # ─── Temporal disputes mapping ────────────────────────────────────────────────

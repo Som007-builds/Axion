@@ -335,22 +335,24 @@ Embeddings live in `embeddings/store.py`; graph access in `graph/neo4j_*.py`.
 | GET | `/api/claims/{id}/provenance` | claim provenance chain | — | global |
 | GET | `/api/contradictions` | all CONTRADICTS with details | — | global |
 | GET | `/api/experiments/{contradiction_id}` | stored experiment design | — | global |
-| POST | `/api/experiments/{contradiction_id}/design` | design experiment on demand | — | 5/min |
+| POST | `/api/experiments/{contradiction_id}/design` | design experiment on demand | 🔑 | 5/min |
 | GET | `/api/gaps` | gaps (`?source=`) | — | global |
-| POST | `/api/query` | full research query (coordinator v2) | — | global |
+| POST | `/api/query` | full research query (coordinator v2) | 🔑 | 10/min |
 | GET | `/api/temporal/evolution` | consensus evolution | — | global |
 | GET | `/api/temporal/disputes` | dispute timeline | — | global |
 | GET | `/api/confidence/distribution` | confidence histogram | — | global |
 | GET | `/api/confidence/most-changed` | biggest confidence moves | — | global |
-| POST | `/api/confidence/recalculate` | recompute confidence | — | 10/min |
+| POST | `/api/confidence/recalculate` | recompute confidence | 🔑 | 10/min |
 | GET | `/api/ingestion/status` | last run + running flag | — | global |
 | POST | `/api/ingestion/trigger` | run ingestion cycle | 🔑 | 2/min |
 | POST | `/api/ingestion/custom` | run ingestion for a topic | 🔑 | 5/min |
 | GET | `/api/ingestion/progress` | live progress + logs | — | global |
 | GET | `/api/graph` | nodes/edges for the graph canvas | — | global |
 
-🔑 = requires `X-Trigger-Secret` header matching `TRIGGER_SECRET`. **All other
-endpoints are unauthenticated.**
+🔑 = requires an `X-API-Key` header matching `AXION_API_KEY` (the legacy
+`X-Trigger-Secret` header is still accepted). Read-only endpoints are public;
+every endpoint that spends LLM tokens or mutates the graph requires the key, and
+returns `503` when no key is configured (fail-closed).
 
 Global rate limit: `60/minute` per client IP (slowapi).
 
@@ -358,7 +360,7 @@ Global rate limit: `60/minute` per client IP (slowapi).
 
 - **Framework:** Next.js App Router; single route (`app/page.tsx`) switching views client-side.
 - **Views:** `query-panel`, `knowledge-graph`, `contradiction-list`, `gap-list`, `timeline-view`, `graph-evolution`, plus `dashboard-stats`, `ingestion-status`, `experiment-card`, `nav-rail`, `status-bar`, `command-bar`.
-- **API client:** `lib/api-client.ts` — one fetch helper reading `NEXT_PUBLIC_API_URL` (default `http://localhost:8000`).
+- **API client:** `lib/api-client.ts` — direct fetches to `NEXT_PUBLIC_API_URL` for read-only endpoints; write/compute calls go through the server-side proxy `app/api/backend/[...path]/route.ts`, which attaches `X-API-Key` from `AXION_API_KEY` (never bundled into the client).
 - **Types:** `types/axion.ts` mirrors API response models.
 - **Design system:** dark "glass" theme, skeletons, empty/error states, `⌘K` command bar, keyboard nav.
 - **Known dead weight:** ~51 unused `components/ui/*` primitives, orphaned `styles/globals.css`, duplicate hooks (`use-mobile`, `use-toast`), placeholder assets.
@@ -385,9 +387,10 @@ Global rate limit: `60/minute` per client IP (slowapi).
 | `SCHEDULER_ENABLED` | `false` | run periodic ingestion in the API process |
 | `SCHEDULER_INTERVAL_HOURS` | `6` | scheduler cadence |
 | `SCHEDULER_PAPERS_PER_RUN` | `5` | papers per scheduler run |
-| `TRIGGER_SECRET` | — (empty ⇒ triggers disabled) | shared secret for ingestion endpoints |
+| `AXION_API_KEY` | — (empty ⇒ write/compute endpoints disabled) | shared secret for query/experiment/confidence/ingestion endpoints (`X-API-Key`) |
+| `TRIGGER_SECRET` | — (empty) | legacy alias accepted via `X-Trigger-Secret` |
 | `NEXT_PUBLIC_API_URL` | `http://localhost:8000` | frontend → API base URL (build-time) |
-| `NEXT_PUBLIC_TRIGGER_SECRET` | — | frontend's copy of the trigger secret (build-time, **public**) |
+| `AXION_API_URL` | `http://localhost:8000` | backend address used by the Next.js server-side proxy |
 | `LOG_LEVEL` | `INFO` | logging |
 
 Non-env config (in `config.py`): embedding model, chunk size/overlap, `MAX_CLAIMS_PER_PAPER=8`, `CONTRADICTION_THRESHOLD=0.95`, `SCHEDULER_TOPICS` (5 LLM-related topics).
@@ -425,7 +428,7 @@ Verified live on 2026-10-17 against the containerized stack (`GET /api/stats`).
 python -m venv venv
 venv/Scripts/activate            # Windows;  source venv/bin/activate on Unix
 pip install -r requirements-dev.txt
-cp .env.example .env             # fill in LLM keys + NEO4J_PASSWORD + TRIGGER_SECRET
+cp .env.example .env             # fill in LLM keys + NEO4J_PASSWORD + AXION_API_KEY
 docker compose up -d neo4j       # graph only
 python -m graph.neo4j_schema     # create constraints/indexes
 uvicorn api.main:app --reload --port 8000
@@ -434,7 +437,7 @@ uvicorn api.main:app --reload --port 8000
 cd axion
 pnpm install
 # axion/.env.local: NEXT_PUBLIC_API_URL=http://localhost:8000
-#                   NEXT_PUBLIC_TRIGGER_SECRET=<same as root TRIGGER_SECRET>
+#                   AXION_API_KEY=<same as root AXION_API_KEY>
 pnpm dev                         # http://localhost:3000
 ```
 
@@ -504,11 +507,11 @@ macro F1 ≥ 0.55, CONTRADICTS precision/recall ≥ 0.60, p95 latency ≤ 4 s.
 
 | Area | State |
 | :--- | :--- |
-| Authentication | ❌ none, except shared-secret on 2 ingestion endpoints |
-| Authorization / roles | ❌ none |
+| Authentication | ✅ shared `AXION_API_KEY` on all write/compute endpoints (fail-closed); ❌ no per-user accounts |
+| Authorization / roles | ❌ none (single shared secret) |
 | Transport security | ❌ no TLS/reverse proxy |
 | Secret storage | ⚠️ plaintext `.env` (gitignored, but keys on disk need rotation) |
-| Secret leakage to client | ⚠️ `NEXT_PUBLIC_TRIGGER_SECRET` is public by design |
+| Secret leakage to client | ✅ fixed: the key is attached by the Next.js server-side proxy; verified absent from the served JS bundles |
 | Neo4j exposure | ✅ bound to `127.0.0.1` only (this pass) |
 | APOC | ⚠️ `apoc.*` unrestricted in Neo4j |
 | CORS | allow-list from `ALLOWED_ORIGINS`; `allow_credentials=True` |
@@ -517,9 +520,15 @@ macro F1 ≥ 0.55, CONTRADICTS precision/recall ≥ 0.60, p95 latency ≤ 4 s.
 | Dependency hygiene | ✅ fully pinned `==` (no hashes) |
 | License | ❌ none specified |
 
-**Bottom line:** not safe to expose to untrusted users or the public internet as
-is. Minimum before multi-user use: real auth on write/compute endpoints, TLS,
-secret-manager rotation, and per-user rate limits.
+**Bottom line:** no longer trivially abusable (compute/graph mutations require the
+key), but still not safe to expose to untrusted users as is. Minimum before
+multi-user use: a real identity layer, TLS, secret-manager rotation, and per-user
+rate limits.
+
+Verified 2026-10-17 against the running stack: anonymous and wrong-key calls to
+`/api/query`, `/api/experiments/{id}/design` and `/api/confidence/recalculate`
+return `401`; the frontend proxy reaches the API with a valid key; and neither
+`AXION_API_KEY` nor the legacy `TRIGGER_SECRET` appears in any served JS chunk.
 
 ---
 
@@ -567,7 +576,7 @@ Consolidated (details and checkboxes in `progress.md`):
 - LLM router health: the configured Groq model was decommissioned and non-rate-limit errors aborted the whole fallback chain — now `openai/gpt-oss-20b` / `gemini-2.5-flash` with full fallback and an empty-response guard.
 
 **Open**
-- No auth; public `NEXT_PUBLIC_TRIGGER_SECRET`.
+- No per-user accounts (single shared `AXION_API_KEY`); no TLS.
 - Evaluation now exists, but CONTRADICTS has only 4 examples — expand the reviewed set; macro F1 0.48 is the current honest number.
 - Scheduler + progress/metrics not multi-process safe; no task queue.
 - Blocking LLM work inside `/api/query`.
@@ -584,13 +593,14 @@ Consolidated (details and checkboxes in `progress.md`):
 
 | Target | Estimate | What's left |
 | :--- | :--- | :--- |
-| **Founder/demo** | **~85%** | Polish; the core loop works and looks finished |
-| **Self-hosted MVP** | **~70–75%** | Hardening: auth, queue, ops, docs, CI — mostly non-feature work |
-| **Multi-tenant SaaS** | **~40%** | Auth/tenancy, durable jobs, observability, valid eval, billing — 2–3+ months |
+| **Founder/demo** | **~90%** | Polish; the core loop works and looks finished |
+| **Self-hosted MVP** | **~80–85%** | Auth ✅ + deployment ✅; remaining: durable queue, observability, ops docs |
+| **Multi-tenant SaaS** | **~45%** | Identity/tenancy, durable jobs, observability, valid eval, billing — 2–3+ months |
 
-**Verdict:** everything needed for a compelling demo exists. Shipping a *product*
-is blocked mainly on **security (auth), a valid evaluation, and operational
-durability**, not on features.
+**Verdict:** everything needed for a compelling demo exists, and the stack is no
+longer trivially abusable (write/compute endpoints require a server-held key).
+Shipping a *product* is now blocked mainly on **operational durability (queue,
+observability)** and a **larger, valid evaluation** — not on features.
 
 ---
 
@@ -600,7 +610,7 @@ durability**, not on features.
 2. **Offline-green tests + CI** — ✅ done (111 tests, GitHub Actions, type-checked build).
 3. **Deployment** — ✅ done this session (Dockerfiles, full-stack compose, healthchecks).
 4. **Valid evaluation** — ✅ reference set rebuilt + baselines recorded (`axion_pairs.csv`, macro F1 0.48); ⏳ expand CONTRADICTS positives before setting thresholds.
-5. **Auth + multi-user** — real accounts, per-user rate limits, protect compute endpoints.
+5. **Auth + multi-user** — shared-key auth on compute endpoints ✅ done; real accounts, per-user rate limits still open.
 6. **Durable task queue** — Celery/RQ for ingestion + long queries; make state cross-process.
 7. **Observability** — persistent metrics, tracing, alerting, structured logs.
 8. **Docs/branding** — unify on **Axion**, reconcile stats, retire stale docs, add LICENSE.

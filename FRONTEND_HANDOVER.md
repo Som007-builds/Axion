@@ -3,6 +3,14 @@
 > **Status:** supplementary reference. The authoritative, current project
 > inventory is [`PROJECT_INFO.md`](PROJECT_INFO.md); actionable work is tracked
 > in [`progress.md`](progress.md). Product name: **Axion**.
+>
+> **⚠️ Auth model updated (2026-10-17):** write/compute endpoints
+> (`/api/query`, `/api/experiments/{id}/design`, `/api/confidence/recalculate`,
+> both ingestion triggers) now require an `X-API-Key` header matching
+> `AXION_API_KEY`. The frontend attaches it from the **server** via
+> `axion/app/api/backend/[...path]/route.ts`; the old public
+> `NEXT_PUBLIC_TRIGGER_SECRET` was removed. Sections below that still describe
+> `X-Trigger-Secret`/`NEXT_PUBLIC_TRIGGER_SECRET` are historical.
 
 This document provides a complete, read-only architectural contract and specification of the `axion/` Next.js frontend. It details the exact API endpoints, TypeScript data models, view inventories, state management behaviors, configuration settings, dependencies, known quirks, and a minimum viable swap checklist for building a drop-in frontend replacement.
 

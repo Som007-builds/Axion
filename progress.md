@@ -10,11 +10,14 @@
 
 | Target | Estimate | State |
 | :--- | :--- | :--- |
-| Research / founder demo | ~1–2 weeks | **~85%** — core loop works, UI looks finished |
-| Public self-hosted MVP | ~4–6 weeks | **~70–75%** — needs hardening, not features |
-| Multi-tenant SaaS | 2–3+ months | **~40%** — auth, queue, observability, multi-tenancy missing |
+| Research / founder demo | ~1–2 weeks | **~90%** — core loop works, UI looks finished |
+| Public self-hosted MVP | ~4–6 weeks | **~80–85%** — auth + deployment done; needs queue, ops, bigger eval |
+| Multi-tenant SaaS | 2–3+ months | **~45%** — accounts/tenancy, queue, observability still missing |
 
-**Bottom line:** ingestion → graph → reasoning → API → UI works end to end. Remaining work is correctness bugs, security, test/CI hygiene, eval, and deployment — not new features.
+**Bottom line:** ingestion → graph → reasoning → API → UI works end to end, the
+stack is containerized and verified, and write/compute endpoints now require a
+server-held API key. Remaining work is the durable queue, observability,
+contradiction quality, and a larger reviewed eval set — not new features.
 
 ---
 
@@ -49,13 +52,13 @@
 
 - [x] **`get_graph_stats` returned `{}` when gaps/contradictions were 0** → rewrote with Neo4j 5 `COUNT {...}` subqueries (always one row). `graph/neo4j_queries.py`.
 - [x] **Temporal endpoints schema mismatch** → `/api/temporal/disputes` now maps `description/first_appeared/status/resolution/resolution_year/related_claim_ids`; evolution uses real per-year confidence (LLM) with top-level fallback and skips rows without a valid year. `api/main.py`, `api/models.py`, `agents/temporal.py` (prompt + data-driven year fallback + claim-id→text map).
-- [x] **Secret check failed open** → now fail-closed: unset `TRIGGER_SECRET` returns 503, wrong/missing secret returns 401, constant-time compare (`secrets.compare_digest`). `api/main.py:require_trigger_secret`.
+- [x] **Secret check failed open** → now fail-closed: unset secret returns 503, wrong/missing secret returns 401, constant-time compare (`secrets.compare_digest`). Superseded 2026-10-17 by the unified `require_write_access` guard (`api/main.py`).
 - [x] **Global exception handler leaked raw `str(exc)`** → now logs the traceback and returns `{"error":"Internal server error"}`. Also sanitized `/api/health` + `/api/metrics` error strings.
 - [x] **Placeholder data removed**: gaps confidence now `null` (frontend guards), graph paper `year` read from Neo4j, contradictions now return real `section`/`arxiv_id`/per-claim `confidence` (extended `get_contradictions` query).
 - [x] **API boots degraded** instead of crashing when Neo4j/Chroma are down (`/api/health` returns 503) — verified with TestClient.
 - [x] **Config/port drift fixed**: defaults + `.env.example` now match compose (`7887`, `axion_neo4j`); compose publishes only `127.0.0.1`, added healthcheck, dropped obsolete `version:`.
 - [x] **Local env wired** for the new fail-closed secret: generated secret appended to untracked `.env`, created `axion/.env.local` (both gitignored via new `.gitignore` rules).
-- [ ] **Rotate secrets** — still open: live-format `GEMINI_API_KEY`, `GROQ_API_KEY` and weak `NEO4J_PASSWORD=scimesh123` sit in untracked `.env`. Rotate + strengthen before any archive/zip/publish. (`NEXT_PUBLIC_TRIGGER_SECRET` is inherently public — move triggers behind real auth before multi-user.)
+- [~] **Rotate secrets** — ✅ `AXION_API_KEY` + `TRIGGER_SECRET` regenerated and the Neo4j password rotated to a 32-char value on 2026-10-17 (verified: stack healthy after recreate). ⏳ Still owed **manually**: `GEMINI_API_KEY` and `GROQ_API_KEY` must be reissued in the Google/Groq consoles (they were exposed in a `docker compose config` dump and no CLI can rotate them).
 
 ### P0 test hygiene — ✅ DONE 2026-10-16
 - [x] `tests/test_claims.py` no longer breaks collection (rewritten as an `integration` test).
@@ -63,7 +66,7 @@
 - [x] `pytest.ini` gained an `integration` marker; integration tests excluded by default.
 - [x] `tests/test_neo4j.py` marked `integration`.
 - [x] Added `tests/test_api_regressions.py` (8 tests) covering the P0 fixes.
-- [x] **`pytest` now green offline: 150 passed, 12 deselected** (grew 97 → 111 via Tracks A/D, → 142 via Track C test conversions, → 150 via Track D eval/LLM tests).
+- [x] **`pytest` now green offline: 154 passed, 12 deselected** (97 → 111 via Tracks A/D, → 142 via Track C test conversions, → 150 via Track D eval/LLM tests, → 154 via the P0 auth tests).
 
 ---
 
@@ -76,11 +79,14 @@
 - [ ] Offload blocking work: LLM `time.sleep` backoff up to 300s, citation 1.5s/request sleep, `/api/query` runs the full LLM loop inside the HTTP request
 - [x] **Confirmed 2026-10-17 against live Neo4j 5.18** — `COUNT {}` returns papers 48 / claims 2,389 / contradictions 224 with no aggregation pitfalls.
 
-### B. Security (P0–P1)
-- [ ] Auth layer (none exists) — at minimum for `/api/query`, `/api/confidence/recalculate`, ingestion triggers
-- [ ] Reject requests when trigger secret unset (P0 above)
-- [ ] Tighten CORS review, publish Neo4j port only on localhost, restrict APOC
-- [ ] Document secret-rotation policy
+### B. Security (P0–P1) — ✅ AUTH DONE 2026-10-17
+- [x] **Auth layer** — `AXION_API_KEY` + `require_write_access` guard on `/api/query`, `/api/experiments/{id}/design`, `/api/confidence/recalculate`, `/api/ingestion/trigger`, `/api/ingestion/custom`; fail-closed (503 unset, 401 invalid), constant-time compare, `X-Trigger-Secret` kept as a legacy alias. Read-only endpoints stay public by design.
+- [x] **Secret never reaches the browser** — removed `NEXT_PUBLIC_TRIGGER_SECRET`; the frontend now posts write/compute calls to a Next.js route handler (`axion/app/api/backend/[...path]/route.ts`) that attaches `X-API-Key` server-side. Allowlisted paths only, so it cannot be used as an open proxy. Verified: 13 served JS chunks contain no secret.
+- [x] Reject requests when no secret is configured (fail-closed) — unified in `require_write_access`.
+- [x] Document secret-rotation policy — documented in `README.md` §Security; `AXION_API_KEY`, legacy `TRIGGER_SECRET`, and the Neo4j password rotated locally.
+- [x] Neo4j password strengthened (was `scimesh123`) and verified via the stack healthcheck after a full recreate.
+- [ ] Tighten CORS review, restrict APOC (Neo4j ports are already loopback-only)
+- [ ] Per-user identity (accounts/roles/quotas) — still a shared key; needed before multi-tenant use
 
 ### C. Testing + CI (P1)
 - [x] Make `pytest` pass offline (collection error fixed, provider-chain leak pinned, `integration` marker added)
@@ -127,7 +133,7 @@
 - [x] Honest query loading state — removed the fake pipeline animation; loading is now indeterminate while `/api/query` runs.
 - [x] Fixed `experiment-card.tsx` — the auto-fetch moved from the render body into a `useEffect` (starts in the loading state to avoid setState-in-effect).
 - [x] Deleted dead code: 47 unused `components/ui/*`, orphaned `styles/globals.css`, `theme-provider.tsx`, duplicate hooks, placeholder `public/` assets.
-- [x] Documented `NEXT_PUBLIC_API_URL` (and `NEXT_PUBLIC_TRIGGER_SECRET`) in `.env.example`.
+- [x] Documented `NEXT_PUBLIC_API_URL` and `AXION_API_KEY` in `.env.example` (the public `NEXT_PUBLIC_TRIGGER_SECRET` was removed 2026-10-17).
 - [x] Added `app/error.tsx`, `app/loading.tsx`, `app/not-found.tsx`; package renamed to `axion`.
 
 ### G. Docs / branding (P3) — ✅ MOSTLY DONE 2026-10-16
@@ -139,8 +145,9 @@
 - [x] README **false claims removed**: deleted the non-existent "red-team agent" and the 6 contradiction types (code emits only `CONTRADICTS` / `SUPPORTS` / `UNRELATED`); fixed diagram, prerequisites (Python 3.11+/Node 20+), and Known Limitations.
 - [x] Added `LICENSE` (MIT) — README claimed MIT but no LICENSE file existed.
 - [x] Added status banners to the 6 side docs pointing at `PROJECT_INFO.md` as authoritative.
-- [ ] **Commit the untracked docs** — `AI_CONTEXT.md`, `AXION_MASTER_CONTEXT.md`, `FILE_MAP.md`, `FRONTEND_HANDOVER.md`, `PROJECT_STATE.md`, `PROJECT_STATUS_NOW.md`, `PROJECT_INFO.md`, `LICENSE`, and `eval/` are still NOT in git (not committed this session by design — `progress.md`/`PROJECT_INFO.md` stay untracked)
-- [ ] Repo **folder** still named `schimesh`; GitHub repo still `AetherGraph` — rename both out-of-band, then the README clone URL (`.../Axion`) will resolve
+- [x] **Commit the untracked docs** — ✅ done 2026-10-17 (`ca95d99`); all side docs, `LICENSE`, `eval/` and this tracker are now in git.
+- [x] GitHub repo renamed `AetherGraph` → `Axion` (remote re-pointed 2026-10-17).
+- [ ] Repo **folder** still named `schimesh` — rename on disk out-of-band.
 
 ---
 
@@ -151,7 +158,8 @@
 3. **Commit untracked docs + eval**, unify name to Axion, correct README stats
 4. ~~**Re-run eval** on real cleaned data, record honest numbers~~ ✅ done 2026-10-17 (rebuilt `axion_pairs.csv`; baselines recorded)
 5. ~~**Dockerize API + frontend**, fix port mismatch, boot degraded~~ ✅ done 2026-10-16
-6. **Auth + task queue** before any multi-user use
+6. ~~**Auth on compute endpoints** before any multi-user use~~ ✅ done 2026-10-17 (shared key + server-side proxy)
+7. **Durable task queue** before any multi-user use
 
 ---
 
@@ -167,3 +175,5 @@
 - `2026-10-16` — **`PROJECT_INFO.md` written** (repo root, untracked): full technical + product inventory — capabilities, explicit limitations ("what it cannot do"), architecture, data model, 21-endpoint API reference, config reference, security posture, deployment, shipment-readiness, roadmap, glossary.
 - `2026-10-17` — **Docker verification pass (Track E).** Started the daemon, built both images, brought neo4j+api+web up healthy, and confirmed the containerized API returns the real graph (48 / 2,389 / 224). Fixed three deployment-breaking bugs: pnpm version pin, Neo4j `NEO4J_PASSWORD` config collision, missing `arxiv` dependency. Commits: `72319f9` (tests + lint + lifespan), `e5af0a7` (Docker fixes). Open: live `/api/stats` reports gaps 18 / experiments 36 vs docs' 30 / 12 — reconcile.
 - `2026-10-17` — **Track D rebuild (eval).** Built `eval/Data/axion_pairs.csv` (286 cross-paper pairs; 4/11/271) from the reviewed `contradicts_review_labeled.csv` + cleaned negatives, via new `eval/Data/build_reference_set.py`. Instrumented `check_pair` with a `diagnostics` out-param (parse failures now distinct from UNRELATED); the LLM predictor tallies statuses into `predictor_diagnostics` and the harness warns on parse failures. **Found ~1.8% production contradiction precision** in the human audit. Recorded real baselines (majority 0.9476/0.3244; llm `openai/gpt-oss-20b` 0.8427 / macro F1 0.4822). Also fixed two production-blocking LLM bugs: decommissioned Groq model + non-rate-limit errors aborting the fallback chain. Tests 149 passed / 12 deselected (+7).
+- `2026-10-17` — Docs committed + pushed (`ca95d99`); GitHub repo renamed to `Axion` and the `origin` remote re-pointed; live stats reconciled to 48 / 2,389 / 224 / 132 / 93 / 18 / 36.
+- `2026-10-17` — **P0 auth shipped.** Added `AXION_API_KEY` + `require_write_access` (fail-closed) on `/api/query`, `/api/experiments/{id}/design`, `/api/confidence/recalculate`, and both ingestion triggers; `X-Trigger-Secret` remains a legacy alias. Removed the public `NEXT_PUBLIC_TRIGGER_SECRET`; added the Next.js server-side proxy `axion/app/api/backend/[...path]/route.ts` (path allowlist, injects `X-API-Key`, returns 503 when unconfigured). Docker: `web` now takes `AXION_API_URL=http://api:8000` + `AXION_API_KEY` at runtime instead of a build arg. Rotated `AXION_API_KEY`, legacy `TRIGGER_SECRET` and the Neo4j password (32 chars, verified after a full recreate). Verified live: 9/9 checks — anonymous/wrong-key compute calls 401, proxy reaches the API, allowlist 404s, **no secret in any of 13 served JS chunks**, and a real LLM query through the proxy returned a cited report. Tests 154 passed / 12 deselected (+4).

@@ -51,6 +51,31 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> 
   return response.json()
 }
 
+// Write/compute calls go through the Next.js server-side proxy, which attaches
+// the backend API key. The key is therefore never present in the client bundle.
+async function fetchViaProxy<T>(
+  endpoint: string,
+  body?: Record<string, unknown>
+): Promise<T> {
+  let response: Response
+  try {
+    response = await fetch(`/api/backend${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: body ? JSON.stringify(body) : undefined,
+    })
+  } catch (err) {
+    throw new ApiError(0, err instanceof Error ? err.message : 'Network error')
+  }
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => 'Unknown error')
+    throw new ApiError(response.status, errorText)
+  }
+
+  return response.json()
+}
+
 // Stats
 export async function getStats(): Promise<GraphStats> {
   return fetchApi<GraphStats>('/api/stats')
@@ -82,9 +107,7 @@ export async function getExperiment(
 export async function designExperiment(
   contradictionId: string
 ): Promise<Experiment> {
-  return fetchApi<Experiment>(`/api/experiments/${contradictionId}/design`, {
-    method: 'POST',
-  })
+  return fetchViaProxy<Experiment>(`/experiments/${contradictionId}/design`)
 }
 
 // Research Gaps
@@ -95,10 +118,7 @@ export async function getGaps(source?: 'semantic' | 'llm_synthesized'): Promise<
 
 // Coordinator Query
 export async function runQuery(question: string): Promise<CoordinatorOutput> {
-  return fetchApi<CoordinatorOutput>('/api/query', {
-    method: 'POST',
-    body: JSON.stringify({ question }),
-  })
+  return fetchViaProxy<CoordinatorOutput>('/query', { question })
 }
 
 // Temporal Analysis
@@ -128,39 +148,20 @@ export async function getMostChanged(limit = 10): Promise<ChangedClaim[]> {
 }
 
 export async function recalculateConfidence(): Promise<{ updated: number }> {
-  return fetchApi<{ updated: number }>('/api/confidence/recalculate', {
-    method: 'POST',
-  })
+  return fetchViaProxy<{ updated: number }>('/confidence/recalculate')
 }
 
 // Ingestion
-export async function triggerIngestion(secret?: string): Promise<{ status: string }> {
-  const headers: Record<string, string> = {}
-  const triggerSecret = secret || process.env.NEXT_PUBLIC_TRIGGER_SECRET
-  if (triggerSecret) {
-    headers['X-Trigger-Secret'] = triggerSecret
-  }
-  return fetchApi<{ status: string }>('/api/ingestion/trigger', {
-    method: 'POST',
-    headers,
-  })
+export async function triggerIngestion(): Promise<{ status: string }> {
+  return fetchViaProxy<{ status: string }>('/ingestion/trigger')
 }
 
 export async function getIngestionStatus(): Promise<IngestionStatus> {
   return fetchApi<IngestionStatus>('/api/ingestion/status')
 }
 
-export async function runCustomIngestion(topic: string, limit: number, secret?: string): Promise<{ status: string }> {
-  const headers: Record<string, string> = {}
-  const triggerSecret = secret || process.env.NEXT_PUBLIC_TRIGGER_SECRET
-  if (triggerSecret) {
-    headers['X-Trigger-Secret'] = triggerSecret
-  }
-  return fetchApi<{ status: string }>('/api/ingestion/custom', {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({ topic, limit }),
-  })
+export async function runCustomIngestion(topic: string, limit: number): Promise<{ status: string }> {
+  return fetchViaProxy<{ status: string }>('/ingestion/custom', { topic, limit })
 }
 
 export async function getIngestionProgress(): Promise<CustomIngestionProgress> {

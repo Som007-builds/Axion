@@ -69,4 +69,13 @@ SCHEDULER_TOPICS = [
 # Narrow topics surface better papers. Add or change as the graph grows.
 
 # ─── Security ────────────────────────────────────────────────
+# Shared secret required by write/compute endpoints: POST /api/query,
+# POST /api/experiments/{id}/design, POST /api/confidence/recalculate and the
+# ingestion triggers. The frontend sends it from its server-side proxy as the
+# `X-API-Key` header, so it never reaches the browser bundle.
+# Empty ⇒ those endpoints fail closed (503), never open to anonymous callers.
+API_KEY = os.getenv("AXION_API_KEY", "")
+
+# Legacy shared secret for the ingestion trigger endpoints. Still accepted
+# (header `X-Trigger-Secret`) for backwards compatibility; prefer AXION_API_KEY.
 TRIGGER_SECRET = os.getenv("TRIGGER_SECRET", "")

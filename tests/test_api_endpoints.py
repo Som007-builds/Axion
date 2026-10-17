@@ -88,18 +88,46 @@ def test_ingestion_progress_offline():
     assert "status" in r.json()
 
 
-def test_trigger_disabled_when_secret_unset():
-    with patch("config.TRIGGER_SECRET", ""):
-        r = client.post("/api/ingestion/trigger")
-    assert r.status_code == 503
+def test_compute_endpoints_disabled_when_no_secret():
+    with patch.multiple("config", API_KEY="", TRIGGER_SECRET=""):
+        assert client.post("/api/ingestion/trigger").status_code == 503
+        assert client.post("/api/query", json={"question": "hi"}).status_code == 503
+        assert client.post("/api/confidence/recalculate").status_code == 503
 
 
 def test_trigger_rejects_missing_or_wrong_secret():
-    with patch("config.TRIGGER_SECRET", "s3cret"):
+    with patch.multiple("config", API_KEY="", TRIGGER_SECRET="s3cret"):
         assert client.post("/api/ingestion/trigger").status_code == 401
         assert client.post(
             "/api/ingestion/trigger", headers={"x-trigger-secret": "nope"}
         ).status_code == 401
+        with patch("ingestion.scheduler.trigger_now"):
+            assert client.post(
+                "/api/ingestion/trigger", headers={"x-trigger-secret": "s3cret"}
+            ).status_code == 200
+
+
+def test_compute_endpoints_require_api_key():
+    """The LLM-backed endpoints must not be callable anonymously."""
+    with patch.multiple("config", API_KEY="k3y", TRIGGER_SECRET=""):
+        assert client.post("/api/query", json={"question": "hi"}).status_code == 401
+        assert client.post(
+            "/api/query", json={"question": "hi"}, headers={"x-api-key": "wrong"}
+        ).status_code == 401
+        assert client.post("/api/confidence/recalculate").status_code == 401
+        assert client.post("/api/experiments/abc/design").status_code == 401
+
+
+def test_query_accepts_valid_api_key():
+    with patch.multiple("config", API_KEY="k3y", TRIGGER_SECRET=""), \
+         patch("agents.coordinator_v2.run", return_value={
+             "report": "r", "raw": {"confidence_in_answer": "medium"},
+             "iterations": 1, "plan": {"sub_queries": []}, "reflection_log": [],
+         }):
+        r = client.post(
+            "/api/query", json={"question": "hi"}, headers={"x-api-key": "k3y"}
+        )
+    assert r.status_code == 200
 
 
 # ─── Metrics ──────────────────────────────────────────────────────────────────

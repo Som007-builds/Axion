@@ -1,0 +1,206 @@
+{
+  "generated_at": "2026-10-17",
+  "script": "eval/mine_contradiction_candidates.py",
+  "model": "none — no LLM calls were made",
+  "gate_value": "not applied — mining is independent of CONTRADICTION_MAX_DISTANCE",
+  "prompt_hash": "n/a — no prompt used",
+  "dataset": {
+    "path": "D:\\AI-Projects\\schimesh\\eval\\Data\\axion_pairs.csv",
+    "rows": 286,
+    "label_column": "label",
+    "used_for": [
+      "exclusions",
+      "rule-coverage sanity check"
+    ]
+  },
+  "graph_claims": 2389,
+  "structured_field_coverage": {
+    "subject": 95,
+    "metric": 91,
+    "both": 41,
+    "direction": 227
+  },
+  "claims_with_subject_and_metric": 41,
+  "groups": 39,
+  "same_key_cross_paper_pairs": 0,
+  "rule_raw_counts": {
+    "rule1": 0,
+    "rule2": 0,
+    "rule1_and_rule2": 0,
+    "unique": 0
+  },
+  "relaxed_preview_report_only": {
+    "same_subject_only_cross_paper_pairs": 10,
+    "same_subject_only_groups": 58,
+    "same_metric_only_cross_paper_pairs": 42,
+    "same_metric_only_groups": 61
+  },
+  "excluded_by_reviewed_set": {
+    "by_claim_ids": 0,
+    "by_text_only": 0,
+    "total": 0
+  },
+  "candidates_after_exclusions": {
+    "rule1+rule2": 0,
+    "rule1_only": 0,
+    "rule2_only": 0,
+    "total": 0
+  },
+  "written": {
+    "path": "D:\\AI-Projects\\schimesh\\eval\\Data\\contradiction_candidates_review.csv",
+    "rows": 0,
+    "cap": 150,
+    "distance": {
+      "n": 0,
+      "min": null,
+      "median": null,
+      "max": null
+    },
+    "remaining_beyond_cap": 0,
+    "remaining_by_rule": {
+      "rule1+rule2": 0,
+      "rule1": 0,
+      "rule2": 0
+    }
+  },
+  "distance_all_candidates": {
+    "n": 0,
+    "min": null,
+    "median": null,
+    "max": null
+  },
+  "embedding_coverage": {
+    "candidate_claims": 0,
+    "missing": 0,
+    "legacy_int_fallback_used": 0
+  },
+  "chroma_id_conventions": {
+    "total": 2389,
+    "elementId_style": 2135,
+    "legacy_int_style": 254,
+    "other": 0
+  },
+  "chroma_collection_metadata": null,
+  "distance_space_probes": [],
+  "direction_value_counts": {
+    "(empty)": 2162,
+    "unclear": 82,
+    "increases": 99,
+    "no_effect": 14,
+    "required": 1,
+    "yes": 6,
+    "lower": 1,
+    "decrease": 1,
+    "decreases": 14,
+    "over-observed": 1,
+    "outperformed": 1,
+    "strong agreement": 2,
+    "low correlation": 1,
+    "low concordance": 1,
+    "stable": 1,
+    "evenly": 1,
+    "modestly": 1
+  },
+  "direction_unmapped_values": {
+    "required": 1,
+    "yes": 6,
+    "over-observed": 1,
+    "outperformed": 1,
+    "strong agreement": 2,
+    "low correlation": 1,
+    "low concordance": 1,
+    "stable": 1,
+    "evenly": 1,
+    "modestly": 1
+  },
+  "sanity_check_reviewed_contradicts": [
+    {
+      "pair_id": "0",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:15",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:207",
+      "in_live_graph": true,
+      "subject_a": "",
+      "subject_b": "",
+      "metric_a": "",
+      "metric_b": "",
+      "direction_a": "",
+      "direction_b": "",
+      "subject_metric_present_a": false,
+      "subject_metric_present_b": false,
+      "number_a": null,
+      "number_b": null,
+      "relative_difference": null,
+      "same_subject_and_metric": false,
+      "rule1_hit": false,
+      "rule1_reason": "subject/metric absent or direction not opposite/known",
+      "rule2_hit": false,
+      "rule2_reason": "subject/metric absent, no numeric pair, or difference <=10%"
+    },
+    {
+      "pair_id": "96",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:11",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:198",
+      "in_live_graph": true,
+      "subject_a": "",
+      "subject_b": "",
+      "metric_a": "",
+      "metric_b": "",
+      "direction_a": "",
+      "direction_b": "",
+      "subject_metric_present_a": false,
+      "subject_metric_present_b": false,
+      "number_a": null,
+      "number_b": null,
+      "relative_difference": null,
+      "same_subject_and_metric": false,
+      "rule1_hit": false,
+      "rule1_reason": "subject/metric absent or direction not opposite/known",
+      "rule2_hit": false,
+      "rule2_reason": "subject/metric absent, no numeric pair, or difference <=10%"
+    },
+    {
+      "pair_id": "124",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:702",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1802",
+      "in_live_graph": true,
+      "subject_a": "",
+      "subject_b": "",
+      "metric_a": "",
+      "metric_b": "",
+      "direction_a": "",
+      "direction_b": "",
+      "subject_metric_present_a": false,
+      "subject_metric_present_b": false,
+      "number_a": 1.8,
+      "number_b": 15.0,
+      "relative_difference": 0.88,
+      "same_subject_and_metric": false,
+      "rule1_hit": false,
+      "rule1_reason": "subject/metric absent or direction not opposite/known",
+      "rule2_hit": false,
+      "rule2_reason": "subject/metric absent, no numeric pair, or difference <=10%"
+    },
+    {
+      "pair_id": "215",
+      "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:200",
+      "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:11",
+      "in_live_graph": true,
+      "subject_a": "",
+      "subject_b": "",
+      "metric_a": "",
+      "metric_b": "",
+      "direction_a": "",
+      "direction_b": "",
+      "subject_metric_present_a": false,
+      "subject_metric_present_b": false,
+      "number_a": null,
+      "number_b": null,
+      "relative_difference": null,
+      "same_subject_and_metric": false,
+      "rule1_hit": false,
+      "rule1_reason": "subject/metric absent or direction not opposite/known",
+      "rule2_hit": false,
+      "rule2_reason": "subject/metric absent, no numeric pair, or difference <=10%"
+    }
+  ]
+}

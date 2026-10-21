@@ -1,0 +1,1 @@
+pair_id,claim_id_a,claim_id_b,arxiv_id_a,arxiv_id_b,text_a,text_b,section_a,section_b,subject,metric,direction_a,direction_b,cosine_distance,source_rule,human_label

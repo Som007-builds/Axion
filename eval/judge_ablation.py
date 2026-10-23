@@ -6,7 +6,7 @@ Runs four variants over the reviewed contradiction pairs:
   A. Old setup: gate 0.95, the pre-change prompt, no demotion guard.
   B. Gate 0.35 with the old prompt: pairs above 0.35 are never judged.
   C. Current production: gate 0.35, current prompt, demotion guard on.
-  D. Same as C, but with the stronger model in the configured provider chain.
+  D. Same as C, but with an alternative judge from another provider (Gemini).
 
 Distances are computed locally with ``all-MiniLM-L6-v2`` (``1 - cosine``), so
 no Neo4j or ChromaDB connection is needed. The harness is deliberately
@@ -124,12 +124,14 @@ OLD_PROMPT_COMMIT_FULL = "ffc222a3ce271833c36a5893e7aaae337e9b27b9"
 OLD_PROMPT_BLOB = "8dd1d177450921ec4ad051aee3eb840da04b0636"
 OLD_GATE = 0.95
 
-# D is the stronger model available in the configured chain: Gemini 3.8 Flash
-# against Groq's openai/gpt-oss-20b. Anthropic is not in LLM_PROVIDER_CHAIN.
-STRONGER_MODEL_RATIONALE = (
+# D is the alternative provider's configured judge: Gemini 3.8 Flash against
+# Groq's openai/gpt-oss-20b. It is not assumed to be stronger; provider and
+# model are confounded with the judge change. Anthropic is not in
+# LLM_PROVIDER_CHAIN.
+ALTERNATIVE_MODEL_RATIONALE = (
     f"Configured chain is Groq ({GROQ_MODEL}) + Gemini ({GEMINI_MODEL}); "
-    "Gemini 3.8 Flash is the stronger/newer of the two. Anthropic is not in "
-    "the configured chain."
+    "Gemini 3.8 Flash is an alternative judge from another provider, not an "
+    "assumed upgrade. Anthropic is not in the configured chain."
 )
 
 
@@ -571,7 +573,7 @@ def build_variants(old_prompt: str) -> dict[str, Variant]:
         ),
         Variant(
             key="D",
-            title="Current + stronger model",
+            title="Current + alternative model (Gemini)",
             gate=0.35,
             prompt_kind="current",
             prompt=CONTRADICTION_PROMPT,
@@ -1159,6 +1161,139 @@ def _audit_metrics(
     }
 
 
+def _pair_sort_key(pair_id: str) -> tuple[int, int | str]:
+    try:
+        return (0, int(pair_id))
+    except (TypeError, ValueError):
+        return (1, str(pair_id))
+
+
+def _gate_positive_rows(pairs: list[Pair], gate: float = 0.35) -> list[dict[str, Any]]:
+    """Distances for every confirmed contradiction relative to the gate."""
+    rows = []
+    for pair in pairs:
+        if pair.label != "CONTRADICTS":
+            continue
+        distance = float(pair.distance) if pair.distance is not None else None
+        rows.append(
+            {
+                "pair_id": pair.pair_id,
+                "distance": distance,
+                "gate": gate,
+                "dropped": bool(distance is not None and distance > gate),
+                "text_a": pair.text_a,
+                "text_b": pair.text_b,
+            }
+        )
+    return sorted(rows, key=lambda row: _pair_sort_key(row["pair_id"]))
+
+
+def _self_consistency(
+    pairs: list[Pair],
+    results: dict[tuple[str, str], dict[str, Any]],
+    *,
+    variant_a: str = "A",
+    variant_b: str = "B",
+    gate: float = 0.35,
+) -> dict[str, Any]:
+    """Compare final verdicts for two variants on gate-passing pairs."""
+    eligible = [pair for pair in pairs if pair.distance is not None and pair.distance <= gate]
+    compared = 0
+    same = 0
+    differences: list[dict[str, Any]] = []
+    for pair in eligible:
+        entry_a = results.get((variant_a, pair.pair_id))
+        entry_b = results.get((variant_b, pair.pair_id))
+        if entry_a is None or entry_b is None:
+            continue
+        compared += 1
+        pred_a = entry_a.get("predicted")
+        pred_b = entry_b.get("predicted")
+        if pred_a == pred_b:
+            same += 1
+            continue
+        differences.append(
+            {
+                "pair_id": pair.pair_id,
+                "distance": pair.distance,
+                "label": pair.label,
+                "variant_a": pred_a,
+                "variant_b": pred_b,
+                "status_a": entry_a.get("status"),
+                "status_b": entry_b.get("status"),
+            }
+        )
+    differences.sort(key=lambda row: _pair_sort_key(row["pair_id"]))
+    return {
+        "variant_a": variant_a,
+        "variant_b": variant_b,
+        "gate": gate,
+        "gate_pass_pairs": len(eligible),
+        "compared": compared,
+        "identical": same,
+        "different": len(differences),
+        "identical_rate": (same / compared) if compared else None,
+        "identical_ci95": wilson_ci(same, compared),
+        "differences": differences,
+    }
+
+
+def _counterfactual_entries(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Reconstruct C's verdicts without the demotion guard.
+
+    A guard-demoted raw CONTRADICTS becomes CONTRADICTS. All other rows keep
+    their final verdict. This is a cache-only counterfactual; it never calls a
+    provider and never changes the cache.
+    """
+    out: list[dict[str, Any]] = []
+    for entry in entries:
+        copy = dict(entry)
+        if copy.get("guard_demoted") and copy.get("raw_relationship") == "CONTRADICTS":
+            copy["predicted"] = "CONTRADICTS"
+            copy["status"] = "CONTRADICTS"
+            copy["guard_demoted"] = False
+        out.append(copy)
+    return out
+
+
+def _false_positive_examples(
+    variant_key: str,
+    audit_pairs: list[Pair],
+    results: dict[tuple[str, str], dict[str, Any]],
+    full_by_key: dict[str, Pair],
+    *,
+    limit: int = 10,
+) -> dict[str, Any]:
+    """Verified audit false positives that a variant still flags."""
+    rows: list[dict[str, Any]] = []
+    for audit_pair in audit_pairs:
+        if audit_pair.label == "CONTRADICTS":
+            continue
+        full = full_by_key.get(audit_pair.pair_key)
+        if full is None:
+            continue
+        entry = results.get((variant_key, full.pair_id))
+        if entry is None or entry.get("predicted") != "CONTRADICTS":
+            continue
+        rows.append(
+            {
+                "pair_id": full.pair_id,
+                "label": full.label,
+                "distance": full.distance,
+                "status": entry.get("status"),
+                "text_a": full.text_a,
+                "text_b": full.text_b,
+            }
+        )
+    rows.sort(key=lambda row: _pair_sort_key(row["pair_id"]))
+    return {
+        "total": len(rows),
+        "shown": min(limit, len(rows)),
+        "pair_ids": [row["pair_id"] for row in rows],
+        "rows": rows[:limit],
+    }
+
+
 def _noise_comparisons(variant_reports: dict[str, Any]) -> list[dict[str, Any]]:
     """Pairwise comparisons, flagged ``within noise`` when Wilson CIs overlap."""
     keys = [key for key in ("A", "B", "C", "D") if key in variant_reports]
@@ -1327,7 +1462,7 @@ def build_meta(
             }
             for v in variants
         },
-        "stronger_model_rationale": STRONGER_MODEL_RATIONALE,
+        "alternative_model_rationale": ALTERNATIVE_MODEL_RATIONALE,
         "cache": {
             "path": _rel(CACHE_PATH),
             "lines": cache_meta.get("lines", 0),
@@ -1394,6 +1529,62 @@ def build_report(
                 row["statuses"][variant.key] = entry.get("status")
         positive_rows.append(row)
 
+    self_consistency = None
+    if {"A", "B"} <= {variant.key for variant in variants}:
+        self_consistency = _self_consistency(pairs, results)
+
+    guard_counterfactual = None
+    c_variant = next((variant for variant in variants if variant.key == "C"), None)
+    if c_variant is not None:
+        c_entries = [
+            results[("C", pair.pair_id)]
+            for pair in pairs
+            if ("C", pair.pair_id) in results
+        ]
+        cf_variant = Variant(
+            key="C_no_guard",
+            title="C without guard (offline counterfactual)",
+            gate=c_variant.gate,
+            prompt_kind=c_variant.prompt_kind,
+            prompt=c_variant.prompt,
+            guard=False,
+            provider=c_variant.provider,
+            model=c_variant.model,
+        )
+        cf_entries = _counterfactual_entries(c_entries)
+        cf_report = _variant_metrics(
+            cf_variant,
+            cf_entries,
+            total_pairs=len(pairs),
+            calls_this_run=0,
+        )
+        cf_report["missing_pair_ids"] = [
+            pair.pair_id for pair in pairs if ("C", pair.pair_id) not in results
+        ]
+        cf_report["audit"] = _audit_metrics(
+            cf_variant,
+            audit_pairs,
+            {(cf_variant.key, entry["pair_id"]): entry for entry in cf_entries},
+            full_by_key,
+        )
+        guard_counterfactual = {
+            "guard_demotions": sum(1 for entry in c_entries if entry.get("guard_demoted")),
+            "raw_contradicts_demoted": sum(
+                1
+                for entry in c_entries
+                if entry.get("guard_demoted")
+                and entry.get("raw_relationship") == "CONTRADICTS"
+            ),
+            "without_guard": cf_report,
+        }
+
+    false_positive_examples = {
+        variant.key: _false_positive_examples(
+            variant.key, audit_pairs, results, full_by_key
+        )
+        for variant in variants
+    }
+
     meta = build_meta(
         variants,
         pairs,
@@ -1413,6 +1604,10 @@ def build_report(
         "variants": variant_reports,
         "positive_pairs": positive_rows,
         "noise_comparisons": _noise_comparisons(variant_reports),
+        "self_consistency": self_consistency,
+        "guard_counterfactual": guard_counterfactual,
+        "true_positive_gate": _gate_positive_rows(pairs),
+        "false_positive_examples": false_positive_examples,
     }
 
 
@@ -1450,6 +1645,10 @@ def build_preregistration_report(
         "variants": {},
         "positive_pairs": [],
         "noise_comparisons": [],
+        "self_consistency": None,
+        "guard_counterfactual": None,
+        "true_positive_gate": _gate_positive_rows(pairs_full),
+        "false_positive_examples": {},
     }
 
 
@@ -1599,6 +1798,13 @@ def render_header(report: dict[str, Any]) -> list[str]:
         + "; labels were read from the CSVs and never generated or filled in."
     )
     lines.append(f"**Variant models and gates:** {_variant_model_line(meta)}.")
+    lines.append(
+        "**Model interpretation:** A–C use the current `openai/gpt-oss-20b`; the original 1.8% "
+        "production figure came from the older `llama-3.1-8b-instant` run at gate 0.95 with the "
+        "old prompt. A re-measures the old prompt and gate on the current model; the model swap "
+        "itself is unmeasured. D is an alternative judge from a different provider, not assumed "
+        "stronger."
+    )
     lines.append(
         f"**Prompt hashes:** old `{meta['old_prompt']['sha256']}`; "
         f"current `{meta['current_prompt']['sha256']}`."
@@ -1863,6 +2069,148 @@ def render_markdown(report: dict[str, Any]) -> str:
         lines.append("No confirmed `CONTRADICTS` pair was included in the evaluated rows.")
     lines.append("")
 
+    gate_rows = report.get("true_positive_gate", [])
+    lines.append("### Gate check: all confirmed contradictions")
+    lines.append("")
+    if gate_rows:
+        lines.append("| Pair | Distance | Gate 0.35 | Dropped before judge? |")
+        lines.append("|---|---:|---:|---|")
+        for row in gate_rows:
+            distance = "n/a" if row.get("distance") is None else f"{row['distance']:.6f}"
+            lines.append(
+                f"| {row['pair_id']} | {distance} | {row.get('gate', 0.35):.2f} | "
+                f"{'yes' if row.get('dropped') else 'no'} |"
+            )
+        dropped_ids = [row["pair_id"] for row in gate_rows if row.get("dropped")]
+        if dropped_ids:
+            lines.append("")
+            lines.append(
+                "Pair " + ", ".join(f"`{pair_id}`" for pair_id in dropped_ids)
+                + (" is" if len(dropped_ids) == 1 else " are")
+                + " above the 0.35 gate, so B, C, and D never send "
+                + ("it" if len(dropped_ids) == 1 else "them")
+                + " to the judge; A keeps "
+                + ("it" if len(dropped_ids) == 1 else "them")
+                + "."
+            )
+    else:
+        lines.append("No confirmed `CONTRADICTS` pair was evaluated.")
+    lines.append("")
+
+    self_consistency = report.get("self_consistency")
+    lines.append("### Judge self-consistency (A vs B)")
+    lines.append("")
+    if self_consistency:
+        lines.append(
+            f"A and B use the same model and old prompt; only the gate differs. "
+            f"On the {self_consistency['gate_pass_pairs']} pairs that pass the 0.35 gate, "
+            f"{self_consistency['compared']} have a cached final verdict for both variants."
+        )
+        lines.append("")
+        lines.append("| Gate-pass pairs | Compared | Identical | Different | Identical rate (95% CI) |")
+        lines.append("|---:|---:|---:|---:|---|")
+        lines.append(
+            f"| {self_consistency['gate_pass_pairs']} | {self_consistency['compared']} | "
+            f"{self_consistency['identical']} | {self_consistency['different']} | "
+            f"{_fmt_prop(self_consistency['identical_rate'], self_consistency['identical_ci95'])} |"
+        )
+        differences = self_consistency.get("differences", [])
+        if differences:
+            lines.append("")
+            lines.append("| Pair | Distance | Human label | A final | B final |")
+            lines.append("|---|---:|---|---|---|")
+            for row in differences:
+                lines.append(
+                    f"| {row['pair_id']} | {row['distance']:.6f} | {row['label']} | "
+                    f"{row['variant_a']} | {row['variant_b']} |"
+                )
+        else:
+            lines.append("")
+            lines.append("No verdict differences on the gate-passing pairs.")
+        lines.append("")
+        lines.append(
+            "This is a consistency check, not an accuracy metric; the gate excludes "
+            f"{report['meta']['evaluated_rows'] - self_consistency['gate_pass_pairs']} pairs "
+            "from B, so the comparison is conditional on passing 0.35."
+        )
+    else:
+        lines.append("A and B were not both requested, so this comparison is unavailable.")
+    lines.append("")
+
+    counterfactual = report.get("guard_counterfactual")
+    lines.append("### C without guard (offline counterfactual)")
+    lines.append("")
+    if counterfactual and "C" in variants:
+        c_report = variants["C"]
+        cf_report = counterfactual["without_guard"]
+        c_audit = c_report["audit"]
+        cf_audit = cf_report["audit"]
+        lines.append(
+            "| Configuration | Flagged | TP | FP | FN | Audit FPs stopped | Audit TPs kept | "
+            "Guard demotions |"
+        )
+        lines.append("|---|---:|---:|---:|---:|---:|---:|---:|")
+        lines.append(
+            f"| C final | {c_report['flagged']} | {c_report['true_positives']} | "
+            f"{c_report['false_positives']} | {c_report['false_negatives']} | "
+            f"{c_audit['false_positives_stopped']}/{c_audit['reviewed_false_positives']} | "
+            f"{c_audit['true_positives_kept']}/{c_audit['confirmed_positives']} | "
+            f"{counterfactual['guard_demotions']} |"
+        )
+        lines.append(
+            f"| C without guard | {cf_report['flagged']} | {cf_report['true_positives']} | "
+            f"{cf_report['false_positives']} | {cf_report['false_negatives']} | "
+            f"{cf_audit['false_positives_stopped']}/{cf_audit['reviewed_false_positives']} | "
+            f"{cf_audit['true_positives_kept']}/{cf_audit['confirmed_positives']} | 0 |"
+        )
+        lines.append("")
+        lines.append(
+            "The cache stores the raw pre-demotion verdict for C. A guard-demoted raw "
+            "`CONTRADICTS` would become `CONTRADICTS` here; no provider call is made. "
+            f"C had {counterfactual['guard_demotions']} guard demotions "
+            f"({counterfactual['raw_contradicts_demoted']} of them raw `CONTRADICTS`), "
+            "so the guard contributes nothing on this dataset. Because B and C share the 0.35 "
+            "gate and model, the B-vs-C difference is attributable to the prompt, not the guard."
+        )
+    else:
+        lines.append("C was not requested, so this counterfactual is unavailable.")
+    lines.append("")
+
+    examples = report.get("false_positive_examples", {})
+    lines.append("### Verified false positives still flagged")
+    lines.append("")
+    lines.append(
+        "Each list shows up to 10 audit false positives whose final prediction is still "
+        "`CONTRADICTS`. Claim texts are copied from `eval/Data/axion_pairs.csv`; only Markdown "
+        "pipe escaping is applied."
+    )
+    lines.append("")
+    for key in ("A", "B", "C", "D"):
+        if key not in variants:
+            continue
+        data = examples.get(key)
+        if not data or data.get("total", 0) == 0:
+            lines.append(f"**{key}:** none.")
+            lines.append("")
+            continue
+        lines.append(
+            f"**{key} — {data['total']} of 220 verified false positives still flagged "
+            f"(showing {data['shown']}):**"
+        )
+        lines.append("")
+        for row in data.get("rows", []):
+            distance = "n/a" if row.get("distance") is None else f"{row['distance']:.6f}"
+            lines.append(
+                f"- `{row['pair_id']}` (distance {distance}): "
+                f"Claim A: {_md_escape(row['text_a'])} Claim B: {_md_escape(row['text_b'])}"
+            )
+        omitted = data.get("pair_ids", [])[data.get("shown", 0) :]
+        if omitted:
+            lines.append("")
+            lines.append("Not shown: " + ", ".join(f"`{pair_id}`" for pair_id in omitted) + ".")
+        lines.append("")
+    lines.append("")
+
     comparisons = report.get("noise_comparisons", [])
     lines.append("### Pairwise differences and noise")
     lines.append("")
@@ -1955,9 +2303,10 @@ def _interpretation(report: dict[str, Any]) -> str:
     focus_key = "C" if "C" in variants else best_key
     focus = variants[focus_key]
     if focus["positives"]:
+        pair_word = "pair" if focus["flagged"] == 1 else "pairs"
         s2 = (
             f"On the {meta['evaluated_rows']}-row evaluated full set, variant {focus_key} flagged "
-            f"{focus['flagged']} pairs with precision {_fmt_prop(focus['precision'], focus.get('precision_ci95'))} "
+            f"{focus['flagged']} {pair_word} with precision {_fmt_prop(focus['precision'], focus.get('precision_ci95'))} "
             f"and recall {_fmt_prop(focus['recall'], focus.get('recall_ci95'))} (macro F1 "
             f"{_fmt_num(focus['macro_f1'])}), and its {focus['gate']:.2f} gate dropped "
             f"{len(focus['gate_dropped_positives'])}/{focus['positives']} confirmed contradictions before the judge."

@@ -23,8 +23,12 @@ from eval.judge_ablation import (
     Pair,
     Variant,
     _audit_metrics,
+    _counterfactual_entries,
+    _false_positive_examples,
+    _gate_positive_rows,
     _interpretation,
     _noise_comparisons,
+    _self_consistency,
     _variant_metrics,
     build_preregistration_report,
     cache_entry_valid,
@@ -384,6 +388,78 @@ def test_noise_comparisons_use_wilson_overlap() -> None:
     labels = {row["label"] for row in comparisons}
     assert "within noise" in labels
     assert "CIs disjoint" in labels
+
+
+def test_gate_rows_report_all_confirmed_contradictions() -> None:
+    kept = make_pair("1", "CONTRADICTS", distance=0.20)
+    dropped = make_pair("2", "CONTRADICTS", distance=0.40)
+    unrelated = make_pair("3", "UNRELATED", distance=0.10)
+    rows = _gate_positive_rows([kept, dropped, unrelated])
+    assert [row["pair_id"] for row in rows] == ["1", "2"]
+    assert rows[0]["dropped"] is False
+    assert rows[1]["dropped"] is True
+    assert rows[1]["distance"] == pytest.approx(0.40)
+
+
+def test_self_consistency_compares_only_gate_pass_pairs() -> None:
+    same = make_pair("1", "CONTRADICTS", distance=0.20)
+    different = make_pair("2", "UNRELATED", distance=0.30)
+    excluded = make_pair("3", "UNRELATED", distance=0.40)
+    results = {
+        ("A", "1"): make_entry(same, "CONTRADICTS", status="CONTRADICTS"),
+        ("B", "1"): make_entry(same, "CONTRADICTS", status="CONTRADICTS"),
+        ("A", "2"): make_entry(different, "CONTRADICTS", status="CONTRADICTS"),
+        ("B", "2"): make_entry(different, "UNRELATED", status="UNRELATED"),
+        ("A", "3"): make_entry(excluded, "CONTRADICTS", status="CONTRADICTS"),
+    }
+    result = _self_consistency([same, different, excluded], results)
+    assert result["gate_pass_pairs"] == 2
+    assert result["compared"] == 2
+    assert result["identical"] == 1
+    assert result["different"] == 1
+    assert result["identical_rate"] == pytest.approx(0.5)
+    assert result["identical_ci95"] is not None
+    assert result["differences"][0]["pair_id"] == "2"
+    assert result["differences"][0]["variant_a"] == "CONTRADICTS"
+    assert result["differences"][0]["variant_b"] == "UNRELATED"
+
+
+def test_c_without_guard_only_changes_demoted_raw_contradictions() -> None:
+    demoted_pair = make_pair("1", "UNRELATED")
+    unchanged_pair = make_pair("2", "UNRELATED")
+    demoted = make_entry(
+        demoted_pair, "UNRELATED", status="UNRELATED", guard_demoted=True
+    )
+    demoted["raw_relationship"] = "CONTRADICTS"
+    unchanged = make_entry(
+        unchanged_pair, "UNRELATED", status="UNRELATED", guard_demoted=False
+    )
+    unchanged["raw_relationship"] = "CONTRADICTS"
+    result = _counterfactual_entries([demoted, unchanged])
+    assert result[0]["predicted"] == "CONTRADICTS"
+    assert result[0]["status"] == "CONTRADICTS"
+    assert result[0]["guard_demoted"] is False
+    assert result[1]["predicted"] == "UNRELATED"
+    assert result[1]["guard_demoted"] is False
+
+
+def test_false_positive_examples_are_audit_only_and_verbatim() -> None:
+    true_positive = make_pair("tp", "CONTRADICTS")
+    false_positive = make_pair(
+        "fp", "UNRELATED", text_a="exact claim a", text_b="exact claim b"
+    )
+    audit_pairs = [true_positive, false_positive]
+    full_by_key = {pair.pair_key: pair for pair in audit_pairs}
+    results = {
+        ("A", "tp"): make_entry(true_positive, "CONTRADICTS", status="CONTRADICTS"),
+        ("A", "fp"): make_entry(false_positive, "CONTRADICTS", status="CONTRADICTS"),
+    }
+    result = _false_positive_examples("A", audit_pairs, results, full_by_key)
+    assert result["total"] == 1
+    assert result["shown"] == 1
+    assert result["pair_ids"] == ["fp"]
+    assert result["rows"][0]["text_a"] == "exact claim a"
+    assert result["rows"][0]["text_b"] == "exact claim b"
 
 
 def test_preregistration_header_precedes_results_and_has_no_metrics() -> None:

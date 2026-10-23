@@ -79,6 +79,63 @@ original 224 auto-detections; 15.4% here, since the eval model differs from the
 one that originally wrote the graph edges). Accuracy looks healthy only because
 271/286 pairs are negatives.
 
+## Judge ablation (pre-registered)
+
+The four-variant judge ablation is pre-registered in
+`eval/results/judge_ablation.md`. Its primary metric is the 224-row human audit
+(220 verified false positives, 4 confirmed contradictions), not the full-set
+accuracy:
+
+- **A** — gate 0.95, old prompt, guard off, Groq `openai/gpt-oss-20b`.
+- **B** — gate 0.35, old prompt, guard off, Groq `openai/gpt-oss-20b`.
+- **C** — gate 0.35, current prompt, guard on, Groq `openai/gpt-oss-20b`.
+- **D** — same as C, but Gemini `gemini-3.8-flash` as an alternative judge.
+
+Results are in `eval/results/judge_ablation.md` (definitions and table layout
+above the results) and `eval/results/judge_ablation.json`. The launch summary
+is `eval/results/ablation_summary.md`; chart-ready aggregates are in
+`eval/results/ablation_chart_data.json`. The resumable cache is
+`eval/results/ablation_cache.jsonl`, keyed by
+`(variant, pair_id, signature)`.
+
+Headline audit results: A stopped 208/220 verified false positives and kept 3/4
+confirmed contradictions; B stopped 219/220 and kept 0/4; C stopped 220/220 and
+kept 1/4; D stopped 220/220 and kept 0/4. These are preliminary: only four
+positives, and 18/24 pairwise comparisons are within noise. No verified false
+positive survives all four variants; pair 171 is the only one still flagged by
+B. The 0.35 gate drops pair 124 (distance 0.501931), one of the four confirmed
+contradictions, before B/C/D judge it.
+
+A–C use the current `openai/gpt-oss-20b`. The original 1.8% production figure
+came from `llama-3.1-8b-instant` at gate 0.95 with the old prompt, so the model
+swap itself is unmeasured. D changes provider and model; it is an alternative
+judge, not an assumed upgrade.
+
+Reproduce offline (no provider calls):
+
+```bash
+python eval/judge_ablation.py --report-only
+python eval/build_ablation_summary.py
+```
+
+Check quota and the remaining cache plan without calling a provider:
+
+```bash
+python eval/judge_ablation.py --dry-run
+```
+
+A live run is resumable and deliberately single-attempt (no retry/fallback):
+
+```bash
+python eval/judge_ablation.py
+```
+
+Provider quota/error stops the run and leaves completed rows cached. The
+summary builder reads only the report, the two reviewed CSVs, and the cache; it
+never writes labels. Do not use
+`eval/human_review/unverified/contradiction_candidates_review_researched.csv`
+as a source; it is unverified and is not part of the ablation.
+
 ### Why the old splits are unusable
 
 `train.csv` / `val.csv` / `test.csv` label almost every SUPPORTS/CONTRADICTS
@@ -143,18 +200,30 @@ Now measurable on `axion_pairs.csv` (not yet met — the audited precision is
 | CONTRADICTS recall | ≥ 0.60 | Recall matters more than precision here |
 | `latency_ms.p95` | ≤ 4000 | Per pair, single LLM call |
 
+The audited precision above is the original production-agent sample. The
+current-model re-measurement, with its gate/guard variants and Wilson intervals,
+is in `eval/results/ablation_summary.md`; it is pilot evidence because the audit
+contains only four confirmed positives.
+
 ## Layout
 
 ```
 eval/
   run_eval.py            # single entry point (CLI + run())
   baseline_llm_eval.py   # deprecated shim -> run_eval.py --predictor llm
+  judge_ablation.py      # pre-registered four-variant judge ablation
+  build_ablation_summary.py # offline summary + chart-data builder
   metrics.py             # pure metric computation
   dataset.py             # loading, validation, same-paper exclusion, composition
   predictors.py          # majority / random / llm predictors
   results/               # generated JSON results
+    judge_ablation.md/json       # full ablation report
+    ablation_summary.md          # launch summary
+    ablation_chart_data.json     # chart-ready aggregates
+    ablation_cache.jsonl         # resumable judge cache
   Data/
     axion_pairs.csv          # reference set (286 reviewed cross-paper pairs)
+    contradicts_review_labeled.csv # 224-row human audit
     build_reference_set.py   # rebuilds axion_pairs.csv from reviewed labels
     ...                      # raw exports / prep scripts
   models/                # empty (planned, unused)

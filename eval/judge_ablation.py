@@ -829,6 +829,7 @@ def _base_entry(variant: Variant, pair: Pair) -> dict[str, Any]:
         "confidence": None,
         "explanation": None,
         "guard_demoted": False,
+        "latency_ms": None,
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
@@ -2387,8 +2388,11 @@ def run_eval_with_meta(
                         if args.delay > 0:
                             time.sleep(args.delay)
                         prompt = build_prompt(variant, pair)
+                        call_started = time.perf_counter()
                         raw, usage = call_provider(variant, prompt)
+                        latency_ms = round((time.perf_counter() - call_started) * 1000.0, 1)
                         entry = _entry_after_judgment(variant, pair, raw, usage)
+                        entry["latency_ms"] = latency_ms
                         calls += 1
                         calls_this_run[variant.key] += 1
 

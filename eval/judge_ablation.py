@@ -17,10 +17,11 @@ leaves completed rows in the cache, and exits non-zero.
 Resumability
 ------------
 Every completed pair is appended to ``eval/results/ablation_cache.jsonl`` and
-keyed by ``(variant, pair_id)``. On restart, entries with the same variant
-signature (prompt hash, gate, guard, model) and pair fingerprint (claim text,
-label, paper ids) are reused; everything else is recomputed. A pair that is
-skipped by the gate is cached too, so it does not need an LLM call on resume.
+keyed by ``(variant, pair_id, signature)``. The signature covers the prompt
+hash, gate, guard, provider, model, and cache version; the pair fingerprint
+covers the claim text, label, and paper ids. A stale entry therefore cannot be
+returned by a key lookup. A pair that is skipped by the gate is cached too, so
+it does not need an LLM call on resume.
 
 Human labels
 ------------
@@ -372,7 +373,7 @@ def validate_pairs(
             other = by_id[pair.pair_id]
             raise SystemExit(
                 f"duplicate pair_id {pair.pair_id!r} in {other.source_path} and "
-                f"{pair.source_path}; the cache key is (variant, pair_id)"
+                f"{pair.source_path}; the cache key is (variant, pair_id, signature)"
             )
         if pair.pair_key in by_key:
             other = by_key[pair.pair_key]
@@ -712,8 +713,27 @@ def call_provider(variant: Variant, prompt: str) -> tuple[str, dict[str, int | N
 # ─── Cache ──────────────────────────────────────────────────────────────────
 
 
-def load_cache() -> tuple[dict[tuple[str, str], dict[str, Any]], dict[str, int]]:
-    entries: dict[tuple[str, str], dict[str, Any]] = {}
+def cache_key(variant: Variant, pair: Pair) -> tuple[str, str, str]:
+    """Cache identity including the full variant signature.
+
+    Including the signature in the key means a lookup for the current harness
+    cannot even return an entry produced by another prompt, model, gate, guard,
+    or cache version. ``cache_entry_valid`` still checks the pair fingerprint
+    and distance before reuse.
+    """
+    return (variant.key, pair.pair_id, variant.signature)
+
+
+def cached_entry(
+    cache: dict[tuple[str, str, str], dict[str, Any]],
+    variant: Variant,
+    pair: Pair,
+) -> dict[str, Any] | None:
+    return cache.get(cache_key(variant, pair))
+
+
+def load_cache() -> tuple[dict[tuple[str, str, str], dict[str, Any]], dict[str, int]]:
+    entries: dict[tuple[str, str, str], dict[str, Any]] = {}
     meta = {"lines": 0, "malformed": 0, "duplicate_keys": 0}
     if not CACHE_PATH.exists():
         return entries, meta
@@ -729,10 +749,19 @@ def load_cache() -> tuple[dict[tuple[str, str], dict[str, Any]], dict[str, int]]
             except json.JSONDecodeError:
                 meta["malformed"] += 1
                 continue
-            if not isinstance(entry, dict) or "variant" not in entry or "pair_id" not in entry:
+            if (
+                not isinstance(entry, dict)
+                or "variant" not in entry
+                or "pair_id" not in entry
+                or not str(entry.get("signature") or "").strip()
+            ):
                 meta["malformed"] += 1
                 continue
-            key = (str(entry["variant"]), str(entry["pair_id"]))
+            key = (
+                str(entry["variant"]),
+                str(entry["pair_id"]),
+                str(entry["signature"]),
+            )
             if key in entries:
                 meta["duplicate_keys"] += 1
             entries[key] = entry
@@ -1576,8 +1605,9 @@ def render_header(report: dict[str, Any]) -> list[str]:
     lines.append(f"**Embedding:** `{meta['embedding_model']}`; distance = {meta['distance_definition']}.")
     lines.append(
         f"**Cache:** `{meta['cache']['path']}` ({meta['cache']['lines']} lines, "
-        f"{meta['cache']['malformed']} malformed); resumable and keyed by variant signature and "
-        "`(variant, pair_id)`; a run may reuse cached rows and make fewer provider calls."
+        f"{meta['cache']['malformed']} malformed); resumable and keyed by "
+        "`(variant, pair_id, signature)`; a stale signature cannot be returned by a lookup, and a "
+        "run may reuse cached rows and make fewer provider calls."
     )
     optional = meta.get("optional_extra", {})
     supplied = optional.get("supplied_paths", [])
@@ -1864,7 +1894,7 @@ def render_markdown(report: dict[str, Any]) -> str:
     lines.append(
         "Reproduce with the command recorded in `judge_ablation.json`; the cache is `"
         + meta["cache"]["path"]
-        + "` and is keyed by `(variant, pair_id)`."
+        + "` and is keyed by `(variant, pair_id, signature)`."
     )
     lines.append("")
     return "\n".join(lines)
@@ -2005,7 +2035,6 @@ def dry_run(
         resume_input = 0
         gate_drop_pos = 0
         for pair in pairs:
-            key = (variant.key, pair.pair_id)
             if pair.claim_id_a and pair.claim_id_a == pair.claim_id_b:
                 same_skip += 1
                 continue
@@ -2021,7 +2050,7 @@ def dry_run(
             prompt_tokens = _estimate_tokens(build_prompt(variant, pair))
             fresh_calls += 1
             fresh_input += prompt_tokens
-            if cache_entry_valid(cache.get(key), variant, pair):
+            if cache_entry_valid(cached_entry(cache, variant, pair), variant, pair):
                 cached += 1
             else:
                 resume_calls += 1
@@ -2281,7 +2310,7 @@ def report_from_cache(
     results: dict[tuple[str, str], dict[str, Any]] = {}
     for variant in variants:
         for pair in pairs:
-            entry = cache.get((variant.key, pair.pair_id))
+            entry = cached_entry(cache, variant, pair)
             if cache_entry_valid(entry, variant, pair):
                 results[(variant.key, pair.pair_id)] = entry  # type: ignore[assignment]
 
@@ -2343,7 +2372,7 @@ def run_eval_with_meta(
             reused = 0
             for idx, pair in enumerate(pairs, 1):
                 key = (variant.key, pair.pair_id)
-                cached = cache.get(key)
+                cached = cached_entry(cache, variant, pair)
                 if cache_entry_valid(cached, variant, pair):
                     results[key] = cached  # type: ignore[assignment]
                     reused += 1
@@ -2364,7 +2393,7 @@ def run_eval_with_meta(
                         calls_this_run[variant.key] += 1
 
                     append_cache(entry)
-                    cache[key] = entry
+                    cache[cache_key(variant, pair)] = entry
                     results[key] = entry
 
                 if idx % PROGRESS_EVERY == 0:

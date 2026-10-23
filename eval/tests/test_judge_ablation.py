@@ -6,6 +6,7 @@ These tests never call a provider and never read the production cache. Run with:
 """
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -17,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+import eval.judge_ablation as judge_ablation
 from eval.judge_ablation import (
     Pair,
     Variant,
@@ -25,7 +27,11 @@ from eval.judge_ablation import (
     _noise_comparisons,
     _variant_metrics,
     build_preregistration_report,
+    cache_entry_valid,
+    cache_key,
+    cached_entry,
     canonical_pair_key,
+    load_cache,
     load_pairs,
     render_markdown,
     validate_pairs,
@@ -81,6 +87,60 @@ def make_entry(
         "guard_demoted": guard_demoted,
         "distance": pair.distance,
     }
+
+
+def _cache_row(variant: Variant, pair: Pair, signature: str) -> dict:
+    return {
+        "variant": variant.key,
+        "pair_id": pair.pair_id,
+        "signature": signature,
+        "fingerprint": pair.fingerprint,
+        "distance": pair.distance,
+        "gate_passed": True,
+        "llm_called": True,
+        "predicted": "CONTRADICTS",
+        "status": "CONTRADICTS",
+    }
+
+
+def test_cache_key_includes_signature_and_ignores_stale_entry(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pair = make_pair("1", "CONTRADICTS", distance=0.2)
+    variant = Variant(
+        key="A",
+        title="Test",
+        gate=0.95,
+        prompt_kind="old",
+        prompt="prompt",
+        guard=False,
+        provider="test",
+        model="test-model",
+    )
+    cache_path = tmp_path / "cache.jsonl"
+    stale = _cache_row(variant, pair, "stale-signature")
+    current = _cache_row(variant, pair, variant.signature)
+    cache_path.write_text(json.dumps(stale) + "\n", encoding="utf-8")
+    monkeypatch.setattr(judge_ablation, "CACHE_PATH", cache_path)
+
+    cache, meta = load_cache()
+    assert meta["lines"] == 1
+    assert len(cache) == 1
+    assert cache_entry_valid(cached_entry(cache, variant, pair), variant, pair) is False
+    assert cached_entry(cache, variant, pair) is None
+
+    with cache_path.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(current) + "\n")
+
+    cache, meta = load_cache()
+    assert meta["lines"] == 2
+    assert len(cache) == 2
+    assert cache_key(variant, pair) == (variant.key, pair.pair_id, variant.signature)
+    selected = cached_entry(cache, variant, pair)
+    assert selected is not None
+    assert selected["signature"] == variant.signature
+    assert cache_entry_valid(selected, variant, pair) is True
+    assert cache_entry_valid(cache[("A", "1", "stale-signature")], variant, pair) is False
 
 
 def test_load_base_and_extra_label_columns(tmp_path: Path) -> None:

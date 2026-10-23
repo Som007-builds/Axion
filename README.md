@@ -1,4 +1,8 @@
-# Axion
+<h1 align="center">
+  <br>
+  <img alt="AXION — Scientific Intelligence System" src="Blueprint%20AXION%20Scientific%20Logo.png" width="400">
+  <br>
+</h1>
 
 **Map the evidence. Trace the disagreements. Investigate what comes next.**
 
@@ -13,7 +17,7 @@ Axion is **not** a chatbot over PDFs. Its central design idea is representing
 scientific claims and their relationships as inspectable, source-linked graph
 data rather than as an opaque document summary.
 
-<p>
+<p align="center">
   <img alt="Python 3.11" src="https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white">
   <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-backend-009688?logo=fastapi&logoColor=white">
   <img alt="Neo4j 5.18" src="https://img.shields.io/badge/Neo4j-5.18-4581C3?logo=neo4j&logoColor=white">
@@ -41,6 +45,7 @@ data rather than as an opaque document summary.
 - [Architecture](#architecture)
 - [How the research pipeline works](#how-the-research-pipeline-works)
 - [Product interface](#product-interface)
+- [The frontend (axion/)](#the-frontend-axion)
 - [Installation and quick start](#installation-and-quick-start)
 - [Docker deployment](#docker-deployment)
 - [Configuration reference](#configuration-reference)
@@ -136,7 +141,7 @@ Maturity legend: **✅ Implemented** · **🟡 Works with caveats** · **🧪 Ex
 | 10 | **Graph-based confidence updates** | 🟡 | Recomputes `confidence = base + 0.08·supports − 0.12·contradictions`, clamped to `[0.05, 0.98]` (`agents/confidence_updater.py`). This is a **heuristic score, not a calibrated probability**. |
 | 11 | **Multi-step question answering** | 🟡 | Coordinator v2 runs plan → retrieve → reflect (≤3 iterations) → synthesize and returns a cited report (`agents/coordinator_v2.py`, `planner.py`, `reflector.py`, `synthesizer.py`). Runs synchronously in the request; see limitations. |
 | 12 | **Temporal analysis & dispute timelines** | 🟡 | Year-filtered retrieval plus LLM narratives for consensus evolution and dispute status (`agents/temporal.py`). Quality depends on having enough claims spread across years. |
-| 13 | **Interactive research workspace** | ✅ | A six-view Next.js workspace with a force-directed graph, contradiction and gap lists, timeline, and confidence-evolution views (`axion/`). See [Product interface](#product-interface). |
+| 13 | **Interactive research workspace** | ✅ | A six-view Next.js workspace rendered in the **Cobalt Grid** design language — force-directed graph, contradiction and gap ledgers, timeline, and confidence-evolution views (`axion/`). See [Product interface](#product-interface). |
 | 14 | **API & command-line workflows** | ✅ | A FastAPI service (21 routes) plus a `main.py` CLI for batch ingestion and analysis jobs. |
 
 ---
@@ -220,7 +225,7 @@ flowchart TD
 | Graph layer | `graph/neo4j_client.py`, `neo4j_queries.py`, `neo4j_schema.py` | Driver, Cypher queries, schema setup | ❌ |
 | Vector layer | `embeddings/store.py` | ChromaDB collections for claims and chunks | ❌ |
 | API | `api/main.py`, `api/models.py` | 22 `/api` routes + `/healthz`, response models | — |
-| Frontend | `axion/` | Six-view research workspace | — |
+| Frontend | `axion/` | Six-view research workspace (Cobalt Grid design system) | — |
 | LLM router | `llm.py` | Provider fallback, transient retry, provider cooldown, optional cache | — |
 
 > The graph store and the vector store are **independent systems kept roughly in
@@ -243,10 +248,10 @@ flowchart TD
 | Background jobs | RQ + Redis, thread fallback | one `worker` sidecar; jobs survive API restarts |
 | Scheduling | APScheduler | in-process; enqueues rather than runs when a queue exists |
 | Frontend | Next.js 16.2.6, React 19, TypeScript 5.7 | App Router, single route |
-| Styling | Tailwind CSS v4, shadcn/ui primitives | `@tailwindcss/postcss` |
+| Styling | Tailwind CSS v4 + Cobalt Grid tokens | square-cornered shadcn/ui-style primitives on Radix |
+| Typography | Newsreader · Hanken Grotesk · DM Mono | display · interface · technical (`next/font`, system fallbacks) |
 | Data fetching | SWR | polling for status/progress |
-| Graph rendering | react-force-graph-2d | force-directed canvas |
-| Charts | Recharts | confidence distribution |
+| Graph rendering | react-force-graph-2d | force-directed canvas, monochrome ink encoding |
 | Package manager (web) | pnpm | lockfile committed |
 
 ---
@@ -310,11 +315,19 @@ steps can be reproduced exactly and which cannot.
 
 ## Product interface
 
-The frontend is a single-page Next.js workspace with a navigation rail and a
-`⌘K`/`Ctrl-K` command bar. Six views are switchable with the keyboard
-(`1`–`6`) when focus is not in a text field:
+The frontend is a single-page Next.js workspace rendered in the **Cobalt Grid**
+design language — a two-color system of warm cream paper (`#F0EBDE`) and
+electric cobalt ink (`#1F2BE0`), a permanent graph-paper grid, square corners,
+hairline rules, and three typefaces with distinct roles: **Newsreader** (400)
+for display typography, **Hanken Grotesk** for interface copy, and **DM Mono**
+for identifiers, metrics, and logs.
 
-| # | View | What you can do |
+There is a navigation rail (with the AXION mark in the top-left corner) and a
+`⌘K`/`Ctrl-K` command bar. Six views are switchable with the keyboard keys
+`1`–`6` (the digits are no longer displayed in the rail, but the shortcuts
+still work) when focus is not in a text field:
+
+| Key | View | What you can do |
 | :-: | :--- | :--- |
 | 1 | **Research** | Ask a research question and read the synthesized report, execution plan, reflection trace, confidence, and sources. Also shows dashboard stats and browser-local query history. |
 | 2 | **Knowledge Graph** | Explore a force-directed canvas of Paper/Claim/Gap nodes with typed edges; adjust how many claims are loaded. |
@@ -325,7 +338,29 @@ The frontend is a single-page Next.js workspace with a navigation rail and a
 
 Additional surfaces: a **dashboard stats** panel fed by `/api/stats`, a global
 **status bar** and nav health indicator derived from `/api/health`, and an
-**ingestion sheet** for topic-based custom ingestion with live progress and logs.
+**ingestion sheet** for topic-based custom ingestion with live progress and
+logs.
+
+Because the whole palette is monochrome, meaning is never carried by color
+alone:
+
+- **Confidence** is encoded by fill density plus text: a solid square for high
+  (≥ 80%), an outlined square for medium (50–79%), a hatched square for low
+  (< 50%) — always alongside the numeric percentage and a `HIGH`/`MEDIUM`/`LOW`
+  label.
+- **Disputes** use `ONGOING` (outlined) vs `RESOLVED` (filled) chips;
+  **ingestion failures** get a hatched `FAILED` treatment.
+- In the graph, entity types are distinguished by **shape** (papers = solid
+  dots, claims = confidence-density dots, gaps = hollow diamonds) and
+  relationship types by **dash pattern and weight** (`CONTRADICTS` = heavy
+  solid, `EXTRACTED_FROM` = dashed); the legend swatches match the canvas
+  exactly.
+- Confidence distribution uses a **pixel-stack** bar of small square cells
+  (filled = cobalt, unfilled = faint cobalt) with the count and percentage
+  printed next to it.
+
+Motion is restrained (opacity and line-color transitions of ~120–250 ms) and
+is disabled under `prefers-reduced-motion`.
 
 Honest notes on current UI behaviour:
 
@@ -337,6 +372,65 @@ Honest notes on current UI behaviour:
 - There is **no export** (PDF/Markdown/CSV) and **no streaming** of responses.
 - There are **no screenshots** committed to this repository, so none are shown
   here. The architecture diagram above is the authoritative visual reference.
+
+---
+
+## The frontend (`axion/`)
+
+A Next.js 16 App Router application (single route, `app/page.tsx`) with React
+19, TypeScript, Tailwind CSS v4, and SWR. Package manager is **pnpm**.
+
+```
+axion/
+├── app/                    # layout, page (shell), globals.css (design tokens), API proxy route
+├── components/axion/       # view components: nav rail, command bar, query panel,
+│                           # knowledge graph, contradictions, gaps, timeline,
+│                           # evolution, ingestion sheet, status bar, stats, experiment card
+├── components/cg/          # shared Cobalt Grid primitives (overlines, confidence tags,
+│                           # status chips, pixel-glitch / QR-block motifs, empty states)
+├── components/ui/          # square-cornered Radix primitives (button, slider, sheet, …)
+├── lib/                    # api-client (typed fetch + job polling), hooks, utils
+├── types/axion.ts          # API response contracts, mirrored from api/models.py
+└── public/                 # brand assets (axion-logo.png lockup, axion-logo-mark.png)
+```
+
+- **Design tokens** live in `app/globals.css` (`--cg-*` custom properties) and
+  remap the semantic variables used by the UI primitives, so the whole palette
+  is controlled from one file.
+- **Fonts** are loaded with `next/font/google` and exposed as CSS variables
+  (`Newsreader`, `Hanken Grotesk`, `DM Mono`) with sane fallbacks; nothing is
+  hidden while fonts load.
+- **Write/compute calls** are proxied server-side through
+  `app/api/backend/[...path]/route.ts`, which attaches `AXION_API_KEY`; the key
+  never reaches the browser. Read-only calls go straight to
+  `NEXT_PUBLIC_API_URL`.
+- **Brand assets** are derived from `Blueprint AXION Scientific Logo.png` at the
+  repository root: the rail shows the cropped mark, and the boot/loading screens
+  show the full lockup.
+
+### Running and checking the frontend
+
+```bash
+cd axion
+pnpm install
+pnpm dev                       # http://localhost:3000
+pnpm lint                      # ESLint: 0 errors (2 intentional hydration warnings)
+pnpm exec tsc --noEmit         # type check
+pnpm build                     # production build (runs tsc)
+```
+
+**Frontend-only mode:** the workspace runs fine with no backend — every data
+view renders an explicit offline/empty state ("Graph unavailable",
+"Contradictions unavailable", …), the status bar shows `SYSTEM OFFLINE`, and
+dashboard stats show `STATUS: API OFFLINE`. This is an intentional, designed
+state, not a broken screen.
+
+Deeper documentation:
+
+- [`FRONTEND_DESIGN_REQUIREMENTS.md`](./FRONTEND_DESIGN_REQUIREMENTS.md) — the
+  designer-facing requirements document (tokens, views, states, accessibility).
+- [`FRONTEND_HANDOVER.md`](./FRONTEND_HANDOVER.md) — the 18-endpoint API
+  contract the frontend talks to.
 
 ---
 
@@ -353,7 +447,7 @@ configuration.
 | :--- | :--- |
 | Python | 3.11 (3.10+ likely works; CI targets 3.11) |
 | Node.js | 20 |
-| pnpm | 9 (via `corepack enable`) |
+| pnpm | 9 or 10 (via `corepack enable`) |
 | Docker + Docker Compose | for Neo4j (or any reachable Neo4j 5.x) |
 | LLM provider key | Groq (primary) and/or Google Gemini (fallback) |
 | Disk / network | ~300 MB Python deps + local embedding model download on first run |
@@ -370,8 +464,8 @@ The GitHub remote and local folder still carry the project's legacy name
 (`AetherGraph` / `schimesh`) pending a rename; the project itself is Axion.
 
 ```bash
-git clone https://github.com/Som007-builds/AetherGraph.git axion
-cd axion
+git clone https://github.com/Som007-builds/AetherGraph.git axion-repo
+cd axion-repo
 ```
 
 ### 2. Create a Python environment and install
@@ -476,8 +570,10 @@ pnpm install
 pnpm dev
 ```
 
-Open <http://localhost:3000>. Use the nav rail (`1`–`6`) or `⌘K`/`Ctrl-K` to
-move between views.
+Open <http://localhost:3000>. Use the navigation rail, the keyboard keys
+`1`–`6`, or `⌘K`/`Ctrl-K` to move between views. Without a backend the
+workspace still runs and shows its designed offline states — see
+[The frontend](#the-frontend-axion).
 
 ### Troubleshooting
 
@@ -485,6 +581,7 @@ move between views.
 | :--- | :--- |
 | `ModuleNotFoundError: No module named 'arxiv'` | The `arxiv` package is not in `requirements.txt`; run `pip install arxiv`. |
 | `ServiceUnavailable` / Neo4j connection errors | Neo4j is not up or the password is wrong. Check `docker compose ps`, the `NEO4J_PASSWORD` value, and that the host port is `7887`. |
+| UI shows `SYSTEM OFFLINE` / `API OFFLINE` badges | Expected when the backend is not running (or `NEXT_PUBLIC_API_URL` is wrong). Start the API on port 8000 and confirm `/api/health` returns `200`. |
 | `/api/health` returns `503` | Neo4j and/or ChromaDB is unreachable. `/healthz` returning `200` is expected even when degraded. |
 | First ingestion is slow / downloads a model | sentence-transformers downloads `all-MiniLM-L6-v2` on first use; it needs network access once. |
 | LLM calls hang, then fail | The router retries transient 5xx/timeouts briefly, switches providers on rate limits, and **benches** a provider that fails hard for `LLM_PROVIDER_COOLDOWN_SECONDS` (default 300 s). Check your keys and quotas — with every provider exhausted, a job fails rather than hangs. |
@@ -805,16 +902,16 @@ are lost on restart.
 
 | Item | State |
 | :--- | :--- |
-| Offline suite | **229 passed, 12 deselected** (verified locally for this document) |
+| Offline suite | **229 passed, 12 deselected** (as of the last recorded full run; CI re-runs it on every push) |
 | Integration tests | `tests/test_neo4j.py`, `tests/test_claims.py` need a live Neo4j/ChromaDB; marked `integration` and excluded by default |
 | CI | `.github/workflows/ci.yml` runs the offline backend suite and a frontend production build on every push/PR to `main` |
 | Coverage | Not measured |
-| Frontend lint | ESLint via `pnpm lint`: 0 errors, 2 intentional hydration warnings in `query-panel.tsx` / `app/page.tsx` |
+| Frontend checks | `pnpm lint`: 0 errors, 2 intentional hydration warnings in `app/page.tsx` / `query-panel.tsx` · `pnpm exec tsc --noEmit`: pass · `pnpm build`: pass (last verified for the Cobalt Grid revision) |
 
 Run the offline tests (no Neo4j, ChromaDB, Redis, or LLM required):
 
 ```bash
-pytest                       # 229 passed, 12 deselected
+pytest                       # offline suite
 pytest -m integration        # opt-in: requires live Neo4j / ChromaDB
 ```
 
@@ -951,6 +1048,7 @@ deliberately not hidden.
 
 - Query history is browser-local only; there is no export, no streaming, and no
   live per-stage progress during a query.
+- There is no view-level automated testing, and no screenshots are committed.
 - Legacy Streamlit/pyvis/plotly dependencies remain in `requirements.txt` even
   though the Streamlit UI was retired.
 - Documentation and branding have historically been inconsistent (legacy names
@@ -1015,7 +1113,7 @@ new features.
 - [x] Contradiction/support detection, gap discovery, experiment design
 - [x] Confidence propagation and temporal analysis
 - [x] Coordinator v2 (plan → retrieve → reflect → synthesize)
-- [x] Six-view Next.js workspace with keyboard navigation
+- [x] Six-view Next.js workspace with keyboard navigation, rebuilt on the Cobalt Grid design system
 - [x] Offline test suite (229 passing) and CI for backend tests + frontend build
 - [x] Dockerfiles, full-stack Compose, healthchecks, `/healthz` liveness
 - [x] Shared-key auth on write/compute routes; job polling is key-guarded too
@@ -1037,8 +1135,8 @@ new features.
    quotas to replace the single shared `AXION_API_KEY`.
 5. **Observability, backups, and migration discipline** — persistent metrics,
    tracing, alerting; scheduled backups; a real migration framework.
-6. **Frontend correctness and documentation cleanup** — linting is wired up;
-   what remains is view-level test coverage and committed screenshots.
+6. **Frontend correctness** — the workspace is redesigned and lint/type/build
+   clean; what remains is view-level test coverage and committed screenshots.
 
 ---
 
@@ -1056,10 +1154,17 @@ deliberately lightweight:
    ```bash
    pytest                 # offline suite must stay green
    ```
-4. **Make a focused change.** Keep pull requests scoped to one concern and
+4. **For frontend changes:** work inside `axion/` and keep edits consistent with
+   the Cobalt Grid token system in `app/globals.css` — square corners, the
+   two-color rule (`#F0EBDE` paper / `#1F2BE0` ink), no shadows/gradients, and
+   monochrome status encodings. Verify with
+   ```bash
+   cd axion && pnpm lint && pnpm exec tsc --noEmit && pnpm build
+   ```
+5. **Make a focused change.** Keep pull requests scoped to one concern and
    consistent with the existing structure, naming, and style.
-5. **Include tests where applicable**, especially for backend logic.
-6. **Open a pull request** with a clear description of what changed, why, and how
+6. **Include tests where applicable**, especially for backend logic.
+7. **Open a pull request** with a clear description of what changed, why, and how
    you verified it. Note any behaviour change and any new configuration.
 
 Good first areas: adding the missing evaluation dataset, improving structured

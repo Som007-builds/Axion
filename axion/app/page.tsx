@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
+import Image from 'next/image'
 import { NavRail, type AxionView } from '@/components/axion/nav-rail'
 import { CommandBar } from '@/components/axion/command-bar'
 import { StatusBar } from '@/components/axion/status-bar'
@@ -70,6 +71,7 @@ export default function AxionWorkspace() {
     function handleKeyDown(e: KeyboardEvent) {
       // Don't trigger shortcuts when typing in inputs
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+      if (e.target instanceof HTMLElement && e.target.isContentEditable) return
 
       const views: AxionView[] = ['query', 'knowledge-graph', 'contradictions', 'gaps', 'timeline', 'evolution']
       const num = parseInt(e.key)
@@ -83,22 +85,22 @@ export default function AxionWorkspace() {
 
   if (!isClient) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-black">
-        <div className="flex flex-col items-center gap-4 animate-fade-up">
-          {/* Premium logo loader */}
-          <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#3b82f6] to-[#06b6d4] shadow-[0_0_50px_rgba(59,130,246,0.15)] after:absolute after:inset-0.5 after:rounded-[14px] after:bg-black/90 after:content-['']">
-            <span className="relative z-10 font-mono text-xl font-bold tracking-tighter text-white animate-pulse">
-              A
+      <div className="flex h-screen w-screen items-center justify-center">
+        <div className="flex flex-col items-center gap-4 px-10 py-8">
+          <Image
+            src="/axion-logo.png"
+            alt="AXION — Scientific Intelligence System"
+            width={1672}
+            height={941}
+            priority
+            className="h-20 w-auto object-contain"
+          />
+          <span className="cg-overline text-ink/70">AXION SYSTEM</span>
+          <div className="flex items-center gap-2">
+            <span aria-hidden="true" className="inline-block h-2 w-2 bg-ink animate-cg-blink" />
+            <span className="cg-mono-meta text-xs text-ink-soft">
+              Initializing workspace kernel…
             </span>
-          </div>
-          <div className="flex flex-col items-center gap-1.5">
-            <span className="text-[10px] text-[#475569] font-semibold tracking-[0.2em] uppercase">
-              AXION SYSTEM
-            </span>
-            <div className="flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#3b82f6] animate-ping" />
-              <span className="text-[10px] text-[#334155] font-mono">Initializing workspace kernel...</span>
-            </div>
           </div>
         </div>
       </div>
@@ -106,7 +108,13 @@ export default function AxionWorkspace() {
   }
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-black">
+    <div className="flex h-screen w-screen overflow-hidden">
+      {/* Structural top rule inset from the page edges */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-x-3 top-2.5 z-40 h-[2px] bg-ink"
+      />
+
       {/* Navigation Rail */}
       <NavRail
         activeView={activeView}
@@ -115,9 +123,9 @@ export default function AxionWorkspace() {
       />
 
       {/* Main Content Area */}
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         {/* Top Bar: Command Bar + View Title */}
-        <header className="flex shrink-0 flex-col gap-4 border-b border-[var(--axion-border-subtle)] bg-black px-6 py-4">
+        <header className="flex shrink-0 flex-col gap-4 border-b border-ink/25 px-6 pt-6 pb-4">
           {/* Command Bar */}
           <CommandBar
             onSubmit={handleCommandSubmit}
@@ -126,12 +134,12 @@ export default function AxionWorkspace() {
           />
 
           {/* View Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-lg font-semibold text-[#f0f6ff]">
+          <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
+            <div className="min-w-0">
+              <h1 className="cg-display text-2xl text-ink">
                 {VIEW_TITLES[activeView]}
               </h1>
-              <p className="text-xs text-[#475569]">
+              <p className="mt-0.5 text-sm text-ink-soft">
                 {VIEW_DESCRIPTIONS[activeView]}
               </p>
             </div>
@@ -143,9 +151,12 @@ export default function AxionWorkspace() {
 
         {/* Active View Content */}
         <main className="flex-1 overflow-auto">
-          <div key={activeView} className="h-full animate-fade-up">
+          <div
+            key={activeView}
+            className="mx-auto h-full w-full max-w-[1440px] animate-fade-up"
+          >
             {activeView === 'query' && (
-              <div className="mx-auto max-w-[1100px] px-6 py-6">
+              <div className="mx-auto w-full max-w-[1200px] px-6 py-6">
                 <QueryPanel
                   externalQuery={commandQuery}
                   onQueryClear={() => setCommandQuery(null)}
@@ -155,31 +166,29 @@ export default function AxionWorkspace() {
             )}
 
             {activeView === 'knowledge-graph' && (
-              <div className="h-full">
-                <KnowledgeGraph />
-              </div>
+              <KnowledgeGraph />
             )}
 
             {activeView === 'contradictions' && (
-              <div className="mx-auto max-w-[1100px] px-6 py-6">
+              <div className="mx-auto w-full max-w-[1200px] px-6 py-6">
                 <ContradictionList />
               </div>
             )}
 
             {activeView === 'gaps' && (
-              <div className="mx-auto max-w-[1100px] px-6 py-6">
+              <div className="mx-auto w-full max-w-[1200px] px-6 py-6">
                 <GapList />
               </div>
             )}
 
             {activeView === 'timeline' && (
-              <div className="mx-auto max-w-[1100px] px-6 py-6">
+              <div className="mx-auto w-full max-w-[1200px] px-6 py-6">
                 <TimelineView />
               </div>
             )}
 
             {activeView === 'evolution' && (
-              <div className="mx-auto max-w-[1100px] px-6 py-6">
+              <div className="mx-auto w-full max-w-[1200px] px-6 py-6">
                 <GraphEvolution />
               </div>
             )}

@@ -2,86 +2,86 @@
 
 import { useState } from 'react'
 import useSWR from 'swr'
-import { Lightbulb, Sparkles, Search, Link2 } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { Search, Sparkles, Link2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Overline, ErrorBanner, EmptyState } from '@/components/cg'
 import { getGaps } from '@/lib/api-client'
 import type { Gap, GapsResponse } from '@/types/axion'
+import { cn } from '@/lib/utils'
 
 type SourceFilter = 'all' | 'semantic' | 'llm_synthesized'
 
-function GapCard({ gap }: { gap: Gap }) {
+function SourceLabel({ source }: { source: Gap['source'] }) {
   return (
-    <div className={`rounded-xl border axion-surface axion-card-hover p-5 space-y-3 ${
-      gap.source === 'semantic' 
-        ? 'border-l-2 border-l-[#3b82f6] border-[var(--axion-border-subtle)]' 
-        : 'border-l-2 border-l-[#8b5cf6] border-[var(--axion-border-subtle)]'
-    }`}>
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <Lightbulb className="h-4 w-4 text-[#8b5cf6]" />
-          <Badge
-            variant="outline"
-            className={`border-[var(--axion-border-subtle)] bg-transparent ${
-              gap.source === 'semantic' 
-                ? 'text-[#60a5fa]' 
-                : 'text-[#a78bfa]'
-            }`}
-          >
-            {gap.source === 'semantic' ? (
-              <><Search className="mr-1 h-3 w-3" />Semantic</>
-            ) : (
-              <><Sparkles className="mr-1 h-3 w-3" />LLM Synthesized</>
-            )}
-          </Badge>
-        </div>
+    <span className="inline-flex items-center gap-1.5">
+      <span
+        aria-hidden="true"
+        className={cn(
+          'inline-block h-2 w-2',
+          source === 'semantic' ? 'bg-ink' : 'border border-ink/70',
+        )}
+      />
+      <span className="cg-overline text-ink/60">
+        {source === 'semantic' ? 'SEMANTIC' : 'LLM SYNTH.'}
+      </span>
+    </span>
+  )
+}
+
+function GapRow({ gap }: { gap: Gap }) {
+  return (
+    <article className="px-5 py-4 [&:not(:first-child)]:border-t [&:not(:first-child)]:border-ink/15">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+        <SourceLabel source={gap.source} />
         {gap.confidence != null && (
-          <span className="text-xs text-[#475569] font-mono tabular-nums">
-            {Math.round(gap.confidence * 100)}%
+          <span className="cg-mono-meta text-xs text-ink tabular-nums">
+            {Math.round(gap.confidence * 100)}% confidence
           </span>
         )}
       </div>
-      
-      <p className="text-sm text-[#f0f6ff] leading-relaxed">{gap.text}</p>
-      
+
+      <p className="mt-2 max-w-[var(--cg-reading-max)] text-[15px] leading-relaxed text-ink">
+        {gap.text}
+      </p>
+
       {gap.related_claims.length > 0 && (
-        <div className="pt-2 border-t border-[var(--axion-border-subtle)]">
-          <div className="flex items-center gap-1.5 mb-2">
-            <Link2 className="h-3 w-3 text-[#475569]" />
-            <h5 className="text-[10px] font-medium uppercase tracking-wider text-[#475569]">
+        <div className="mt-3 border-t border-ink/10 pt-2.5">
+          <div className="mb-2 flex items-center gap-1.5">
+            <Link2 className="h-3 w-3 text-ink/50" aria-hidden="true" />
+            <Overline className="tracking-[0.1em] text-ink/40">
               Related Claims ({gap.related_claims.length})
-            </h5>
+            </Overline>
           </div>
           <div className="flex flex-wrap gap-1.5">
             {gap.related_claims.slice(0, 5).map((claimId, i) => (
               <span
                 key={i}
-                className="font-mono text-[10px] text-[#8b5cf6] rounded-md bg-[#8b5cf6]/8 border border-[#8b5cf6]/15 px-2 py-0.5"
+                className="cg-mono-meta border border-ink/30 bg-ink/[0.04] px-2 py-0.5 text-[11px] text-ink"
               >
                 {claimId}
               </span>
             ))}
             {gap.related_claims.length > 5 && (
-              <span className="text-[10px] text-[#334155] px-1">
+              <span className="cg-mono-meta px-1 py-0.5 text-[11px] text-ink/40">
                 +{gap.related_claims.length - 5} more
               </span>
             )}
           </div>
         </div>
       )}
-    </div>
+    </article>
   )
 }
 
 function GapSkeleton() {
   return (
-    <div className="rounded-xl border border-[var(--axion-border-subtle)] axion-surface p-5 space-y-3">
+    <div className="border border-ink/25 bg-paper p-5">
       <div className="flex items-center gap-3">
-        <div className="animate-shimmer h-5 w-5 rounded" />
-        <div className="animate-shimmer h-5 w-24 rounded" />
+        <span className="cg-skeleton h-3 w-20" />
+        <span className="cg-skeleton h-3 w-12" />
       </div>
-      <div className="animate-shimmer h-4 w-full rounded" />
-      <div className="animate-shimmer h-4 w-4/5 rounded" />
+      <span className="cg-skeleton mt-3 block h-3.5 w-full" />
+      <span className="cg-skeleton mt-2 block h-3.5 w-4/5" />
     </div>
   )
 }
@@ -96,40 +96,48 @@ export function GapList() {
   )
 
   const filterButtons: { value: SourceFilter; label: string; icon: React.ReactNode }[] = [
-    { value: 'all', label: 'All', icon: <Search className="h-3.5 w-3.5" /> },
-    { value: 'semantic', label: 'Semantic', icon: <Search className="h-3.5 w-3.5" /> },
-    { value: 'llm_synthesized', label: 'LLM Synthesized', icon: <Sparkles className="h-3.5 w-3.5" /> },
+    { value: 'all', label: 'All', icon: <Search className="h-3 w-3" aria-hidden="true" /> },
+    { value: 'semantic', label: 'Semantic', icon: <Search className="h-3 w-3" aria-hidden="true" /> },
+    { value: 'llm_synthesized', label: 'LLM Synthesized', icon: <Sparkles className="h-3 w-3" aria-hidden="true" /> },
   ]
 
   return (
     <div className="space-y-6">
-      {/* Filter */}
-      <div className="flex items-center gap-1 rounded-xl border border-[var(--axion-border-subtle)] axion-surface p-1.5">
-        {filterButtons.map((btn) => (
-          <Button
-            key={btn.value}
-            variant="ghost"
-            size="sm"
-            onClick={() => setSourceFilter(btn.value)}
-            className={`rounded-lg transition-all duration-150 ${
-              sourceFilter === btn.value
-                ? 'bg-[rgba(59,130,246,0.08)] text-[#f0f6ff]'
-                : 'text-[#475569] hover:text-[#94a3b8] hover:bg-[rgba(59,130,246,0.04)]'
-            }`}
-          >
-            {btn.icon}
-            <span>{btn.label}</span>
-          </Button>
-        ))}
+      {/* Segmented filter */}
+      <div
+        role="group"
+        aria-label="Filter research gaps by source"
+        className="inline-flex flex-wrap items-center gap-0.5 border border-ink/40 bg-paper p-1"
+      >
+        {filterButtons.map((btn) => {
+          const active = sourceFilter === btn.value
+          return (
+            <Button
+              key={btn.value}
+              variant="ghost"
+              size="sm"
+              aria-pressed={active}
+              onClick={() => setSourceFilter(btn.value)}
+              className={cn(
+                'h-7 gap-1.5 px-3 text-xs',
+                active
+                  ? 'bg-ink text-paper hover:bg-ink'
+                  : 'text-ink-soft hover:bg-ink/5 hover:text-ink',
+              )}
+            >
+              {btn.icon}
+              <span>{btn.label}</span>
+            </Button>
+          )
+        })}
       </div>
 
       {/* Error state */}
       {error && (
-        <div className="rounded-xl border border-[#f43f5e]/20 bg-[#f43f5e]/5 p-4">
-          <p className="text-sm text-[#f43f5e]">
-            Failed to load research gaps. Is the API running?
-          </p>
-        </div>
+        <ErrorBanner
+          title="Research gaps unavailable"
+          message="Failed to load research gaps. Is the API running?"
+        />
       )}
 
       {/* Loading state */}
@@ -144,23 +152,22 @@ export function GapList() {
       {/* Results */}
       {data && !isLoading && (
         <>
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-[#475569]">
-              {data.total} research gap{data.total !== 1 ? 's' : ''} identified
-            </p>
-          </div>
-          <div className="space-y-4 stagger-children">
-            {data.gaps.map((gap) => (
-              <GapCard key={gap.id} gap={gap} />
-            ))}
-          </div>
-          {data.gaps.length === 0 && (
-            <div className="rounded-xl border border-[var(--axion-border-subtle)] axion-surface p-8 text-center">
-              <Lightbulb className="mx-auto h-8 w-8 text-[#334155]" />
-              <p className="mt-3 text-[#94a3b8]">
-                No research gaps found with the current filter
-              </p>
+          <p className="text-sm text-ink-soft">
+            <span className="cg-mono-meta text-ink">{data.total}</span>{' '}
+            research gap{data.total !== 1 ? 's' : ''} identified
+          </p>
+          {data.gaps.length > 0 ? (
+            <div className="border border-ink/25 bg-paper">
+              {data.gaps.map((gap) => (
+                <GapRow key={gap.id} gap={gap} />
+              ))}
             </div>
+          ) : (
+            <EmptyState
+              glyph="◇"
+              title="No research gaps found"
+              description="No research gaps found with the current filter."
+            />
           )}
         </>
       )}

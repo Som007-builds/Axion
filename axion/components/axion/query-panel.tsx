@@ -1,5 +1,6 @@
 'use client'
 
+import * as React from 'react'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Search,
@@ -8,15 +9,11 @@ import {
   Loader2,
   BookOpen,
   Brain,
-  CheckCircle2,
   Swords,
   HelpCircle,
   FlaskConical,
   ExternalLink,
   Sparkles,
-  ShieldCheck,
-  ShieldAlert,
-  ShieldQuestion,
   Plus,
   Trash2,
   History,
@@ -33,6 +30,14 @@ import { runQuery } from '@/lib/api-client'
 import type { CoordinatorOutput, JobStatus, ReflectionStep } from '@/types/axion'
 import ReactMarkdown from 'react-markdown'
 import { useIsClient } from '@/lib/use-is-client'
+import { cn } from '@/lib/utils'
+import {
+  Overline,
+  ErrorBanner,
+  PixelGlitch,
+  QrBlock,
+  confidenceLevel,
+} from '@/components/cg'
 
 // ─── Raw report JSON type from the coordinator ──────────────────────────────
 
@@ -51,32 +56,6 @@ interface RawReport {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function getConfidenceConfig(confidence: number) {
-  if (confidence >= 0.8)
-    return {
-      color: 'text-[#10b981]',
-      bg: 'bg-[#10b981]/8',
-      border: 'border-[#10b981]/20',
-      icon: ShieldCheck,
-      label: 'High Confidence',
-    }
-  if (confidence >= 0.5)
-    return {
-      color: 'text-[#f59e0b]',
-      bg: 'bg-[#f59e0b]/8',
-      border: 'border-[#f59e0b]/20',
-      icon: ShieldAlert,
-      label: 'Medium Confidence',
-    }
-  return {
-    color: 'text-[#f43f5e]',
-    bg: 'bg-[#f43f5e]/8',
-    border: 'border-[#f43f5e]/20',
-    icon: ShieldQuestion,
-    label: 'Low Confidence',
-  }
-}
-
 function parseRaw(rawStr: string): RawReport {
   try {
     return JSON.parse(rawStr)
@@ -90,76 +69,7 @@ function arxivUrl(id: string): string {
   return `https://arxiv.org/abs/${clean}`
 }
 
-// ─── Sub-components ──────────────────────────────────────────────────────────
-
-function ReflectionLog({ steps }: { steps: ReflectionStep[] }) {
-  const [isOpen, setIsOpen] = useState(false)
-
-  if (steps.length === 0) return null
-
-  return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <CollapsibleTrigger className="flex w-full items-center gap-2 py-2 text-sm text-[#94a3b8] hover:text-[#f0f6ff] transition-colors">
-        {isOpen ? (
-          <ChevronDown className="h-4 w-4" />
-        ) : (
-          <ChevronRight className="h-4 w-4" />
-        )}
-        <Brain className="h-4 w-4 text-[#8b5cf6]" />
-        <span>Reasoning trace ({steps.length} steps)</span>
-      </CollapsibleTrigger>
-      <CollapsibleContent>
-        <div className="mt-2 space-y-3 border-l-2 border-[#8b5cf6]/30 pl-4">
-          {steps.map((step, i) => (
-            <div key={i} className="space-y-1 animate-fade-up" style={{ animationDelay: `${i * 50}ms` }}>
-              <div className="flex items-center gap-2">
-                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#8b5cf6]/15 font-mono text-[10px] text-[#8b5cf6]">
-                  {step.step}
-                </span>
-                <span className="text-xs text-[#475569]">{step.action}</span>
-              </div>
-              <p className="text-sm text-[#94a3b8] leading-relaxed">{step.observation}</p>
-              {step.reasoning && (
-                <p className="text-xs text-[#475569] italic">{step.reasoning}</p>
-              )}
-            </div>
-          ))}
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
-  )
-}
-
-function PlanSteps({ plan }: { plan: string[] }) {
-  const [isOpen, setIsOpen] = useState(false)
-
-  if (plan.length === 0) return null
-
-  return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <CollapsibleTrigger className="flex w-full items-center gap-2 py-2 text-sm text-[#94a3b8] hover:text-[#f0f6ff] transition-colors">
-        {isOpen ? (
-          <ChevronDown className="h-4 w-4" />
-        ) : (
-          <ChevronRight className="h-4 w-4" />
-        )}
-        <span>Execution plan ({plan.length} sub-queries)</span>
-      </CollapsibleTrigger>
-      <CollapsibleContent>
-        <div className="mt-2 space-y-2 border-l-2 border-[#3b82f6]/30 pl-4">
-          {plan.map((step, i) => (
-            <div key={i} className="flex items-start gap-2 animate-fade-up" style={{ animationDelay: `${i * 50}ms` }}>
-              <span className="mt-0.5 inline-flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[#3b82f6]/15 font-mono text-[10px] text-[#3b82f6]">
-                {i + 1}
-              </span>
-              <span className="text-sm text-[#94a3b8]">{step}</span>
-            </div>
-          ))}
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
-  )
-}
+// ─── Citation chip ───────────────────────────────────────────────────────────
 
 function CitationChip({ id }: { id: string }) {
   const clean = id.replace(/[\[\]]/g, '').trim()
@@ -168,76 +78,175 @@ function CitationChip({ id }: { id: string }) {
       href={arxivUrl(clean)}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex items-center gap-1 rounded-md border border-[#3b82f6]/20 bg-[#3b82f6]/8 px-1.5 py-0.5 font-mono text-[11px] text-[#60a5fa] transition-all duration-150 hover:bg-[#3b82f6]/15 hover:text-[#3b82f6] hover:border-[#3b82f6]/30"
+      className="cg-mono-meta inline-flex items-center gap-1 border border-ink/40 bg-ink/[0.04] px-1.5 py-0.5 text-[11px] text-ink transition-colors duration-150 hover:bg-ink hover:text-paper focus-visible:outline-none"
     >
       {clean}
-      <ExternalLink className="h-2.5 w-2.5" />
+      <ExternalLink className="h-2.5 w-2.5" aria-hidden="true" />
     </a>
   )
 }
 
-function SectionHeader({
-  icon: Icon,
-  title,
-  count,
-  color,
+// ─── Collapsible sections: execution plan / reasoning trace ─────────────────
+
+function CollapsibleSection({
+  label,
+  icon,
+  children,
 }: {
-  icon: React.ElementType
-  title: string
-  count?: number
-  color: string
+  label: string
+  icon: React.ReactNode
+  children: React.ReactNode
 }) {
+  const [isOpen, setIsOpen] = useState(false)
+  if (React.Children.count(children) === 0) return null
+
   return (
-    <div className="flex items-center gap-2 mb-3">
-      <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${color}`}>
-        <Icon className="h-3.5 w-3.5" />
-      </div>
-      <h4 className="font-medium text-[#f0f6ff]">{title}</h4>
-      {count !== undefined && count > 0 && (
-        <span className="font-mono text-xs text-[#475569]">{count}</span>
-      )}
-    </div>
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <CollapsibleTrigger className="flex w-full items-center gap-2 py-1.5 text-left text-sm text-ink-soft transition-colors hover:text-ink focus-visible:outline-none">
+        {isOpen ? (
+          <ChevronDown className="h-4 w-4 shrink-0" aria-hidden="true" />
+        ) : (
+          <ChevronRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+        )}
+        {icon}
+        <span>{label}</span>
+      </CollapsibleTrigger>
+      <CollapsibleContent>{children}</CollapsibleContent>
+    </Collapsible>
   )
 }
 
-// ─── Report sections ─────────────────────────────────────────────────────────
+function PlanSteps({ plan }: { plan: string[] }) {
+  return (
+    <CollapsibleSection
+      label={`Execution plan (${plan.length} sub-queries)`}
+      icon={<Sparkles className="h-3.5 w-3.5 text-ink" aria-hidden="true" />}
+    >
+      <div className="mt-2 flex flex-col gap-2 border-l-[1.5px] border-ink/40 pl-4">
+        {plan.map((step, i) => (
+          <div key={i} className="flex items-start gap-2.5">
+            <span className="cg-mono-meta mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center border border-ink/50 text-[10px] text-ink">
+              {i + 1}
+            </span>
+            <span className="text-sm leading-relaxed text-ink-soft">{step}</span>
+          </div>
+        ))}
+      </div>
+    </CollapsibleSection>
+  )
+}
+
+function ReflectionLog({ steps }: { steps: ReflectionStep[] }) {
+  return (
+    <CollapsibleSection
+      label={`Reasoning trace (${steps.length} steps)`}
+      icon={<Brain className="h-3.5 w-3.5 text-ink" aria-hidden="true" />}
+    >
+      <div className="mt-2 flex flex-col gap-3 border-l-[1.5px] border-ink/60 pl-4">
+        {steps.map((step, i) => (
+          <div key={i} className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="cg-mono-meta flex h-5 w-5 items-center justify-center bg-ink text-[10px] text-paper">
+                {step.step}
+              </span>
+              <span className="cg-overline text-ink/50">{step.action}</span>
+            </div>
+            <p className="text-sm leading-relaxed text-ink-soft">{step.observation}</p>
+            {step.reasoning && (
+              <p className="text-xs italic leading-relaxed text-ink-soft/80">
+                {step.reasoning}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+    </CollapsibleSection>
+  )
+}
+
+// ─── Report scaffolding ──────────────────────────────────────────────────────
+
+function SectionShell({
+  icon: Icon,
+  title,
+  count,
+  tone = 'solid',
+  children,
+}: {
+  icon: React.ComponentType<{ className?: string }>
+  title: string
+  count: number
+  tone?: 'solid' | 'outline'
+  children: React.ReactNode
+}) {
+  return (
+    <section className="border border-ink/25 bg-paper p-5">
+      <div className="mb-4 flex items-center gap-2.5 border-b border-ink/20 pb-3">
+        <div
+          className={cn(
+            'flex h-6 w-6 items-center justify-center border',
+            tone === 'solid' ? 'border-ink bg-ink text-paper' : 'border-ink/50 text-ink',
+          )}
+        >
+          <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+        </div>
+        <Overline as="h3" className="text-ink">
+          {title}
+        </Overline>
+        {count > 0 && (
+          <span className="cg-mono-meta text-xs text-ink/50">{count}</span>
+        )}
+      </div>
+      {children}
+    </section>
+  )
+}
+
+/** Row marker: filled square (primary assertions) vs outlined square (secondary). */
+function RowMarker({ tone }: { tone: 'solid' | 'outline' | 'hatch' }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        'mt-1.5 inline-block h-2 w-2 shrink-0',
+        tone === 'solid' && 'bg-ink',
+        tone === 'outline' && 'border border-ink/70',
+        tone === 'hatch' && 'cg-hatch border border-ink/70',
+      )}
+    />
+  )
+}
 
 function ConsensusSection({ items }: { items: RawReport['consensus'] }) {
   if (!items || items.length === 0) return null
 
   return (
-    <div className="rounded-xl border border-[var(--axion-border-subtle)] axion-surface p-5 axion-card-hover">
-      <SectionHeader
-        icon={CheckCircle2}
-        title="Consensus"
-        count={items.length}
-        color="bg-[#10b981]/10 text-[#10b981]"
-      />
-      <div className="space-y-3">
+    <SectionShell icon={Brain} title="Consensus" count={items.length}>
+      <div className="flex flex-col">
         {items.map((item, i) => (
           <div
             key={i}
-            className="flex gap-3 rounded-lg border border-[#10b981]/10 bg-[#10b981]/[0.03] p-3"
+            className="py-3 [&:not(:first-child)]:border-t [&:not(:first-child)]:border-ink/15"
           >
-            <div className="mt-1 flex-shrink-0">
-              <div className="h-1.5 w-1.5 rounded-full bg-[#10b981]" />
-            </div>
-            <div className="space-y-1.5">
-              <p className="text-sm text-[#cbd5e1] leading-relaxed">
-                {item.finding}
-              </p>
-              {item.citations && item.citations.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {item.citations.map((c, j) => (
-                    <CitationChip key={j} id={c} />
-                  ))}
-                </div>
-              )}
+            <div className="flex gap-3">
+              <RowMarker tone="solid" />
+              <div className="min-w-0 space-y-2">
+                <p className="text-[15px] leading-relaxed text-ink">
+                  {item.finding}
+                </p>
+                {item.citations && item.citations.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {item.citations.map((c, j) => (
+                      <CitationChip key={j} id={c} />
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         ))}
       </div>
-    </div>
+    </SectionShell>
   )
 }
 
@@ -245,14 +254,8 @@ function DisputesSection({ items }: { items: RawReport['disputed'] }) {
   if (!items || items.length === 0) return null
 
   return (
-    <div className="rounded-xl border border-[var(--axion-border-subtle)] axion-surface p-5 axion-card-hover">
-      <SectionHeader
-        icon={Swords}
-        title="Disputes"
-        count={items.length}
-        color="bg-[#f43f5e]/10 text-[#f43f5e]"
-      />
-      <div className="space-y-4">
+    <SectionShell icon={Swords} title="Disputes" count={items.length} tone="outline">
+      <div className="space-y-5">
         {items.map((d, i) => {
           const pa = typeof d.position_a === 'string'
             ? { claim: d.position_a, paper: '?' }
@@ -262,50 +265,62 @@ function DisputesSection({ items }: { items: RawReport['disputed'] }) {
             : d.position_b
 
           return (
-            <div
-              key={i}
-              className="rounded-lg border border-[#f43f5e]/10 bg-[#f43f5e]/[0.03] p-4 space-y-3"
-            >
-              <p className="text-sm font-medium text-[#f0f6ff]">{d.topic}</p>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {/* Position A */}
-                <div className="rounded-md border border-[var(--axion-border-subtle)] bg-black/40 p-3 space-y-1.5">
-                  <div className="flex items-center gap-1.5">
-                    <span className="inline-block h-2 w-2 rounded-full bg-[#3b82f6]" />
-                    <span className="text-[10px] font-medium uppercase tracking-wider text-[#475569]">
-                      Position A
-                    </span>
+            <div key={i} className="space-y-3">
+              <p className="text-[15px] font-medium leading-snug text-ink">{d.topic}</p>
+              {/* Two-sided comparison: anchored VS marker centered between panels */}
+              <div className="relative grid items-start gap-3 md:grid-cols-[1fr_auto_1fr] md:gap-x-8">
+                <div className="min-w-0 border border-ink/25 bg-paper-secondary/60 p-3.5">
+                  <div className="mb-2 flex items-center gap-2">
+                    <span
+                      aria-hidden="true"
+                      className="inline-block h-2 w-2 bg-ink"
+                    />
+                    <Overline className="text-ink/60">Position A</Overline>
                   </div>
-                  <p className="text-xs text-[#94a3b8] leading-relaxed">
-                    {pa.claim}
-                  </p>
+                  <p className="text-sm leading-relaxed text-ink-soft">{pa.claim}</p>
                   {pa.paper && pa.paper !== '?' && (
-                    <CitationChip id={pa.paper} />
+                    <div className="mt-2">
+                      <CitationChip id={pa.paper} />
+                    </div>
                   )}
                 </div>
-                {/* VS Indicator */}
-                <div className="hidden sm:flex items-center justify-center absolute left-1/2 -translate-x-1/2 pointer-events-none" />
-                {/* Position B */}
-                <div className="rounded-md border border-[var(--axion-border-subtle)] bg-black/40 p-3 space-y-1.5">
-                  <div className="flex items-center gap-1.5">
-                    <span className="inline-block h-2 w-2 rounded-full bg-[#f43f5e]" />
-                    <span className="text-[10px] font-medium uppercase tracking-wider text-[#475569]">
-                      Position B
-                    </span>
+
+                {/* VS medallion — grid-column centered (desktop) */}
+                <div className="hidden md:flex md:items-center md:justify-center">
+                  <span className="cg-overline border border-ink/40 px-2 py-1 text-ink/70">
+                    VS
+                  </span>
+                </div>
+
+                <div className="min-w-0 border border-ink/25 bg-paper p-3.5">
+                  <div className="mb-2 flex items-center gap-2">
+                    <span
+                      aria-hidden="true"
+                      className="cg-hatch inline-block h-2 w-2 border border-ink"
+                    />
+                    <Overline className="text-ink/60">Position B</Overline>
                   </div>
-                  <p className="text-xs text-[#94a3b8] leading-relaxed">
-                    {pb.claim}
-                  </p>
+                  <p className="text-sm leading-relaxed text-ink-soft">{pb.claim}</p>
                   {pb.paper && pb.paper !== '?' && (
-                    <CitationChip id={pb.paper} />
+                    <div className="mt-2">
+                      <CitationChip id={pb.paper} />
+                    </div>
                   )}
                 </div>
+
+                {/* VS for stacked (mobile) layout */}
+                <span
+                  aria-hidden="true"
+                  className="cg-overline w-full text-center text-ink/40 md:hidden"
+                >
+                  · VS ·
+                </span>
               </div>
             </div>
           )
         })}
       </div>
-    </div>
+    </SectionShell>
   )
 }
 
@@ -313,25 +328,19 @@ function GapsSection({ items }: { items: string[] }) {
   if (!items || items.length === 0) return null
 
   return (
-    <div className="rounded-xl border border-[var(--axion-border-subtle)] axion-surface p-5 axion-card-hover">
-      <SectionHeader
-        icon={HelpCircle}
-        title="Research Gaps"
-        count={items.length}
-        color="bg-[#8b5cf6]/10 text-[#8b5cf6]"
-      />
-      <div className="space-y-2">
+    <SectionShell icon={HelpCircle} title="Research Gaps" count={items.length} tone="outline">
+      <div className="flex flex-col">
         {items.map((gap, i) => (
           <div
             key={i}
-            className="flex gap-3 rounded-lg border border-[#8b5cf6]/10 bg-[#8b5cf6]/[0.03] p-3"
+            className="flex gap-3 py-2.5 [&:not(:first-child)]:border-t [&:not(:first-child)]:border-ink/15"
           >
-            <HelpCircle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-[#8b5cf6]/50" />
-            <p className="text-sm text-[#94a3b8] leading-relaxed">{gap}</p>
+            <RowMarker tone="outline" />
+            <p className="text-sm leading-relaxed text-ink-soft">{gap}</p>
           </div>
         ))}
       </div>
-    </div>
+    </SectionShell>
   )
 }
 
@@ -339,25 +348,19 @@ function ExperimentsSection({ items }: { items: string[] }) {
   if (!items || items.length === 0) return null
 
   return (
-    <div className="rounded-xl border border-[var(--axion-border-subtle)] axion-surface p-5 axion-card-hover">
-      <SectionHeader
-        icon={FlaskConical}
-        title="Recommended Experiments"
-        count={items.length}
-        color="bg-[#3b82f6]/10 text-[#3b82f6]"
-      />
-      <div className="space-y-2">
+    <SectionShell icon={FlaskConical} title="Recommended Experiments" count={items.length}>
+      <div className="flex flex-col">
         {items.map((exp, i) => (
           <div
             key={i}
-            className="flex gap-3 rounded-lg border border-[#3b82f6]/10 bg-[#3b82f6]/[0.03] p-3"
+            className="flex gap-3 py-2.5 [&:not(:first-child)]:border-t [&:not(:first-child)]:border-ink/15"
           >
-            <FlaskConical className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-[#3b82f6]/50" />
-            <p className="text-sm text-[#94a3b8] leading-relaxed">{exp}</p>
+            <RowMarker tone="solid" />
+            <p className="text-sm leading-relaxed text-ink-soft">{exp}</p>
           </div>
         ))}
       </div>
-    </div>
+    </SectionShell>
   )
 }
 
@@ -365,13 +368,7 @@ function SourcesSection({ sources }: { sources: string[] }) {
   if (sources.length === 0) return null
 
   return (
-    <div className="rounded-xl border border-[var(--axion-border-subtle)] axion-surface p-5 axion-card-hover">
-      <SectionHeader
-        icon={BookOpen}
-        title="Sources"
-        count={sources.length}
-        color="bg-[#3b82f6]/10 text-[#3b82f6]"
-      />
+    <SectionShell icon={BookOpen} title="Sources" count={sources.length} tone="outline">
       <div className="flex flex-wrap gap-2">
         {sources.map((source, i) => {
           const clean = source.replace(/[\[\]]/g, '').trim()
@@ -381,16 +378,16 @@ function SourcesSection({ sources }: { sources: string[] }) {
               href={arxivUrl(clean)}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--axion-border-subtle)] bg-[var(--axion-surface-2)] px-3 py-2 text-sm text-[#60a5fa] transition-all duration-150 hover:border-[#3b82f6]/30 hover:bg-[#3b82f6]/10"
+              className="inline-flex items-center gap-2 border border-ink/35 bg-paper px-3 py-2 text-xs transition-colors duration-150 hover:border-ink hover:bg-ink/5 focus-visible:outline-none"
             >
-              <BookOpen className="h-3.5 w-3.5" />
-              <span className="font-mono">{clean}</span>
-              <ExternalLink className="h-3 w-3 text-[#475569]" />
+              <BookOpen className="h-3.5 w-3.5 text-ink" aria-hidden="true" />
+              <span className="cg-mono-meta text-ink">{clean}</span>
+              <ExternalLink className="h-3 w-3 text-ink/50" aria-hidden="true" />
             </a>
           )
         })}
       </div>
-    </div>
+    </SectionShell>
   )
 }
 
@@ -398,39 +395,78 @@ function ExecutiveSummarySection({ report }: { report?: string }) {
   if (!report) return null
 
   return (
-    <div className="rounded-xl border border-[var(--axion-border-subtle)] axion-surface p-5 axion-card-hover">
-      <SectionHeader
-        icon={Sparkles}
-        title="Executive Summary"
-        color="bg-[#3b82f6]/10 text-[#3b82f6]"
-      />
-      <div className="text-sm text-[#cbd5e1] leading-relaxed space-y-3">
+    <section className="border border-ink/25 bg-paper p-6">
+      <div className="mb-4 flex items-center gap-2.5 border-b border-ink/20 pb-3">
+        <Overline as="h3" className="text-ink">
+          Executive Summary
+        </Overline>
+        <QrBlock className="ml-auto" />
+      </div>
+      <div className="max-w-[var(--cg-reading-max)] text-[15px] leading-[1.7] text-ink">
         <ReactMarkdown
           components={{
-            h1: ({ node: _node, ...props}) => <h1 className="text-lg font-bold text-[#f0f6ff] mt-4 mb-2" {...props} />,
-            h2: ({ node: _node, ...props}) => <h2 className="text-base font-semibold text-[#f0f6ff] mt-3 mb-2" {...props} />,
-            h3: ({ node: _node, ...props}) => <h3 className="text-sm font-semibold text-[#f0f6ff] mt-2 mb-1" {...props} />,
-            p: ({ node: _node, ...props}) => <p className="mb-3 last:mb-0" {...props} />,
-            ul: ({ node: _node, ...props}) => <ul className="list-disc pl-5 mb-3 space-y-1" {...props} />,
-            ol: ({ node: _node, ...props}) => <ol className="list-decimal pl-5 mb-3 space-y-1" {...props} />,
-            li: ({ node: _node, ...props}) => <li className="text-sm text-[#94a3b8]" {...props} />,
-            strong: ({ node: _node, ...props}) => <strong className="font-semibold text-[#f0f6ff]" {...props} />,
-            code: ({ node: _node, ...props}) => <code className="bg-white/5 px-1.5 py-0.5 rounded font-mono text-xs text-[#f0f6ff]" {...props} />,
-            a: ({ node: _node, ...props}) => {
+            h1: ({ node: _node, ...props }) => (
+              <h1 className="cg-display mt-6 mb-3 text-2xl text-ink" {...props} />
+            ),
+            h2: ({ node: _node, ...props }) => (
+              <h2 className="cg-display mt-5 mb-2.5 text-xl text-ink" {...props} />
+            ),
+            h3: ({ node: _node, ...props }) => (
+              <h3 className="cg-display mt-4 mb-2 text-lg text-ink" {...props} />
+            ),
+            p: ({ node: _node, ...props }) => <p className="mb-4" {...props} />,
+            ul: ({ node: _node, ...props }) => (
+              <ul className="mb-4 list-disc space-y-1.5 pl-5" {...props} />
+            ),
+            ol: ({ node: _node, ...props }) => (
+              <ol className="mb-4 list-decimal space-y-1.5 pl-5" {...props} />
+            ),
+            li: ({ node: _node, ...props }) => (
+              <li className="text-[15px] text-ink" {...props} />
+            ),
+            strong: ({ node: _node, ...props }) => (
+              <strong className="font-semibold text-ink" {...props} />
+            ),
+            blockquote: ({ node: _node, ...props }) => (
+              <blockquote
+                className="mb-4 border-l-2 border-ink/40 pl-4 italic text-ink-soft"
+                {...props}
+              />
+            ),
+            code: ({ node: _node, ...props }) => (
+              <code
+                className="cg-mono-meta bg-ink/5 px-1.5 py-0.5 text-[13px] text-ink"
+                {...props}
+              />
+            ),
+            a: ({ node: _node, ...props }) => {
               const text = props.children?.toString() || ''
-              if (text.startsWith('arXiv:') || text.match(/^\d{4}\.\d{4,5}$/) || text.startsWith('[arXiv:')) {
+              if (
+                text.startsWith('arXiv:') ||
+                text.match(/^\d{4}\.\d{4,5}$/) ||
+                text.startsWith('[arXiv:')
+              ) {
                 return <CitationChip id={text} />
               }
-              return <a className="text-[#60a5fa] hover:underline" target="_blank" rel="noopener noreferrer" {...props} />
-            }
+              return (
+                <a
+                  className="text-ink underline underline-offset-2 hover:bg-ink/5"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  {...props}
+                />
+              )
+            },
           }}
         >
           {report}
         </ReactMarkdown>
       </div>
-    </div>
+    </section>
   )
 }
+
+// ─── Query history ───────────────────────────────────────────────────────────
 
 interface QueryHistoryItem {
   id: string
@@ -438,6 +474,8 @@ interface QueryHistoryItem {
   timestamp: string
   result: CoordinatorOutput
 }
+
+// ─── Main panel ──────────────────────────────────────────────────────────────
 
 interface QueryPanelProps {
   externalQuery?: string | null
@@ -578,76 +616,107 @@ export function QueryPanel({ externalQuery, onQueryClear, onLoadingChange }: Que
   }
 
   const raw: RawReport = result?.raw ? parseRaw(result.raw) : {}
-  const conf = result ? getConfidenceConfig(result.confidence) : null
+  const confidenceLevelValue = result ? confidenceLevel(result.confidence) : null
 
   if (!isClient) {
     return (
-      <div className="rounded-xl border border-[var(--axion-border-subtle)] p-6 space-y-4">
-        <div className="animate-shimmer h-24 w-full rounded-lg" />
-        <div className="animate-shimmer h-10 w-24 rounded-lg" />
+      <div className="grid flex-col gap-6 md:grid-cols-12">
+        <div className="cg-skeleton h-72 rounded-none md:col-span-4" />
+        <div className="md:col-span-8">
+          <div className="cg-skeleton mb-4 h-28" />
+          <div className="cg-skeleton h-64" />
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-12">
-      {/* Sidebar - Chat History */}
-      <div className="md:col-span-4 border border-[var(--axion-border-subtle)] rounded-xl axion-surface p-4 space-y-4 flex flex-col max-h-[750px] min-h-[400px]">
-        <div className="flex items-center justify-between border-b border-[var(--axion-border-subtle)] pb-3">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+      {/* ── Sidebar: query history ledger ─────────────────────────────────── */}
+      <aside className="flex max-h-[780px] min-h-[380px] flex-col gap-4 border border-ink/30 bg-paper p-4 lg:col-span-4">
+        <div className="flex items-center justify-between border-b border-ink/25 pb-3">
           <div className="flex items-center gap-2">
-            <History className="h-4 w-4 text-[#3b82f6]" />
-            <h3 className="font-semibold text-sm text-[#f0f6ff]">History</h3>
+            <History className="h-4 w-4 text-ink" aria-hidden="true" />
+            <Overline as="h2" className="text-ink">
+              Query History
+            </Overline>
           </div>
           <Button
             size="sm"
+            variant="outline"
             onClick={handleNewQuery}
-            className="h-7 border border-[#3b82f6]/30 bg-transparent text-[#60a5fa] hover:bg-[#3b82f6]/10 hover:text-white transition-all text-xs flex items-center gap-1"
+            className="h-7 gap-1 text-xs"
           >
-            <Plus className="h-3 w-3" />
+            <Plus className="h-3 w-3" aria-hidden="true" />
             <span>New</span>
           </Button>
         </div>
 
-        {/* Query List */}
-        <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
+        {/* Query ledger list */}
+        <div className="flex-1 overflow-y-auto pr-1">
           {history.length === 0 ? (
-            <div className="text-center py-8 text-[#334155] text-xs">
-              No queries yet. Use the command bar or input below.
+            <div className="flex flex-col items-start gap-4 py-8 text-left">
+              <span className="cg-mono-meta text-xs leading-relaxed text-ink/50">
+                No queries yet. Use the command bar above or the input below.
+              </span>
+              <PixelGlitch width="w-16" className="opacity-60" />
             </div>
           ) : (
-            history.map((item) => {
-              const isActive = item.id === activeHistoryId
-              return (
-                <div
-                  key={item.id}
-                  onClick={() => handleSelectHistory(item)}
-                  className={`group relative flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all duration-150 ${
-                    isActive
-                      ? 'border-[#3b82f6]/30 bg-[#3b82f6]/5 text-[#f0f6ff]'
-                      : 'border-transparent bg-transparent hover:bg-[rgba(59,130,246,0.04)] text-[#94a3b8]'
-                  }`}
-                >
-                  <MessageSquare className={`h-3.5 w-3.5 mt-0.5 flex-shrink-0 ${isActive ? 'text-[#3b82f6]' : 'text-[#334155]'}`} />
-                  <div className="flex-1 pr-6 overflow-hidden">
-                    <p className="text-xs font-medium truncate leading-relaxed">{item.question}</p>
-                    <span className="text-[10px] text-[#334155] block mt-0.5">{item.timestamp}</span>
-                  </div>
-                  <button
-                    onClick={(e) => handleDeleteHistory(item.id, e)}
-                    className="absolute right-2 top-2 p-1 rounded hover:bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity text-[#475569] hover:text-[#f43f5e]"
-                    title="Delete query history"
+            <ul className="flex flex-col">
+              {history.map((item) => {
+                const isActive = item.id === activeHistoryId
+                return (
+                  <li
+                    key={item.id}
+                    className={cn(
+                      'group relative border-b border-ink/10 border-l-2 transition-colors duration-150 last:border-b-0',
+                      isActive
+                        ? 'border-l-ink bg-ink/5'
+                        : 'border-l-transparent hover:bg-ink/[0.03]',
+                    )}
                   >
-                    <Trash2 className="h-3 w-3" />
-                  </button>
-                </div>
-              )
-            })
+                    <button
+                      onClick={() => handleSelectHistory(item)}
+                      className="flex w-full items-start gap-3 py-3 pl-3 pr-10 text-left focus-visible:outline-none"
+                    >
+                      <MessageSquare
+                        className={cn(
+                          'h-3.5 w-3.5 mt-0.5 flex-shrink-0',
+                          isActive ? 'text-ink' : 'text-ink/40',
+                        )}
+                        aria-hidden="true"
+                      />
+                      <span className="min-w-0 flex-1 overflow-hidden">
+                        <span
+                          className={cn(
+                            'block truncate text-[13px] font-medium leading-relaxed',
+                            isActive ? 'text-ink' : 'text-ink-soft group-hover:text-ink',
+                          )}
+                        >
+                          {item.question}
+                        </span>
+                        <span className="cg-mono-meta mt-0.5 block text-[10px] text-ink/40">
+                          {item.timestamp}
+                        </span>
+                      </span>
+                    </button>
+                    <button
+                      aria-label={`Delete query: ${item.question}`}
+                      onClick={(e) => handleDeleteHistory(item.id, e)}
+                      className="absolute right-2 top-3 p-1.5 text-ink/40 opacity-0 transition-opacity duration-150 hover:bg-ink/10 hover:text-ink focus-visible:opacity-100 focus-visible:outline-none group-hover:opacity-100"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
           )}
         </div>
-      </div>
+      </aside>
 
-      {/* Main Content Area */}
-      <div className="md:col-span-8 space-y-6">
+      {/* ── Main content: input + report ──────────────────────────────────── */}
+      <div className="min-w-0 space-y-6 lg:col-span-8">
         {/* Question input */}
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="relative">
@@ -655,27 +724,28 @@ export function QueryPanel({ externalQuery, onQueryClear, onLoadingChange }: Que
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               placeholder="Ask a research question… e.g., What is the current consensus on transformer scaling laws?"
-              className="min-h-[100px] w-full resize-none rounded-xl border border-[var(--axion-border-subtle)] bg-[var(--axion-surface-1)] px-4 py-3 text-sm text-[#f0f6ff] placeholder:text-[#334155] focus:border-[#3b82f6]/40 focus:outline-none focus:ring-1 focus:ring-[#3b82f6]/20 focus:shadow-[0_0_20px_rgba(59,130,246,0.08)] transition-all duration-200"
+              aria-label="Research question"
+              className="min-h-[110px] w-full resize-none border border-ink/40 bg-paper px-4 py-3.5 text-[15px] leading-relaxed text-ink placeholder:text-ink/35 transition-colors duration-150 hover:border-ink/60 focus:border-ink focus:ring-[3px] focus:ring-ink/15 focus:outline-none disabled:opacity-60"
               disabled={isLoading}
             />
           </div>
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-[#334155]">
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-xs text-ink/50">
               Multi-agent synthesis across your knowledge graph
             </p>
             <Button
               type="submit"
               disabled={!question.trim() || isLoading}
-              className="border border-[#3b82f6]/40 bg-[#3b82f6]/5 text-[#60a5fa] hover:bg-[#3b82f6]/10 hover:text-white transition-all duration-150"
+              variant="outline"
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                   <span>Synthesizing…</span>
                 </>
               ) : (
                 <>
-                  <Search className="h-4 w-4" />
+                  <Search className="h-4 w-4" aria-hidden="true" />
                   <span>Ask</span>
                 </>
               )}
@@ -685,106 +755,126 @@ export function QueryPanel({ externalQuery, onQueryClear, onLoadingChange }: Que
 
         {/* Loading state */}
         {isLoading && (
-          <div className="rounded-xl border border-[#3b82f6]/15 bg-[#3b82f6]/[0.02] p-6 space-y-6 animate-fade-up">
-            {/* Indeterminate progress. The query runs as a queued job and
-                reports no per-stage progress, so this lists the pipeline
-                without pretending stages have completed. */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#3b82f6]/10">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-[#3b82f6]" />
+          <div className="animate-fade-up border border-ink/40 bg-paper p-6">
+            <div className="flex items-start gap-8">
+              <div className="min-w-0 flex-1 space-y-3">
+                <div className="flex items-center gap-3">
+                  <span
+                    aria-hidden="true"
+                    className="inline-block h-2.5 w-2.5 bg-ink animate-cg-blink"
+                  />
+                  <span className="text-sm font-medium text-ink">
+                    {jobStage === 'queued'
+                      ? 'Queued — waiting for a worker…'
+                      : 'Synthesizing research intelligence…'}
+                  </span>
                 </div>
-                <span className="text-sm text-[#f0f6ff] font-medium">
-                  {jobStage === 'queued'
-                    ? 'Queued — waiting for a worker…'
-                    : 'Synthesizing research intelligence…'}
-                </span>
+                <div className="ml-[18px] flex flex-col gap-1.5">
+                  {[
+                    'Plan sub-queries',
+                    'Retrieve claims & contradictions',
+                    'Reflect on sufficiency',
+                    'Synthesize cited report',
+                  ].map((step) => (
+                    <div key={step} className="flex items-center gap-2.5">
+                      <span
+                        aria-hidden="true"
+                        className="inline-block h-1.5 w-1.5 border border-ink/50"
+                      />
+                      <span className="cg-mono-meta text-xs text-ink-soft">{step}</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="ml-[18px] cg-mono-meta text-[10px] text-ink/40">
+                  This can take up to a minute — the coordinator may iterate a few times.
+                </p>
               </div>
-              <div className="ml-9 space-y-2">
-                {['Plan sub-queries', 'Retrieve claims & contradictions', 'Reflect on sufficiency', 'Synthesize cited report'].map((step) => (
-                  <div key={step} className="flex items-center gap-2 text-xs">
-                    <div className="h-1 w-1 rounded-full bg-[#3b82f6]/50" />
-                    <span className="text-[#475569]">{step}</span>
-                  </div>
-                ))}
-              </div>
-              <p className="ml-9 text-[10px] text-[#334155]">
-                This can take up to a minute — the coordinator may iterate a few times.
-              </p>
+              <PixelGlitch width="w-20" className="mt-1 hidden shrink-0 sm:flex" />
             </div>
-            <div className="space-y-3">
-              <div className="animate-shimmer h-4 w-full rounded" />
-              <div className="animate-shimmer h-4 w-5/6 rounded" style={{ animationDelay: '100ms' }} />
-              <div className="animate-shimmer h-4 w-4/5 rounded" style={{ animationDelay: '200ms' }} />
+            <div className="mt-6 flex flex-col gap-3 border-t border-ink/15 pt-5">
+              <span className="cg-skeleton h-3 w-full" />
+              <span className="cg-skeleton h-3 w-5/6" />
+              <span className="cg-skeleton h-3 w-4/5" />
             </div>
           </div>
         )}
 
-        {/* Error state */}
+        {/* Error state — question is preserved for retry */}
         {error && (
-          <div className="rounded-xl border border-[#f43f5e]/20 bg-[#f43f5e]/5 p-4 animate-fade-up">
-            <p className="text-sm text-[#f43f5e]">{error}</p>
-          </div>
+          <ErrorBanner
+            title="Request failed"
+            message={error}
+            className="animate-fade-up"
+          />
         )}
 
         {/* Result */}
         {result && !isLoading && (
-          <div className="space-y-4 animate-fade-up">
-            {/* Header card — Question + confidence */}
-            <div className="rounded-xl border border-[var(--axion-border-subtle)] axion-surface p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div className="space-y-2 flex-1">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-[#3b82f6]" />
-                    <span className="text-xs font-medium uppercase tracking-wider text-[#475569]">
-                      Research Report
-                    </span>
-                  </div>
-                  <p className="text-[#f0f6ff] font-medium leading-snug">{question}</p>
+          <div className="animate-fade-up space-y-4">
+            {/* Report header */}
+            <section className="border-[1.5px] border-ink/60 bg-paper p-6">
+              <div className="flex items-start justify-between gap-6">
+                <div className="min-w-0 flex-1 space-y-2.5">
+                  <Overline>Research Report</Overline>
+                  <p className="cg-display text-2xl leading-snug text-ink sm:text-3xl">
+                    {question}
+                  </p>
                 </div>
-                {conf && (
-                  <div
-                    className={`flex items-center gap-2 rounded-lg border px-3 py-2 ${conf.bg} ${conf.border}`}
-                  >
-                    <conf.icon className={`h-4 w-4 ${conf.color}`} />
-                    <div className="text-right">
-                      <p className={`text-sm font-medium tabular-nums ${conf.color}`}>
-                        {Math.round(result.confidence * 100)}%
-                      </p>
-                      <p className="text-[10px] text-[#475569]">{conf.label}</p>
-                    </div>
+                <div className="hidden shrink-0 items-start gap-6 sm:flex">
+                  <QrBlock />
+                  <div className="border border-ink/40 px-4 py-3 text-right">
+                    <Overline className="text-ink/60">
+                      {confidenceLevelValue?.toUpperCase()}
+                    </Overline>
+                    <p className="cg-mono-meta mt-1 text-2xl font-medium text-ink tabular-nums">
+                      {Math.round(result.confidence * 100)}%
+                    </p>
+                    <Overline className="mt-1 text-ink/50">
+                      Confidence
+                    </Overline>
                   </div>
-                )}
+                </div>
               </div>
 
-              {/* Confidence reason */}
+              {/* Confidence (mobile, stacked) */}
+              {confidenceLevelValue !== null && (
+                <div className="mt-4 flex items-center justify-between border border-ink/40 px-4 py-2.5 sm:hidden">
+                  <span className="cg-mono-meta text-lg text-ink tabular-nums">
+                    {Math.round(result.confidence * 100)}%
+                  </span>
+                  <Overline className="text-ink/60">
+                    {confidenceLevelValue} confidence
+                  </Overline>
+                </div>
+              )}
+
               {raw.confidence_reason && (
-                <p className="mt-3 text-xs text-[#475569] border-t border-[var(--axion-border-subtle)] pt-3">
+                <p className="mt-4 border-t border-ink/20 pt-3 text-xs leading-relaxed text-ink-soft">
                   {raw.confidence_reason}
                 </p>
               )}
 
               {/* Meta badges */}
-              <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-[var(--axion-border-subtle)] pt-3">
+              <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-ink/20 pt-4">
                 <Badge
                   variant="outline"
-                  className="border-[var(--axion-border-subtle)] bg-transparent text-[#94a3b8]"
+                  className="cg-mono-meta text-[11px] font-normal"
                 >
                   {result.iterations} iteration{result.iterations !== 1 ? 's' : ''}
                 </Badge>
                 {result.sources.length > 0 && (
                   <Badge
                     variant="outline"
-                    className="border-[var(--axion-border-subtle)] bg-transparent text-[#60a5fa]"
+                    className="cg-mono-meta text-[11px] font-normal"
                   >
-                    <BookOpen className="mr-1 h-3 w-3" />
+                    <BookOpen className="h-3 w-3" aria-hidden="true" />
                     {result.sources.length} source{result.sources.length !== 1 ? 's' : ''}
                   </Badge>
                 )}
                 {raw.consensus && (
                   <Badge
                     variant="outline"
-                    className="border-[var(--axion-border-subtle)] bg-transparent text-[#10b981]"
+                    className="cg-mono-meta text-[11px] font-normal"
                   >
                     {raw.consensus.length} consensus point{raw.consensus.length !== 1 ? 's' : ''}
                   </Badge>
@@ -792,18 +882,24 @@ export function QueryPanel({ externalQuery, onQueryClear, onLoadingChange }: Que
                 {raw.disputed && raw.disputed.length > 0 && (
                   <Badge
                     variant="outline"
-                    className="border-[var(--axion-border-subtle)] bg-transparent text-[#f43f5e]"
+                    className="cg-mono-meta text-[11px] font-normal"
                   >
                     {raw.disputed.length} dispute{raw.disputed.length !== 1 ? 's' : ''}
                   </Badge>
                 )}
               </div>
-            </div>
+            </section>
 
             {/* Collapsible reasoning */}
-            <div className="rounded-xl border border-[var(--axion-border-subtle)] axion-surface p-4">
-              <PlanSteps plan={result.plan} />
-              <ReflectionLog steps={result.reflection_log} />
+            <div className="border border-ink/25 bg-paper p-4 sm:px-5">
+              <div className="divide-y divide-ink/10">
+                <div>
+                  <PlanSteps plan={result.plan} />
+                </div>
+                <div>
+                  <ReflectionLog steps={result.reflection_log} />
+                </div>
+              </div>
             </div>
 
             {/* Structured report sections */}

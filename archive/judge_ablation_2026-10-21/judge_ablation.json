@@ -1,0 +1,515 @@
+{
+  "meta": {
+    "generated_at": "2026-10-21T10:16:29.065468+00:00",
+    "date": "2026-10-21",
+    "status": "partial",
+    "error": null,
+    "command": "eval\\judge_ablation.py --variants A,B,C,D --report-only --note A/B/C complete. Groq runs were paced at 6.5s (C, B) and 4s (A) to stay under the 8k tokens/minute limit. A and B share the old prompt/model but disagreed on all three positives that passed both gates (0, 96, 215), so A-vs-B is one noisy sample, not a clean gate comparison. D is partial: Gemini 3.8 Flash returned 503 UNAVAILABLE on two attempts; 19 judged calls completed (141/286 rows).",
+    "limit": null,
+    "delay_seconds": 0.0,
+    "note": "A/B/C complete. Groq runs were paced at 6.5s (C, B) and 4s (A) to stay under the 8k tokens/minute limit. A and B share the old prompt/model but disagreed on all three positives that passed both gates (0, 96, 215), so A-vs-B is one noisy sample, not a clean gate comparison. D is partial: Gemini 3.8 Flash returned 503 UNAVAILABLE on two attempts; 19 judged calls completed (141/286 rows).",
+    "rendered_from_cache": true,
+    "requested_variants": [
+      "A",
+      "B",
+      "C",
+      "D"
+    ],
+    "datasets": [
+      {
+        "path": "eval\\Data\\axion_pairs.csv",
+        "rows": 286,
+        "labels": {
+          "CONTRADICTS": 4,
+          "SUPPORTS": 11,
+          "UNRELATED": 271
+        },
+        "source_tag": "base"
+      }
+    ],
+    "combined_rows": 286,
+    "evaluated_rows": 286,
+    "positives_in_full": 4,
+    "positives_evaluated": 4,
+    "embedding_model": "all-MiniLM-L6-v2",
+    "distance_definition": "1 - cosine similarity, computed locally with sentence-transformers",
+    "old_prompt": {
+      "source_commit": "82526c3^",
+      "resolved_commit": "ffc222a3ce271833c36a5893e7aaae337e9b27b9",
+      "blob": "8dd1d177450921ec4ad051aee3eb840da04b0636",
+      "sha256": "4c7e1d55997e34320e3195bbf43002d6a74480f9691543b4d1a1fecfae6302b0"
+    },
+    "current_prompt": {
+      "source": "agents/contradiction.py",
+      "sha256": "2a8e00957a0015016b699ba52b916ffa986a581ab899fac56ad8fdf290b53f9e"
+    },
+    "variants": {
+      "A": {
+        "title": "Old setup",
+        "gate": 0.95,
+        "prompt_kind": "old",
+        "prompt_sha256": "4c7e1d55997e34320e3195bbf43002d6a74480f9691543b4d1a1fecfae6302b0",
+        "guard": false,
+        "provider": "groq",
+        "model": "openai/gpt-oss-20b"
+      },
+      "B": {
+        "title": "Gate 0.35 + old prompt",
+        "gate": 0.35,
+        "prompt_kind": "old",
+        "prompt_sha256": "4c7e1d55997e34320e3195bbf43002d6a74480f9691543b4d1a1fecfae6302b0",
+        "guard": false,
+        "provider": "groq",
+        "model": "openai/gpt-oss-20b"
+      },
+      "C": {
+        "title": "Current production",
+        "gate": 0.35,
+        "prompt_kind": "current",
+        "prompt_sha256": "2a8e00957a0015016b699ba52b916ffa986a581ab899fac56ad8fdf290b53f9e",
+        "guard": true,
+        "provider": "groq",
+        "model": "openai/gpt-oss-20b"
+      },
+      "D": {
+        "title": "Current + stronger model",
+        "gate": 0.35,
+        "prompt_kind": "current",
+        "prompt_sha256": "2a8e00957a0015016b699ba52b916ffa986a581ab899fac56ad8fdf290b53f9e",
+        "guard": true,
+        "provider": "gemini",
+        "model": "gemini-3.8-flash"
+      }
+    },
+    "stronger_model_rationale": "Configured chain is Groq (openai/gpt-oss-20b) + Gemini (gemini-3.8-flash); Gemini 3.8 Flash is the stronger/newer of the two. Anthropic is not in the configured chain.",
+    "cache": {
+      "path": "eval\\results\\ablation_cache.jsonl",
+      "lines": 999,
+      "malformed": 0,
+      "duplicate_keys": 0
+    },
+    "calls_this_run": {}
+  },
+  "variants": {
+    "A": {
+      "variant": "A",
+      "title": "Old setup",
+      "gate": 0.95,
+      "prompt_kind": "old",
+      "prompt_sha256": "4c7e1d55997e34320e3195bbf43002d6a74480f9691543b4d1a1fecfae6302b0",
+      "guard": false,
+      "provider": "groq",
+      "model": "openai/gpt-oss-20b",
+      "total_pairs": 286,
+      "evaluated": 286,
+      "complete": true,
+      "positives": 4,
+      "flagged": 15,
+      "true_positives": 3,
+      "false_positives": 12,
+      "false_negatives": 1,
+      "precision": 0.2,
+      "precision_ci95": [
+        0.07047549346981563,
+        0.45185448715169363
+      ],
+      "recall": 0.75,
+      "recall_ci95": [
+        0.30064184258240184,
+        0.9544127391902995
+      ],
+      "macro_f1": 0.5319449417193778,
+      "gate_dropped_positives": [],
+      "guard_demoted_positives": [],
+      "guard_demoted_all": [],
+      "llm_calls": 286,
+      "llm_calls_this_run": 0,
+      "tokens": {
+        "prompt": 89290,
+        "completion": 33660,
+        "total": 122950
+      },
+      "predictions": {
+        "CONTRADICTS": 15,
+        "SUPPORTS": 38,
+        "UNRELATED": 233
+      },
+      "statuses": {
+        "CONTRADICTS": 15,
+        "SUPPORTS": 38,
+        "UNRELATED": 233
+      },
+      "missing_pair_ids": []
+    },
+    "B": {
+      "variant": "B",
+      "title": "Gate 0.35 + old prompt",
+      "gate": 0.35,
+      "prompt_kind": "old",
+      "prompt_sha256": "4c7e1d55997e34320e3195bbf43002d6a74480f9691543b4d1a1fecfae6302b0",
+      "guard": false,
+      "provider": "groq",
+      "model": "openai/gpt-oss-20b",
+      "total_pairs": 286,
+      "evaluated": 286,
+      "complete": true,
+      "positives": 4,
+      "flagged": 1,
+      "true_positives": 0,
+      "false_positives": 1,
+      "false_negatives": 4,
+      "precision": 0.0,
+      "precision_ci95": [
+        0.0,
+        0.7934506856227626
+      ],
+      "recall": 0.0,
+      "recall_ci95": [
+        0.0,
+        0.4898908364545973
+      ],
+      "macro_f1": 0.3538695917123705,
+      "gate_dropped_positives": [
+        "124"
+      ],
+      "guard_demoted_positives": [],
+      "guard_demoted_all": [],
+      "llm_calls": 34,
+      "llm_calls_this_run": 0,
+      "tokens": {
+        "prompt": 10353,
+        "completion": 4908,
+        "total": 15261
+      },
+      "predictions": {
+        "CONTRADICTS": 1,
+        "SUPPORTS": 9,
+        "UNRELATED": 276
+      },
+      "statuses": {
+        "CONTRADICTS": 1,
+        "GATE_DROPPED": 252,
+        "SUPPORTS": 9,
+        "UNRELATED": 24
+      },
+      "missing_pair_ids": []
+    },
+    "C": {
+      "variant": "C",
+      "title": "Current production",
+      "gate": 0.35,
+      "prompt_kind": "current",
+      "prompt_sha256": "2a8e00957a0015016b699ba52b916ffa986a581ab899fac56ad8fdf290b53f9e",
+      "guard": true,
+      "provider": "groq",
+      "model": "openai/gpt-oss-20b",
+      "total_pairs": 286,
+      "evaluated": 286,
+      "complete": true,
+      "positives": 4,
+      "flagged": 1,
+      "true_positives": 1,
+      "false_positives": 0,
+      "false_negatives": 3,
+      "precision": 1.0,
+      "precision_ci95": [
+        0.20654931437723745,
+        1.0
+      ],
+      "recall": 0.25,
+      "recall_ci95": [
+        0.04558726080970055,
+        0.6993581574175981
+      ],
+      "macro_f1": 0.5144144144144144,
+      "gate_dropped_positives": [
+        "124"
+      ],
+      "guard_demoted_positives": [],
+      "guard_demoted_all": [],
+      "llm_calls": 34,
+      "llm_calls_this_run": 0,
+      "tokens": {
+        "prompt": 19907,
+        "completion": 6495,
+        "total": 26402
+      },
+      "predictions": {
+        "CONTRADICTS": 1,
+        "SUPPORTS": 1,
+        "UNRELATED": 284
+      },
+      "statuses": {
+        "CONTRADICTS": 1,
+        "GATE_DROPPED": 252,
+        "SUPPORTS": 1,
+        "UNRELATED": 32
+      },
+      "missing_pair_ids": []
+    },
+    "D": {
+      "variant": "D",
+      "title": "Current + stronger model",
+      "gate": 0.35,
+      "prompt_kind": "current",
+      "prompt_sha256": "2a8e00957a0015016b699ba52b916ffa986a581ab899fac56ad8fdf290b53f9e",
+      "guard": true,
+      "provider": "gemini",
+      "model": "gemini-3.8-flash",
+      "total_pairs": 286,
+      "evaluated": 141,
+      "complete": false,
+      "positives": 3,
+      "flagged": 0,
+      "true_positives": 0,
+      "false_positives": 0,
+      "false_negatives": 3,
+      "precision": null,
+      "precision_ci95": null,
+      "recall": 0.0,
+      "recall_ci95": [
+        5.551115123125783e-17,
+        0.5614970317550454
+      ],
+      "macro_f1": 0.41876750700280113,
+      "gate_dropped_positives": [
+        "124"
+      ],
+      "guard_demoted_positives": [],
+      "guard_demoted_all": [],
+      "llm_calls": 19,
+      "llm_calls_this_run": 0,
+      "tokens": {
+        "prompt": 10284,
+        "completion": 1697,
+        "total": 12477
+      },
+      "predictions": {
+        "SUPPORTS": 1,
+        "UNRELATED": 140
+      },
+      "statuses": {
+        "GATE_DROPPED": 122,
+        "SUPPORTS": 1,
+        "UNRELATED": 18
+      },
+      "missing_pair_ids": [
+        "141",
+        "142",
+        "143",
+        "144",
+        "145",
+        "146",
+        "147",
+        "148",
+        "149",
+        "150",
+        "151",
+        "152",
+        "153",
+        "154",
+        "155",
+        "156",
+        "157",
+        "158",
+        "159",
+        "160",
+        "161",
+        "162",
+        "163",
+        "164",
+        "165",
+        "166",
+        "167",
+        "168",
+        "169",
+        "170",
+        "171",
+        "172",
+        "173",
+        "174",
+        "175",
+        "176",
+        "177",
+        "178",
+        "179",
+        "180",
+        "181",
+        "182",
+        "183",
+        "184",
+        "185",
+        "186",
+        "187",
+        "188",
+        "189",
+        "190",
+        "191",
+        "192",
+        "193",
+        "194",
+        "195",
+        "196",
+        "197",
+        "198",
+        "199",
+        "200",
+        "201",
+        "202",
+        "203",
+        "204",
+        "205",
+        "206",
+        "207",
+        "208",
+        "209",
+        "210",
+        "211",
+        "212",
+        "213",
+        "214",
+        "215",
+        "216",
+        "217",
+        "218",
+        "219",
+        "220",
+        "221",
+        "222",
+        "223",
+        "224",
+        "225",
+        "226",
+        "227",
+        "228",
+        "229",
+        "230",
+        "231",
+        "232",
+        "233",
+        "234",
+        "235",
+        "236",
+        "237",
+        "238",
+        "239",
+        "240",
+        "241",
+        "242",
+        "243",
+        "244",
+        "245",
+        "246",
+        "247",
+        "248",
+        "249",
+        "250",
+        "251",
+        "252",
+        "253",
+        "254",
+        "255",
+        "256",
+        "257",
+        "258",
+        "259",
+        "260",
+        "261",
+        "262",
+        "263",
+        "264",
+        "265",
+        "266",
+        "267",
+        "268",
+        "269",
+        "270",
+        "271",
+        "272",
+        "273",
+        "274",
+        "275",
+        "276",
+        "277",
+        "278",
+        "279",
+        "280",
+        "281",
+        "282",
+        "283",
+        "284",
+        "285"
+      ]
+    }
+  },
+  "positive_pairs": [
+    {
+      "pair_id": "0",
+      "distance": 0.1801595687866211,
+      "source": "eval\\Data\\axion_pairs.csv",
+      "predictions": {
+        "A": "CONTRADICTS",
+        "B": "UNRELATED",
+        "C": "UNRELATED",
+        "D": "UNRELATED"
+      },
+      "statuses": {
+        "A": "CONTRADICTS",
+        "B": "UNRELATED",
+        "C": "UNRELATED",
+        "D": "UNRELATED"
+      }
+    },
+    {
+      "pair_id": "96",
+      "distance": 0.24749106168746948,
+      "source": "eval\\Data\\axion_pairs.csv",
+      "predictions": {
+        "A": "CONTRADICTS",
+        "B": "UNRELATED",
+        "C": "UNRELATED",
+        "D": "UNRELATED"
+      },
+      "statuses": {
+        "A": "CONTRADICTS",
+        "B": "UNRELATED",
+        "C": "UNRELATED",
+        "D": "UNRELATED"
+      }
+    },
+    {
+      "pair_id": "124",
+      "distance": 0.5019311010837555,
+      "source": "eval\\Data\\axion_pairs.csv",
+      "predictions": {
+        "A": "CONTRADICTS",
+        "B": "UNRELATED",
+        "C": "UNRELATED",
+        "D": "UNRELATED"
+      },
+      "statuses": {
+        "A": "CONTRADICTS",
+        "B": "GATE_DROPPED",
+        "C": "GATE_DROPPED",
+        "D": "GATE_DROPPED"
+      }
+    },
+    {
+      "pair_id": "215",
+      "distance": 0.27478528022766113,
+      "source": "eval\\Data\\axion_pairs.csv",
+      "predictions": {
+        "A": "UNRELATED",
+        "B": "SUPPORTS",
+        "C": "CONTRADICTS",
+        "D": "not run"
+      },
+      "statuses": {
+        "A": "UNRELATED",
+        "B": "SUPPORTS",
+        "C": "CONTRADICTS",
+        "D": "not run"
+      }
+    }
+  ]
+}

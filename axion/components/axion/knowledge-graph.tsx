@@ -6,6 +6,7 @@ import { Loader2, Network, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
 import { Badge } from '@/components/ui/badge'
+import { Overline, ErrorBanner } from '@/components/cg'
 import { getGraphData } from '@/lib/api-client'
 import type { GraphData, GraphNode } from '@/types/axion'
 
@@ -15,27 +16,39 @@ const ForceGraph2D = dynamic(() => import('react-force-graph-2d'), {
   ssr: false,
   loading: () => (
     <div className="flex h-full items-center justify-center">
-      <Loader2 className="h-8 w-8 animate-spin text-[#3b82f6]" />
+      <Loader2 className="h-6 w-6 animate-spin text-ink" aria-hidden="true" />
     </div>
   ),
 })
 
-// ─── Color helpers ───────────────────────────────────────────────────────────
+// ─── Monochrome encoding ─────────────────────────────────────────────────────
+// One ink. Entity types are distinguished by shape and fill, edges by line
+// weight and dash pattern. Confidence is encoded by fill opacity and always
+// available numerically in the hover card.
+
+const INK_RGB = '31, 43, 224'
+
+function ink(a: number): string {
+  return `rgba(${INK_RGB}, ${a})`
+}
+
+function claimAlpha(node: GraphNode): number {
+  const c = node.confidence ?? 0.5
+  if (c >= 0.8) return 0.95
+  if (c >= 0.5) return 0.5
+  return 0.16
+}
 
 function getNodeColor(node: GraphNode): string {
   switch (node.type) {
     case 'paper':
-      return '#3b82f6' // sapphire blue
-    case 'claim': {
-      const c = node.confidence ?? 0.5
-      if (c >= 0.8) return '#10b981'   // green — high
-      if (c >= 0.5) return '#f59e0b'   // amber — medium
-      return '#f43f5e'                  // rose — low
-    }
+      return ink(1)
+    case 'claim':
+      return ink(claimAlpha(node))
     case 'gap':
-      return '#8b5cf6' // violet
+      return ink(0.75)
     default:
-      return '#475569'
+      return ink(0.35)
   }
 }
 
@@ -50,10 +63,10 @@ function getNodeSize(node: GraphNode): number {
 
 function getEdgeColor(edge: { type?: string }): string {
   switch (edge.type) {
-    case 'CONTRADICTS': return 'rgba(244, 63, 94, 0.6)'   // rose
-    case 'SUPPORTS':    return 'rgba(16, 185, 129, 0.4)'   // green
-    case 'RELATES_TO':  return 'rgba(139, 92, 246, 0.4)'   // violet
-    default:            return 'rgba(71, 85, 105, 0.2)'     // dim
+    case 'CONTRADICTS':    return ink(0.85)
+    case 'SUPPORTS':       return ink(0.45)
+    case 'RELATES_TO':     return ink(0.35)
+    default:               return ink(0.2)
   }
 }
 
@@ -63,45 +76,73 @@ function getEdgeWidth(edge: { type?: string }): number {
 
 // ─── Legend ──────────────────────────────────────────────────────────────────
 
+function LegendSwatchCircle({ alpha }: { alpha: number }) {
+  return (
+    <span
+      aria-hidden="true"
+      style={{ backgroundColor: `rgba(${INK_RGB}, ${alpha})` }}
+      className="inline-block h-2.5 w-2.5 rounded-full"
+    />
+  )
+}
+
+function LegendSwatchDiamond() {
+  return (
+    <span
+      aria-hidden="true"
+      className="inline-block h-2 w-2 rotate-45 border-[1.5px]"
+      style={{ borderColor: `rgba(${INK_RGB}, 0.75)` }}
+    />
+  )
+}
+
+function LegendSwatchLine({ dashed, width = 1 }: { dashed: boolean; width?: number }) {
+  return (
+    <svg aria-hidden="true" width="16" height="8" className="inline-block shrink-0">
+      <line
+        x1="0"
+        y1="4"
+        x2="16"
+        y2="4"
+        stroke={`rgba(${INK_RGB}, 0.7)`}
+        strokeWidth={width}
+        strokeDasharray={dashed ? '4 3' : undefined}
+      />
+    </svg>
+  )
+}
+
 function Legend() {
   const nodeItems = [
-    { color: '#3b82f6', label: 'Paper' },
-    { color: '#10b981', label: 'Claim (High)' },
-    { color: '#f59e0b', label: 'Claim (Med)' },
-    { color: '#f43f5e', label: 'Claim (Low)' },
-    { color: '#8b5cf6', label: 'Gap' },
+    { label: 'Paper', el: <LegendSwatchCircle alpha={1} /> },
+    { label: 'Claim · High', el: <LegendSwatchCircle alpha={0.95} /> },
+    { label: 'Claim · Medium', el: <LegendSwatchCircle alpha={0.5} /> },
+    { label: 'Claim · Low', el: <LegendSwatchCircle alpha={0.16} /> },
+    { label: 'Gap', el: <LegendSwatchDiamond /> },
   ]
   const edgeItems = [
-    { color: '#f43f5e', label: 'Contradicts', style: 'solid' },
-    { color: '#475569', label: 'Extracted From', style: 'dashed' },
+    { label: 'Contradicts', dashed: false, width: 2 },
+    { label: 'Supports', dashed: false, width: 1 },
+    { label: 'Relates / Extracted From', dashed: true, width: 1 },
   ]
 
   return (
-    <div className="absolute bottom-4 left-4 z-10 rounded-xl border border-[var(--axion-border-subtle)] axion-glass p-3">
-      <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-[#475569]">Nodes</p>
-      <div className="flex flex-wrap gap-x-3 gap-y-1">
+    <div className="absolute bottom-4 left-4 z-10 max-w-[min(92vw,280px)] border border-ink/40 bg-paper p-3">
+      <Overline className="mb-2 text-ink/60">Nodes</Overline>
+      <div className="flex flex-wrap gap-x-3 gap-y-1.5">
         {nodeItems.map((item) => (
           <div key={item.label} className="flex items-center gap-1.5">
-            <span
-              className="inline-block h-2 w-2 rounded-full"
-              style={{ backgroundColor: item.color }}
-            />
-            <span className="text-[10px] text-[#94a3b8]">{item.label}</span>
+            {item.el}
+            <span className="text-[11px] text-ink-soft">{item.label}</span>
           </div>
         ))}
       </div>
-      <p className="mb-1 mt-2 text-[10px] font-medium uppercase tracking-wider text-[#475569]">Edges</p>
-      <div className="flex flex-wrap gap-x-3 gap-y-1">
+      <Overline className="mb-1.5 mt-3 text-ink/60">Edges</Overline>
+      <div className="flex flex-col gap-1">
         {edgeItems.map((item) => (
-          <div key={item.label} className="flex items-center gap-1.5">
-            <span
-              className="inline-block h-0.5 w-4"
-              style={{
-                backgroundColor: item.color,
-                borderStyle: item.style === 'dashed' ? 'dashed' : 'solid',
-              }}
-            />
-            <span className="text-[10px] text-[#94a3b8]">{item.label}</span>
+          <div key={item.label} className="flex items-center gap-2">
+            <LegendSwatchLine dashed={item.dashed} width={item.width} />
+            <span className="text-[11px] text-ink-soft">{item.label}</span>
           </div>
         ))}
       </div>
@@ -109,7 +150,7 @@ function Legend() {
   )
 }
 
-// ─── Main Component ──────────────────────────────────────────────────────────
+// ─── Main component ──────────────────────────────────────────────────────────
 
 export function KnowledgeGraph() {
   const [claimLimit, setClaimLimit] = useState(100)
@@ -186,78 +227,117 @@ export function KnowledgeGraph() {
     }
   })()
 
+  const nodeCounts = (() => {
+    if (!graphData) return null
+    const counts = { paper: 0, claim: 0, gap: 0 }
+    for (const n of graphData.nodes) {
+      if (n.type in counts) counts[n.type as keyof typeof counts]++
+    }
+    return counts
+  })()
+
+  const edgeCounts = (() => {
+    if (!graphData) return null
+    const counts: Record<string, number> = {}
+    for (const e of graphData.edges) {
+      counts[e.type] = (counts[e.type] ?? 0) + 1
+    }
+    return counts
+  })()
+
   return (
-    <div ref={containerRef} className="relative h-full w-full bg-[#020408]">
+    <div
+      ref={containerRef}
+      className="relative h-full w-full overflow-hidden"
+      role="application"
+      aria-label="Knowledge graph: force-directed network of papers, claims, and gaps"
+    >
+      {/* Accessible text alternative for the canvas */}
+      {nodeCounts && edgeCounts && (
+        <div className="cg-sr-summary">
+          Knowledge graph summary: {nodeCounts.paper} papers,{' '}
+          {nodeCounts.claim} claims (colored by confidence via fill density),{' '}
+          {nodeCounts.gap} research gaps. Relationship counts:{' '}
+          {Object.entries(edgeCounts)
+            .map(([type, n]) => `${type.toLowerCase().replace(/_/g, ' ')} ${n}`)
+            .join(', ')}
+          . Interact with the zoom controls or drag nodes to explore the graph.
+        </div>
+      )}
+
       {/* Floating Controls */}
-      <div className="absolute right-4 top-4 z-10 flex items-center gap-2 rounded-xl border border-[var(--axion-border-subtle)] axion-glass px-3 py-2">
+      <div className="absolute right-4 top-4 z-10 flex max-w-[calc(100%-2rem)] flex-wrap items-center gap-2 border border-ink/40 bg-paper px-3 py-2">
         {/* Node count */}
         {graphData && (
           <Badge
             variant="outline"
-            className="border-[var(--axion-border-subtle)] bg-transparent text-[10px] text-[#475569] font-mono"
+            className="cg-mono-meta text-[10px] font-normal text-ink/60"
           >
             {graphData.nodes.length} nodes · {graphData.edges.length} edges
           </Badge>
         )}
 
-        <div className="h-4 w-px bg-[var(--axion-border-subtle)]" />
+        <div aria-hidden="true" className="h-4 w-px bg-ink/25" />
 
         {/* Claim limit slider */}
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-[#475569]">Claims:</span>
+          <span className="cg-overline text-ink/50">Claims</span>
           <div className="w-20">
             <Slider
               defaultValue={[claimLimit]}
               min={25}
               max={200}
               step={25}
+              aria-label="Number of claims shown in graph"
               onValueCommit={(val: number[]) => setClaimLimit(val[0])}
             />
           </div>
-          <span className="w-6 text-right font-mono text-[10px] text-[#94a3b8] tabular-nums">
+          <span className="cg-mono-meta w-6 text-right text-[10px] text-ink tabular-nums">
             {claimLimit}
           </span>
         </div>
 
-        <div className="h-4 w-px bg-[var(--axion-border-subtle)]" />
+        <div aria-hidden="true" className="h-4 w-px bg-ink/25" />
 
         {/* Zoom controls */}
         <div className="flex items-center gap-0.5">
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6 text-[#475569] hover:text-[#f0f6ff] hover:bg-[rgba(59,130,246,0.08)]"
+            className="h-6 w-6"
+            aria-label="Zoom in"
             onClick={handleZoomIn}
           >
-            <ZoomIn className="h-3.5 w-3.5" />
+            <ZoomIn className="h-3.5 w-3.5" aria-hidden="true" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6 text-[#475569] hover:text-[#f0f6ff] hover:bg-[rgba(59,130,246,0.08)]"
+            className="h-6 w-6"
+            aria-label="Zoom out"
             onClick={handleZoomOut}
           >
-            <ZoomOut className="h-3.5 w-3.5" />
+            <ZoomOut className="h-3.5 w-3.5" aria-hidden="true" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6 text-[#475569] hover:text-[#f0f6ff] hover:bg-[rgba(59,130,246,0.08)]"
+            className="h-6 w-6"
+            aria-label="Zoom to fit"
             onClick={handleZoomToFit}
           >
-            <Maximize2 className="h-3.5 w-3.5" />
+            <Maximize2 className="h-3.5 w-3.5" aria-hidden="true" />
           </Button>
         </div>
       </div>
 
       {/* Error state */}
       {error && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="rounded-xl border border-[#f43f5e]/20 bg-[#f43f5e]/5 p-4">
-            <p className="text-sm text-[#f43f5e]">
-              Failed to load graph data. Is the API running?
-            </p>
-          </div>
+        <div className="absolute inset-x-8 top-20 z-10 mx-auto max-w-xl">
+          <ErrorBanner
+            title="Graph unavailable"
+            message="Failed to load graph data. Is the API running?"
+          />
         </div>
       )}
 
@@ -265,8 +345,11 @@ export function KnowledgeGraph() {
       {isLoading ? (
         <div className="flex h-full items-center justify-center">
           <div className="space-y-3 text-center">
-            <Loader2 className="mx-auto h-8 w-8 animate-spin text-[#3b82f6]" />
-            <p className="text-sm text-[#475569]">Loading graph data…</p>
+            <Loader2
+              className="mx-auto h-6 w-6 animate-spin text-ink"
+              aria-hidden="true"
+            />
+            <p className="cg-mono-meta text-xs text-ink-soft">Loading graph data…</p>
           </div>
         </div>
       ) : graphData && graphData.nodes.length > 0 ? (
@@ -276,13 +359,18 @@ export function KnowledgeGraph() {
             graphData={fgData}
             width={dimensions.width}
             height={dimensions.height}
-            backgroundColor="#020408"
+            backgroundColor="transparent"
             nodeRelSize={1}
             nodeVal={(node) => getNodeSize(node as GraphNode) ** 2}
             nodeColor={(node) => getNodeColor(node as GraphNode)}
             nodeLabel=""
             linkColor={(link) => getEdgeColor(link as { type?: string })}
             linkWidth={(link) => getEdgeWidth(link as { type?: string })}
+            linkLineDash={(link) => {
+              const t = (link as { type?: string }).type
+              if (t === 'CONTRADICTS' || t === 'SUPPORTS') return null
+              return [4, 4]
+            }}
             linkDirectionalArrowLength={3}
             linkDirectionalArrowRelPos={1}
             linkDirectionalArrowColor={(link) => getEdgeColor(link as { type?: string })}
@@ -293,39 +381,60 @@ export function KnowledgeGraph() {
             nodeCanvasObject={(node, ctx: CanvasRenderingContext2D, globalScale: number) => {
               const gn = node as GraphNode & { x?: number; y?: number }
               const size = getNodeSize(gn) / globalScale * 2
-              const color = getNodeColor(gn)
               const x = gn.x ?? 0
               const y = gn.y ?? 0
 
-              // Glow effect
-              if (gn.type === 'paper' || gn.type === 'gap') {
+              if (gn.type === 'paper') {
+                // Paper: solid cobalt dot with a light structural halo
                 ctx.beginPath()
-                ctx.arc(x, y, size + 3, 0, 2 * Math.PI)
-                ctx.fillStyle = `${color}15`
+                ctx.arc(x, y, size + 2, 0, 2 * Math.PI)
+                ctx.fillStyle = ink(0.1)
                 ctx.fill()
                 ctx.beginPath()
-                ctx.arc(x, y, size + 1.5, 0, 2 * Math.PI)
-                ctx.fillStyle = `${color}25`
+                ctx.arc(x, y, size, 0, 2 * Math.PI)
+                ctx.fillStyle = ink(1)
+                ctx.fill()
+                ctx.lineWidth = 0.3
+                ctx.strokeStyle = ink(0.5)
+                ctx.stroke()
+              } else if (gn.type === 'claim') {
+                // Claim: dot filled by confidence density
+                ctx.beginPath()
+                ctx.arc(x, y, size, 0, 2 * Math.PI)
+                ctx.fillStyle = ink(claimAlpha(gn))
+                ctx.fill()
+                ctx.beginPath()
+                ctx.arc(x, y, size, 0, 2 * Math.PI)
+                ctx.lineWidth = 0.4
+                ctx.strokeStyle = ink(0.75)
+                ctx.stroke()
+              } else if (gn.type === 'gap') {
+                // Gap: hollow diamond
+                const r = size * 1.35
+                ctx.beginPath()
+                ctx.moveTo(x, y - r)
+                ctx.lineTo(x + r, y)
+                ctx.lineTo(x, y + r)
+                ctx.lineTo(x - r, y)
+                ctx.closePath()
+                ctx.lineWidth = 1.1 / Math.max(globalScale, 1) * 2
+                ctx.strokeStyle = ink(0.8)
+                ctx.stroke()
+                ctx.fillStyle = ink(0.1)
+                ctx.fill()
+              } else {
+                ctx.beginPath()
+                ctx.arc(x, y, size, 0, 2 * Math.PI)
+                ctx.fillStyle = ink(0.35)
                 ctx.fill()
               }
 
-              // Main circle
-              ctx.beginPath()
-              ctx.arc(x, y, size, 0, 2 * Math.PI)
-              ctx.fillStyle = color
-              ctx.fill()
-
-              // Border
-              ctx.strokeStyle = `${color}66`
-              ctx.lineWidth = 0.3
-              ctx.stroke()
-
               // Label at high zoom
               if (globalScale > 2.5 && gn.label) {
-                ctx.font = `${Math.max(2, 10 / globalScale)}px Inter, sans-serif`
+                ctx.font = `${Math.max(2, 10 / globalScale)}px 'Hanken Grotesk', sans-serif`
                 ctx.textAlign = 'center'
                 ctx.textBaseline = 'top'
-                ctx.fillStyle = '#94a3b8'
+                ctx.fillStyle = ink(0.75)
                 ctx.fillText(
                   gn.label.length > 25 ? gn.label.slice(0, 25) + '…' : gn.label,
                   x,
@@ -338,40 +447,32 @@ export function KnowledgeGraph() {
         </>
       ) : (
         <div className="flex h-full items-center justify-center">
-          <div className="text-center">
-            <Network className="mx-auto h-10 w-10 text-[#334155]" />
-            <p className="mt-3 text-sm text-[#94a3b8]">
-              No graph data available
-            </p>
-            <p className="mt-1 text-xs text-[#475569]">
+          <div className="border border-ink/25 bg-paper px-10 py-8 text-center">
+            <Network className="mx-auto h-8 w-8 text-ink/40" aria-hidden="true" />
+            <p className="cg-display mt-3 text-xl text-ink">No graph data available</p>
+            <p className="mt-1.5 text-sm text-ink-soft">
               Ingest some papers first to populate the knowledge graph
             </p>
           </div>
         </div>
       )}
 
-      {/* Hover tooltip */}
+      {/* Hover details */}
       {hoveredNode && (
-        <div className="absolute right-4 top-16 z-20 max-w-xs rounded-xl border border-[var(--axion-border-subtle)] axion-glass-strong p-3 animate-fade-up">
+        <div className="animate-fade-up absolute right-4 top-20 z-20 max-w-xs min-w-[220px] border-[1.5px] border-ink/60 bg-paper p-3.5">
           <div className="flex items-center gap-2">
-            <span
-              className="inline-block h-2.5 w-2.5 rounded-full"
-              style={{ backgroundColor: getNodeColor(hoveredNode) }}
-            />
             <Badge
               variant="outline"
-              className="border-[var(--axion-border-subtle)] bg-transparent text-[10px] uppercase text-[#475569]"
+              className="cg-overline border-ink/50 bg-transparent font-semibold text-ink"
             >
               {hoveredNode.type}
             </Badge>
           </div>
-          <p className="mt-2 text-sm text-[#f0f6ff] leading-snug">
-            {hoveredNode.label}
-          </p>
+          <p className="mt-2 text-sm leading-snug text-ink">{hoveredNode.label}</p>
           {hoveredNode.confidence !== undefined && (
-            <p className="mt-1 text-xs text-[#475569]">
+            <p className="mt-1.5 border-t border-ink/15 pt-1.5 text-xs text-ink-soft">
               Confidence:{' '}
-              <span className="font-mono text-[#94a3b8] tabular-nums">
+              <span className="cg-mono-meta font-medium text-ink tabular-nums">
                 {Math.round(hoveredNode.confidence * 100)}%
               </span>
             </p>

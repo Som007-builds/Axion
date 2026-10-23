@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import useSWR from 'swr'
 import { ChevronDown, ChevronRight, AlertTriangle, FileText } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
 import { Slider } from '@/components/ui/slider'
 import {
   Collapsible,
@@ -11,19 +10,30 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
 import { ExperimentCard } from './experiment-card'
+import { Overline, ErrorBanner, EmptyState, confidenceLevel } from '@/components/cg'
 import { getContradictions } from '@/lib/api-client'
 import type { Contradiction, ContradictionsResponse } from '@/types/axion'
+import { cn } from '@/lib/utils'
 
-function getConfidenceColor(confidence: number): string {
-  if (confidence >= 0.8) return 'text-[#10b981]'
-  if (confidence >= 0.5) return 'text-[#f59e0b]'
-  return 'text-[#f43f5e]'
-}
-
-function getConfidenceBg(confidence: number): string {
-  if (confidence >= 0.8) return 'bg-[#10b981]/10 border-[#10b981]/20'
-  if (confidence >= 0.5) return 'bg-[#f59e0b]/10 border-[#f59e0b]/20'
-  return 'bg-[#f43f5e]/10 border-[#f43f5e]/20'
+function ConfidenceLevelChip({ value }: { value: number }) {
+  const level = confidenceLevel(value)
+  return (
+    <span className="inline-flex items-center gap-2">
+      <span
+        aria-hidden="true"
+        className={cn(
+          'inline-block h-2 w-2 shrink-0',
+          level === 'high' && 'bg-ink',
+          level === 'medium' && 'border border-ink/70',
+          level === 'low' && 'cg-hatch border border-ink'
+        )}
+      />
+      <span className="cg-mono-meta text-xs font-medium text-ink tabular-nums">
+        {Math.round(value * 100)}%
+      </span>
+      <span className="cg-overline text-ink/50">{level.toUpperCase()}</span>
+    </span>
+  )
 }
 
 function ContradictionCard({ contradiction }: { contradiction: Contradiction }) {
@@ -31,95 +41,99 @@ function ContradictionCard({ contradiction }: { contradiction: Contradiction }) 
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <div className="rounded-xl border border-[var(--axion-border-subtle)] axion-surface axion-card-hover">
-        <CollapsibleTrigger className="flex w-full items-start gap-4 p-5 text-left transition-colors duration-150 hover:bg-[rgba(59,130,246,0.03)] rounded-xl">
-          <div className="mt-1">
-            {isOpen ? (
-              <ChevronDown className="h-4 w-4 text-[#475569]" />
-            ) : (
-              <ChevronRight className="h-4 w-4 text-[#475569]" />
-            )}
-          </div>
-          <div className="flex-1 space-y-2">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="h-4 w-4 text-[#f43f5e]" />
-              <Badge
-                variant="outline"
-                className={`border ${getConfidenceBg(contradiction.confidence)} ${getConfidenceColor(contradiction.confidence)} tabular-nums`}
-              >
-                {Math.round(contradiction.confidence * 100)}%
-              </Badge>
+      <div className="transition-colors duration-150 hover:bg-ink/[0.02]">
+        {/* Collapsed ledger row */}
+        <CollapsibleTrigger className="flex w-full items-center gap-4 px-5 py-4 text-left focus-visible:outline-none">
+          {isOpen ? (
+            <ChevronDown className="h-4 w-4 shrink-0 text-ink/50" aria-hidden="true" />
+          ) : (
+            <ChevronRight className="h-4 w-4 shrink-0 text-ink/50" aria-hidden="true" />
+          )}
+          <AlertTriangle className="h-4 w-4 shrink-0 text-ink" aria-hidden="true" />
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <div className="flex flex-wrap items-center gap-3">
+              <ConfidenceLevelChip value={contradiction.confidence} />
               {contradiction.has_experiment && (
-                <Badge
-                  variant="outline"
-                  className="border-[#3b82f6]/20 bg-[#3b82f6]/8 text-[#60a5fa]"
-                >
-                  Has experiment
-                </Badge>
+                <span className="cg-overline border border-ink/50 px-1.5 py-0.5 text-ink/70">
+                  HAS EXPERIMENT
+                </span>
               )}
             </div>
-            <p className="text-sm text-[#94a3b8] line-clamp-2">
+            <p className="line-clamp-2 text-sm leading-relaxed text-ink-soft">
               {contradiction.explanation}
             </p>
           </div>
         </CollapsibleTrigger>
 
+        {/* Expanded dossier */}
         <CollapsibleContent>
-          <div className="border-t border-[var(--axion-border-subtle)] p-5 space-y-4 animate-fade-up">
-            {/* Claims side by side with VS badge */}
-            <div className="relative grid gap-4 md:grid-cols-2">
-              <div className="rounded-lg border border-[var(--axion-border-subtle)] bg-[var(--axion-surface-2)] p-4 border-l-2 border-l-[#3b82f6]">
-                <div className="mb-2 flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-[#8b5cf6]" />
-                  <span className="font-mono text-xs text-[#8b5cf6]">
-                    {contradiction.paper_a}
-                  </span>
+          <div className="animate-fade-up border-t border-ink/15 px-5 py-5">
+            {/* Claims side by side with centered VS */}
+            <div className="relative grid items-start gap-4 md:grid-cols-[1fr_auto_1fr] md:gap-x-8">
+              <div className="min-w-0 border border-ink/25 bg-paper-secondary/60 p-4">
+                <div className="mb-2.5 flex items-center gap-2">
+                  <span aria-hidden="true" className="inline-block h-2 w-2 bg-ink" />
+                  <Overline className="text-ink/60">Position A</Overline>
                 </div>
-                <p className="text-sm text-[#f0f6ff]">{contradiction.claim_a.text}</p>
-                <div className="mt-2 flex items-center gap-2 text-xs text-[#475569]">
+                <div className="mb-3 flex items-center gap-2 border-b border-ink/15 pb-2.5">
+                  <FileText className="h-3.5 w-3.5 text-ink" aria-hidden="true" />
+                  <span className="cg-mono-meta text-xs text-ink">{contradiction.paper_a}</span>
+                </div>
+                <p className="text-sm leading-relaxed text-ink">{contradiction.claim_a.text}</p>
+                <div className="mt-2.5 flex items-center gap-3 text-xs text-ink-soft">
                   <span>{contradiction.claim_a.section}</span>
-                  <span className="text-[var(--axion-border-subtle)]">|</span>
-                  <span className={getConfidenceColor(contradiction.claim_a.confidence)}>
+                  <span aria-hidden="true" className="h-3 w-px bg-ink/25" />
+                  <span className="cg-mono-meta text-ink tabular-nums">
                     {Math.round(contradiction.claim_a.confidence * 100)}%
                   </span>
                 </div>
               </div>
 
-              {/* VS Badge */}
-              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 hidden md:flex">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[#f43f5e]/30 bg-[#f43f5e]/10 text-[10px] font-bold text-[#f43f5e]">
+              {/* VS medallion — anchored center (desktop) */}
+              <div className="hidden md:flex md:items-center md:justify-center md:self-start md:pt-10">
+                <span className="cg-overline border border-ink/40 px-2 py-1 text-ink/70">
                   VS
-                </div>
+                </span>
               </div>
 
-              <div className="rounded-lg border border-[var(--axion-border-subtle)] bg-[var(--axion-surface-2)] p-4 border-l-2 border-l-[#f43f5e]">
-                <div className="mb-2 flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-[#8b5cf6]" />
-                  <span className="font-mono text-xs text-[#8b5cf6]">
-                    {contradiction.paper_b}
-                  </span>
+              <div className="min-w-0 border border-ink/25 bg-paper p-4 md:bg-paper">
+                <div className="mb-2.5 flex items-center gap-2">
+                  <span aria-hidden="true" className="cg-hatch inline-block h-2 w-2 border border-ink" />
+                  <Overline className="text-ink/60">Position B</Overline>
                 </div>
-                <p className="text-sm text-[#f0f6ff]">{contradiction.claim_b.text}</p>
-                <div className="mt-2 flex items-center gap-2 text-xs text-[#475569]">
+                <div className="mb-3 flex items-center gap-2 border-b border-ink/15 pb-2.5">
+                  <FileText className="h-3.5 w-3.5 text-ink" aria-hidden="true" />
+                  <span className="cg-mono-meta text-xs text-ink">{contradiction.paper_b}</span>
+                </div>
+                <p className="text-sm leading-relaxed text-ink">{contradiction.claim_b.text}</p>
+                <div className="mt-2.5 flex items-center gap-3 text-xs text-ink-soft">
                   <span>{contradiction.claim_b.section}</span>
-                  <span className="text-[var(--axion-border-subtle)]">|</span>
-                  <span className={getConfidenceColor(contradiction.claim_b.confidence)}>
+                  <span aria-hidden="true" className="h-3 w-px bg-ink/25" />
+                  <span className="cg-mono-meta text-ink tabular-nums">
                     {Math.round(contradiction.claim_b.confidence * 100)}%
                   </span>
                 </div>
               </div>
+
+              {/* VS for stacked layout */}
+              <span
+                aria-hidden="true"
+                className="cg-overline w-full text-center text-ink/40 md:hidden"
+              >
+                · VS ·
+              </span>
             </div>
 
             {/* Full explanation */}
-            <div>
-              <h5 className="mb-2 text-xs font-medium uppercase tracking-wider text-[#475569]">
-                Explanation
-              </h5>
-              <p className="text-sm text-[#94a3b8]">{contradiction.explanation}</p>
+            <div className="mt-5 border-l-2 border-ink/40 pl-4">
+              <Overline className="text-ink/60">Contradiction Explanation</Overline>
+              <p className="mt-2 text-sm leading-relaxed text-ink-soft">
+                {contradiction.explanation}
+              </p>
             </div>
 
             {/* Experiment */}
-            <div className="pt-2">
+            <div className="mt-5 border-t border-ink/15 pt-4">
               <ExperimentCard
                 contradictionId={contradiction.id}
                 hasExperiment={contradiction.has_experiment}
@@ -134,13 +148,13 @@ function ContradictionCard({ contradiction }: { contradiction: Contradiction }) 
 
 function ContradictionSkeleton() {
   return (
-    <div className="rounded-xl border border-[var(--axion-border-subtle)] axion-surface p-5 space-y-3">
+    <div className="border border-ink/25 bg-paper p-5">
       <div className="flex items-center gap-3">
-        <div className="animate-shimmer h-5 w-5 rounded" />
-        <div className="animate-shimmer h-5 w-16 rounded" />
+        <span className="cg-skeleton h-4 w-4" />
+        <span className="cg-skeleton h-4 w-20" />
       </div>
-      <div className="animate-shimmer h-4 w-full rounded" />
-      <div className="animate-shimmer h-4 w-3/4 rounded" />
+      <span className="cg-skeleton mt-4 block h-3.5 w-full" />
+      <span className="cg-skeleton mt-2.5 block h-3.5 w-3/4" />
     </div>
   )
 }
@@ -157,10 +171,12 @@ export function ContradictionList() {
   return (
     <div className="space-y-6">
       {/* Filter */}
-      <div className="flex items-center gap-6 rounded-xl border border-[var(--axion-border-subtle)] axion-surface p-4">
-        <div className="flex items-center gap-2 text-sm text-[#94a3b8]">
-          <span>Min confidence:</span>
-          <span className="font-mono text-[#f0f6ff] tabular-nums">{minConfidence}%</span>
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border border-ink/30 bg-paper p-4">
+        <div className="flex items-center gap-3">
+          <Overline className="text-ink/60">Min confidence</Overline>
+          <span className="cg-mono-meta text-sm text-ink tabular-nums">
+            {minConfidence}%
+          </span>
         </div>
         <Slider
           value={[minConfidence]}
@@ -168,17 +184,17 @@ export function ContradictionList() {
           min={0}
           max={100}
           step={5}
-          className="flex-1"
+          aria-label="Minimum contradiction confidence"
+          className="min-w-[200px] flex-1"
         />
       </div>
 
       {/* Error state */}
       {error && (
-        <div className="rounded-xl border border-[#f43f5e]/20 bg-[#f43f5e]/5 p-4">
-          <p className="text-sm text-[#f43f5e]">
-            Failed to load contradictions. Is the API running?
-          </p>
-        </div>
+        <ErrorBanner
+          title="Contradictions unavailable"
+          message="Failed to load contradictions. Is the API running?"
+        />
       )}
 
       {/* Loading state */}
@@ -193,23 +209,22 @@ export function ContradictionList() {
       {/* Results */}
       {data && !isLoading && (
         <>
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-[#475569]">
-              {data.total} contradiction{data.total !== 1 ? 's' : ''} detected
-            </p>
-          </div>
-          <div className="space-y-4 stagger-children">
-            {data.contradictions.map((c) => (
-              <ContradictionCard key={c.id} contradiction={c} />
-            ))}
-          </div>
-          {data.contradictions.length === 0 && (
-            <div className="rounded-xl border border-[var(--axion-border-subtle)] axion-surface p-8 text-center">
-              <AlertTriangle className="mx-auto h-8 w-8 text-[#334155]" />
-              <p className="mt-3 text-[#94a3b8]">
-                No contradictions found with confidence above {minConfidence}%
-              </p>
+          <p className="text-sm text-ink-soft">
+            <span className="cg-mono-meta text-ink">{data.total}</span>{' '}
+            contradiction{data.total !== 1 ? 's' : ''} detected
+          </p>
+          {data.contradictions.length > 0 ? (
+            <div className="divide-y divide-ink/15 border border-ink/25 bg-paper">
+              {data.contradictions.map((c) => (
+                <ContradictionCard key={c.id} contradiction={c} />
+              ))}
             </div>
+          ) : (
+            <EmptyState
+              glyph="△"
+              title="No contradictions detected"
+              description={`No contradictions found with confidence above ${minConfidence}%.`}
+            />
           )}
         </>
       )}

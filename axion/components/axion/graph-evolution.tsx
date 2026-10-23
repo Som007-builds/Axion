@@ -2,86 +2,117 @@
 
 import { useState } from 'react'
 import useSWR from 'swr'
-import { TrendingUp, TrendingDown, RefreshCw, Loader2, BarChart3 } from 'lucide-react'
+import { RefreshCw, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { Overline, ErrorBanner } from '@/components/cg'
 import { getConfidenceDistribution, getMostChanged, recalculateConfidence } from '@/lib/api-client'
 import type { ConfidenceDistribution, ChangedClaim } from '@/types/axion'
+import { cn } from '@/lib/utils'
 
-function ConfidenceBar({ 
-  label, 
-  count, 
-  total, 
-  gradient,
-}: { 
-  label: string
+// ─── Pixel-stack visualization ───────────────────────────────────────────────
+// Monochrome bar: small square grid cells, filled = cobalt, unfilled =
+// low-opacity cobalt on paper. The numeric value is always visible adjacent
+// to the stack, so the visualization is never the only source of truth.
+
+const STACK_CELLS = 20
+
+function PixelStack({
+  count,
+  total,
+  label,
+}: {
   count: number
   total: number
-  gradient: string
+  label: string
 }) {
   const percentage = total > 0 ? (count / total) * 100 : 0
-  
+  const filled = total > 0 ? Math.round((count / total) * STACK_CELLS) : 0
+
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between text-sm">
-        <span className="text-[#94a3b8]">{label}</span>
-        <span className="font-mono text-[#f0f6ff] tabular-nums">
-          {count} <span className="text-[#475569]">({percentage.toFixed(1)}%)</span>
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+        <span className="cg-overline text-ink/60">{label}</span>
+        <span className="cg-mono-meta text-sm text-ink tabular-nums">
+          {count.toLocaleString()}{' '}
+          <span className="text-ink/40">({percentage.toFixed(1)}%)</span>
         </span>
       </div>
-      <div className="h-1.5 w-full rounded-full bg-[var(--axion-surface-3)]">
-        <div
-          className={`h-1.5 rounded-full ${gradient} transition-all duration-700 ease-out`}
-          style={{ width: `${percentage}%` }}
-        />
+      <div
+        role="img"
+        aria-label={`${label}: ${count} of ${total} claims (${percentage.toFixed(1)}%)`}
+        className="flex flex-wrap gap-[3px]"
+      >
+        {Array.from({ length: STACK_CELLS }, (_, i) => (
+          <span
+            key={i}
+            aria-hidden="true"
+            className={cn(
+              'inline-block h-4 w-[9px] transition-colors duration-300',
+              i < filled ? 'cg-cell-filled' : 'cg-cell-empty',
+            )}
+          />
+        ))}
       </div>
     </div>
   )
 }
 
-function ChangedClaimCard({ claim }: { claim: ChangedClaim }) {
+// ─── Changed-claim ledger row ────────────────────────────────────────────────
+
+function ChangedClaimRow({ claim }: { claim: ChangedClaim }) {
   const isPositive = claim.delta > 0
-  
+
   return (
-    <div className={`rounded-lg border border-[var(--axion-border-subtle)] bg-[var(--axion-surface-2)] p-4 space-y-2 axion-card-hover border-l-2 ${
-      isPositive ? 'border-l-[#10b981]' : 'border-l-[#f43f5e]'
-    }`}>
-      <div className="flex items-start justify-between gap-4">
+    <article className="space-y-2 px-4 py-3.5 [&:not(:first-child)]:border-t [&:not(:first-child)]:border-ink/15">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
         <div className="flex items-center gap-2">
-          {isPositive ? (
-            <TrendingUp className="h-4 w-4 text-[#10b981]" />
-          ) : (
-            <TrendingDown className="h-4 w-4 text-[#f43f5e]" />
-          )}
+          {/* Sign + arrow glyph carries direction; no color coding */}
           <span
-            className={`font-mono text-sm font-semibold tabular-nums ${isPositive ? 'text-[#10b981]' : 'text-[#f43f5e]'}`}
+            aria-hidden="true"
+            className={cn(
+              'inline-block h-2 w-2',
+              isPositive ? 'bg-ink' : 'cg-hatch border border-ink',
+            )}
+          />
+          <span
+            className={cn(
+              'cg-mono-meta text-sm font-semibold text-ink tabular-nums',
+            )}
           >
-            {isPositive ? '+' : ''}{(claim.delta * 100).toFixed(1)}%
+            {isPositive ? '+' : ''}
+            {(claim.delta * 100).toFixed(1)}%{' '}
+            <span aria-hidden="true">{isPositive ? '↑' : '↓'}</span>
+          </span>
+          <span className="cg-sr-only">
+            {isPositive ? 'increased' : 'decreased'} by {Math.abs(claim.delta * 100).toFixed(1)}%
           </span>
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-[#475569]">
-          <span className="font-mono tabular-nums">{Math.round(claim.base_confidence * 100)}%</span>
-          <span className="text-[#334155]">→</span>
-          <span className="font-mono text-[#f0f6ff] tabular-nums">{Math.round(claim.current_confidence * 100)}%</span>
-        </div>
+        <span className="cg-mono-meta text-xs text-ink-soft tabular-nums">
+          {Math.round(claim.base_confidence * 100)}%
+          <span aria-hidden="true" className="text-ink/40"> → </span>
+          <span className="font-medium text-ink">
+            {Math.round(claim.current_confidence * 100)}%
+          </span>
+        </span>
       </div>
-      <p className="text-sm text-[#94a3b8] line-clamp-2 leading-relaxed">{claim.claim_text}</p>
-      <Badge
-        variant="outline"
-        className="border-[var(--axion-border-subtle)] bg-transparent text-[10px] text-[#475569]"
-      >
-        {claim.reason}
-      </Badge>
-    </div>
+      <p className="line-clamp-2 text-sm leading-relaxed text-ink-soft">{claim.claim_text}</p>
+      {claim.reason && (
+        <span className="cg-overline inline-block border border-ink/30 px-1.5 py-0.5 text-ink/60">
+          {claim.reason}
+        </span>
+      )}
+    </article>
   )
 }
+
+// ─── Main view ───────────────────────────────────────────────────────────────
 
 export function GraphEvolution() {
   const [isRecalculating, setIsRecalculating] = useState(false)
 
-  const { 
-    data: distribution, 
-    isLoading: distLoading, 
+  const {
+    data: distribution,
+    isLoading: distLoading,
     error: distError,
     mutate: mutateDistribution,
   } = useSWR<ConfidenceDistribution>(
@@ -90,9 +121,9 @@ export function GraphEvolution() {
     { refreshInterval: 60000 }
   )
 
-  const { 
-    data: changedClaims, 
-    isLoading: claimsLoading, 
+  const {
+    data: changedClaims,
+    isLoading: claimsLoading,
     error: claimsError,
     mutate: mutateClaims,
   } = useSWR<ChangedClaim[]>(
@@ -117,21 +148,20 @@ export function GraphEvolution() {
   const hasError = distError || claimsError
 
   return (
-    <div className="space-y-6 animate-fade-up">
-      {/* Header with recalculate button */}
+    <div className="animate-fade-up space-y-6">
+      {/* Header with recalculate action */}
       <div className="flex items-center justify-between">
-        <div />
+        <Overline className="text-ink/60">Confidence ledger</Overline>
         <Button
           onClick={handleRecalculate}
           disabled={isRecalculating}
           variant="outline"
           size="sm"
-          className="border-[var(--axion-border-subtle)] bg-transparent text-[#94a3b8] hover:border-[#3b82f6]/30 hover:text-[#f0f6ff] hover:bg-[rgba(59,130,246,0.04)] transition-all duration-150"
         >
           {isRecalculating ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
           ) : (
-            <RefreshCw className="h-4 w-4" />
+            <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
           )}
           <span>Recalculate</span>
         </Button>
@@ -139,97 +169,91 @@ export function GraphEvolution() {
 
       {/* Error state */}
       {hasError && (
-        <div className="rounded-xl border border-[#f43f5e]/20 bg-[#f43f5e]/5 p-4">
-          <p className="text-sm text-[#f43f5e]">
-            Failed to load confidence data. Is the API running?
-          </p>
-        </div>
+        <ErrorBanner
+          title="Confidence data unavailable"
+          message="Failed to load confidence data. Is the API running?"
+        />
       )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Confidence Distribution */}
-        <div className="rounded-xl border border-[var(--axion-border-subtle)] axion-surface axion-inner-glow p-5 space-y-6">
-          <div className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4 text-[#3b82f6]" />
-            <h4 className="font-medium text-[#f0f6ff]">Confidence Distribution</h4>
+        <section className="border border-ink/25 bg-paper p-5">
+          <div className="mb-5 flex items-center gap-2.5 border-b border-ink/20 pb-3">
+            <Overline as="h3" className="tracking-[0.1em] text-ink">
+              Confidence Distribution
+            </Overline>
           </div>
 
           {isLoading ? (
-            <div className="space-y-4">
+            <div className="space-y-5">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="space-y-2">
-                  <div className="animate-shimmer h-4 w-full rounded" />
-                  <div className="animate-shimmer h-1.5 w-full rounded" />
+                  <span className="cg-skeleton block h-3.5 w-2/3" />
+                  <span className="cg-skeleton block h-4 w-full" />
                 </div>
               ))}
+              <div className="border-t border-ink/15 pt-4">
+                <span className="cg-skeleton block h-3.5 w-full" />
+                <span className="cg-skeleton mt-2 block h-3.5 w-1/2" />
+              </div>
             </div>
           ) : distribution ? (
             <>
-              <div className="space-y-4">
-                <ConfidenceBar
-                  label="High (>80%)"
-                  count={distribution.high}
-                  total={distribution.total}
-                  gradient="bg-gradient-to-r from-[#10b981] to-[#06b6d4]"
-                />
-                <ConfidenceBar
-                  label="Medium (50-80%)"
-                  count={distribution.medium}
-                  total={distribution.total}
-                  gradient="bg-gradient-to-r from-[#f59e0b] to-[#f97316]"
-                />
-                <ConfidenceBar
-                  label="Low (<50%)"
-                  count={distribution.low}
-                  total={distribution.total}
-                  gradient="bg-gradient-to-r from-[#f43f5e] to-[#e11d48]"
-                />
+              <div className="space-y-5">
+                <PixelStack label="High (>80%)" count={distribution.high} total={distribution.total} />
+                <PixelStack label="Medium (50-80%)" count={distribution.medium} total={distribution.total} />
+                <PixelStack label="Low (<50%)" count={distribution.low} total={distribution.total} />
               </div>
 
-              <div className="space-y-2 border-t border-[var(--axion-border-subtle)] pt-4">
+              <div className="mt-5 space-y-2 border-t border-ink/25 pt-4">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-[#475569]">Total claims</span>
-                  <span className="font-mono text-[#f0f6ff] tabular-nums">{distribution.total}</span>
+                  <Overline className="text-ink/50">Total claims</Overline>
+                  <span className="cg-mono-meta text-ink tabular-nums">
+                    {distribution.total.toLocaleString()}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-[#475569]">Average confidence</span>
-                  <span className="font-mono text-[#f0f6ff] tabular-nums">
+                  <Overline className="text-ink/50">Average confidence</Overline>
+                  <span className="cg-mono-meta text-ink tabular-nums">
                     {Math.round(distribution.average * 100)}%
                   </span>
                 </div>
               </div>
             </>
           ) : null}
-        </div>
+        </section>
 
         {/* Most Changed Claims */}
-        <div className="rounded-xl border border-[var(--axion-border-subtle)] axion-surface axion-inner-glow p-5 space-y-4">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-[#10b981]" />
-            <h4 className="font-medium text-[#f0f6ff]">Most Changed Claims</h4>
+        <section className="border border-ink/25 bg-paper p-5">
+          <div className="mb-2 flex items-center gap-2.5 border-b border-ink/20 pb-3">
+            <Overline as="h3" className="tracking-[0.1em] text-ink">
+              Most Changed Claims
+            </Overline>
           </div>
 
           {isLoading ? (
-            <div className="space-y-3">
+            <div className="space-y-3 pt-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="animate-shimmer h-20 w-full rounded-lg" />
+                <span key={i} className="cg-skeleton block h-16 w-full" />
               ))}
             </div>
           ) : changedClaims && changedClaims.length > 0 ? (
-            <div className="space-y-3 max-h-[400px] overflow-y-auto stagger-children">
+            <div className="-mx-1 max-h-[420px] overflow-y-auto">
               {changedClaims.map((claim) => (
-                <ChangedClaimCard key={claim.claim_id} claim={claim} />
+                <ChangedClaimRow key={claim.claim_id} claim={claim} />
               ))}
             </div>
           ) : (
-            <div className="py-8 text-center">
-              <TrendingUp className="mx-auto h-8 w-8 text-[#334155]" />
-              <p className="mt-3 text-sm text-[#94a3b8]">
+            <div className="py-10 text-center">
+              <span className="cg-mono-meta text-2xl text-ink/40" aria-hidden="true">
+                ⇅
+              </span>
+              <p className="mt-2 text-sm text-ink-soft">
                 No significant confidence changes detected
               </p>
             </div>
           )}
-        </div>
+        </section>
       </div>
     </div>
   )

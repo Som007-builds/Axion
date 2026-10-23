@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect } from 'react'
-import { AlertTriangle } from 'lucide-react'
 
 export default function Error({
   error,
@@ -17,19 +16,23 @@ export default function Error({
   }, [error])
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-black px-6 text-center">
-      <AlertTriangle className="h-10 w-10 text-[#f43f5e]" />
-      <h1 className="text-lg font-semibold text-[#f0f6ff]">Something went wrong</h1>
-      <p className="max-w-md text-sm text-[#94a3b8]">
-        The workspace hit an unexpected error. This is usually a temporary API or
-        rendering issue.
-      </p>
-      <button
-        onClick={reset}
-        className="rounded-lg border border-[#3b82f6]/30 bg-[#3b82f6]/10 px-4 py-2 text-sm text-[#60a5fa] transition-colors hover:bg-[#3b82f6]/20 hover:text-white"
-      >
-        Try again
-      </button>
+    <div className="cg-grid flex min-h-screen flex-col items-center justify-center px-6 py-10 text-center">
+      <div className="w-full max-w-xl border-[1.5px] border-ink bg-paper px-8 py-10 text-left">
+        <span className="cg-overline text-ink">SYSTEM INTERRUPT</span>
+        <h1 className="cg-display mt-3 text-3xl text-ink">
+          Something went wrong
+        </h1>
+        <p className="mt-3 text-sm leading-relaxed text-ink-soft">
+          The workspace hit an unexpected error. This is usually a temporary
+          rendering issue — the underlying research data has not been affected.
+        </p>
+        <button
+          onClick={reset}
+          className="mt-6 border border-ink/40 bg-transparent px-5 py-2 text-sm font-medium text-ink transition-colors duration-150 hover:border-ink hover:bg-ink/5 focus-visible:border-ink focus-visible:ring-ink/15 focus-visible:ring-[3px] focus-visible:outline-none"
+        >
+          Try again
+        </button>
+      </div>
     </div>
   )
 }

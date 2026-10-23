@@ -1,42 +1,56 @@
 #!/usr/bin/env python
 """Mine likely genuine cross-paper contradiction candidates from the live graph.
 
-Prompt 1 of the measurement plan. NO LLM calls, NO labels are generated or
-pre-filled. Read-only against Neo4j + ChromaDB.
+NO LLM calls. NO labels are generated or pre-filled. Read-only against
+Neo4j + ChromaDB.
 
-Rules
+Modes
 -----
-rule1  different papers (`arxiv_id`), same normalized `subject` + `metric`,
-       opposite `direction` (increase vs decrease).
-rule2  different papers, same normalized `subject` + `metric`, numeric values
-       in the claim texts differing by >10% relative. Numbers are found with a
-       simple regex; the first non-year number in each text is used; pairs
-       where either claim has no number are skipped.
+``--mode text`` (default)
+    Candidate pool: unique cross-paper pairs among the top-8 retrieval
+    neighbours of every claim, cosine distance <= 0.55 (wider than the 0.35
+    production gate on purpose). Pairs already reviewed in
+    ``eval/Data/axion_pairs.csv`` (by claim ids or normalized text), exact
+    duplicate texts, empty texts, and pairs with distance < 0.05 are excluded.
 
-Exclusions
-----------
-Every pair already reviewed in `eval/Data/axion_pairs.csv` is dropped, matched
-on the unordered claim-id pair OR on the unordered normalized-text pair.
+    Every pair is scored with five independent signals (binary each):
+      1 shared benchmark/dataset token (regex-extracted name tokens matched
+        against an explicit list printed in the results JSON)
+      2 shared model/method name token (name-shaped token in both claims that
+        is not a benchmark token)
+      3 opposite polarity vocabulary across the two claims (explicit word
+        lists printed in the report)
+      4 numeric disagreement: both claims have a number within 120 characters
+        of the same shared name token, relative difference > 10%
+      5 structured fields: same subject, same metric, opposite direction
+        (rare; counted but not depended upon)
 
-Ordering & output
------------------
-Ordered by rule strength (rule1+rule2, then rule1-only, then rule2-only), then
-by ascending cosine distance computed from the stored ChromaDB claim
-embeddings. Written to `eval/Data/contradiction_candidates_review.csv` with an
-empty `human_label` column. The file deliberately contains NO judge verdicts,
-NO confidence values and NO Neo4j edge types.
+    Ranked by score descending, then cosine distance ascending, with at most
+    5 pairs per unordered paper pair. The top ``--cap`` (default 150) are
+    written best-first to ``eval/human_review/contradiction_candidates_review.csv``
+    with an EMPTY ``human_label`` column. Signal details and scores go to
+    ``eval/results/mining_signals_<date>.json``.
+
+``--mode structured`` (original Prompt-1 behaviour, kept behind a flag)
+    rule1  different papers, same normalized ``subject`` + ``metric``, opposite
+           ``direction``.
+    rule2  different papers, same normalized ``subject`` + ``metric``, first
+           non-year number in each claim text differing by >10% relative.
+    Writes ``eval/Data/contradiction_candidates_review.csv`` (16 columns) and
+    ``eval/results/mining_contradiction_candidates_2026-10-17.json``.
 
 Id conventions (verified 2026-10-17, read-only probes)
 ------------------------------------------------------
 * The canonical claim id is the Neo4j **elementId** (this is what
-  `axion_pairs.csv` and the CONTRADICTS edges use).
+  ``axion_pairs.csv`` and the CONTRADICTS edges use).
 * 2,135 of 2,389 claim embeddings are stored as ``claim_<elementId>``, but 254
   legacy claims (migrated from SQLite) are stored as ``claim_<int claim_id>``.
   Embedding lookup therefore tries ``claim_<elementId>`` first and falls back
   to the node's integer ``claim_id`` property.
 
 Usage:
-    python eval/mine_contradiction_candidates.py [--cap 150] [--dry-run]
+    python eval/mine_contradiction_candidates.py [--mode text] [--cap 150] [--dry-run]
+    python eval/mine_contradiction_candidates.py --mode structured [--cap 150] [--dry-run]
 """
 from __future__ import annotations
 
@@ -47,6 +61,7 @@ import math
 import re
 import statistics
 import sys
+from collections import Counter
 from datetime import date
 from pathlib import Path
 
@@ -61,13 +76,27 @@ from config import NEO4J_PASSWORD, NEO4J_URI, NEO4J_USER  # noqa: E402
 EVAL_DIR = Path(__file__).resolve().parent
 DATA_DIR = EVAL_DIR / "Data"
 RESULTS_DIR = EVAL_DIR / "results"
+HUMAN_REVIEW_DIR = EVAL_DIR / "human_review"
 REVIEW_DATASET = DATA_DIR / "axion_pairs.csv"
+
+# structured-mode outputs (kept exactly as shipped in Prompt 1)
 OUT_PATH = DATA_DIR / "contradiction_candidates_review.csv"
 REPORT_PATH = RESULTS_DIR / "mining_contradiction_candidates_2026-10-17.json"
+
+# text-mode outputs
+TEXT_OUT_PATH = HUMAN_REVIEW_DIR / "contradiction_candidates_review.csv"
+TEXT_REPORT_PATH = RESULTS_DIR / f"mining_signals_{date.today().isoformat()}.json"
 
 DEFAULT_CAP = 150
 REL_DIFF_THRESHOLD = 0.10
 PROGRESS_EVERY = 500
+
+# text-mode parameters
+POOL_DISTANCE = 0.55
+MIN_PAIR_DISTANCE = 0.05
+PER_PAPER_PAIR_CAP = 5
+TOP_NEIGHBORS = 8
+NUMERIC_WINDOW = 120
 
 # direction value -> sign; None means "no usable polarity"
 _DIRECTION_SIGNS: dict[str, int | None] = {
@@ -88,6 +117,82 @@ _NUM_RE = re.compile(r"-?\d+(?:\.\d+)?")
 _YEAR_RE = re.compile(r"^(19|20)\d{2}$")
 _THOUSANDS_RE = re.compile(r"(?<=\d),(?=\d{3}(?!\d))")
 _WS_RE = re.compile(r"\s+")
+
+# name-shaped tokens: GSM8K, MMLU, SCAN, HellaSwag, WikiText-103, GPT-4, ...
+_NAME_TOKEN_RE = re.compile(
+    r"(?<![A-Za-z0-9_])"
+    r"([A-Za-z][A-Za-z0-9]*(?:[-_][A-Za-z0-9]+)*)"
+    r"(?![A-Za-z0-9_])"
+)
+# numbers with optional thousands separators, not glued to alphanumerics
+_NUM_POS_RE = re.compile(
+    r"(?<![A-Za-z0-9])"
+    r"(-?\d{1,3}(?:,\d{3})+(?:\.\d+)?|-?\d+(?:\.\d+)?)"
+    r"(?![A-Za-z0-9])"
+)
+
+# Explicit benchmark/dataset list. Classification is only applied to tokens
+# that already look like names (see _is_name_like), so lowercase common words
+# such as "scan" or "drop" do not become name tokens by themselves.
+BENCHMARK_TOKENS = frozenset({
+    "gsm8k", "gsm-8k", "svamp", "asdiv", "math500", "mathvista", "mathvision",
+    "mmlu", "mmlu-pro", "mmlu-redux", "hellaswag", "scan", "wikitext",
+    "wikitext-103", "wikitext-2", "wt103", "squad", "squad2", "squad-2",
+    "glue", "superglue", "arc", "arc-easy", "arc-challenge", "boolq", "piqa",
+    "winogrande", "truthfulqa", "humaneval", "mbpp", "openbookqa",
+    "commonsenseqa", "bbh", "bigbench", "big-bench", "triviaqa",
+    "naturalquestions", "webqs", "webquestions", "lambada", "ptb", "enwik8",
+    "imagenet", "cifar-10", "cifar-100", "coco", "vqa", "gqa", "textvqa",
+    "docvqa", "chartqa", "scienceqa", "tabfact", "anli", "rte", "cola",
+    "sst-2", "mrpc", "qqp", "mnli", "qnli", "wnli", "sts-b", "wmt", "iwslt",
+    "librispeech", "commonvoice", "alpacaeval", "alpaca-eval", "mt-bench",
+    "mtbench", "chatbot-arena", "lmsys", "mmmu", "mmmu-pro", "videomme",
+    "longvideobench", "olympiadbench", "aime", "gpqa", "livecodebench",
+    "swe-bench", "swebench", "terminal-bench", "codeforces", "medqa",
+    "pubmedqa", "legalbench", "ifeval", "arena-hard", "rewardbench", "mujoco",
+    "atari", "dm-control", "procgen", "minigrid", "babyai", "alfworld",
+    "webshop", "scienceworld", "textworld", "jericho", "hotpotqa", "musique",
+    "qasper", "govreport", "xsum", "samsum", "cnn-dailymail", "writingprompt",
+    "multi-news", "billsum", "scitldr",
+})
+
+# Generic acronyms that look like names but carry no model/benchmark identity.
+GENERIC_NAME_TOKENS = frozenset({
+    "ai", "ml", "nlp", "llm", "llms", "api", "apis", "gpu", "gpus", "cpu",
+    "tpu", "rq", "json", "csv", "pdf", "html", "http", "https", "url",
+    "sota", "f1", "em", "bleu", "rouge", "meteor", "bertscore", "auc",
+    "map", "mrr", "ndcg", "wer", "cer", "ppl", "id", "ids", "ok", "vs",
+    "ii", "iii", "iv",
+})
+
+POLARITY_POSITIVE = (
+    "improve", "improves", "improved", "improving", "improvement",
+    "outperform", "outperforms", "outperformed", "outperforming",
+    "better", "higher", "increase", "increases", "increased", "increasing",
+    "gain", "gains", "gained", "help", "helps", "helped", "effective",
+    "superior", "exceed", "exceeds", "exceeded", "boost", "boosts", "boosted",
+    "enhance", "enhances", "enhanced", "win", "wins", "won", "success",
+    "succeeds", "stronger", "faster",
+)
+POLARITY_NEGATIVE = (
+    "degrade", "degrades", "degraded", "degrading", "degradation",
+    "hurt", "hurts", "underperform", "underperforms", "underperformed",
+    "worse", "lower", "decrease", "decreases", "decreased", "decreasing",
+    "loss", "losses", "lose", "loses", "lost", "fail", "fails", "failed",
+    "failing", "failure", "ineffective", "inferior", "harm", "harms",
+    "worsen", "worsens", "worsened", "reduce", "reduces", "reduced",
+    "drop", "drops", "dropped", "weaker", "slower", "struggle", "struggles",
+    "struggled",
+)
+
+
+def _alternation(words) -> re.Pattern:
+    body = "|".join(sorted((re.escape(w) for w in words), key=len, reverse=True))
+    return re.compile(rf"\b(?:{body})\b", re.IGNORECASE)
+
+
+_POS_RE = _alternation(POLARITY_POSITIVE)
+_NEG_RE = _alternation(POLARITY_NEGATIVE)
 
 CLAIMS_QUERY = """
 MATCH (c:Claim)
@@ -185,8 +290,82 @@ def rule_tier(rules: set[str]) -> int:
     return 2
 
 
+def _is_name_like(raw: str) -> bool:
+    """True for GSM8K / MMLU / HellaSwag / WikiText-103 style name tokens."""
+    if len(raw) < 2:
+        return False
+    if raw.casefold() in GENERIC_NAME_TOKENS:
+        return False
+    if any(ch.isdigit() for ch in raw):
+        return True
+    if any(ch.isupper() for ch in raw[1:]):
+        return True
+    return raw.isupper()
+
+
+def claim_features(text: str) -> dict:
+    """Cache token/position/number/polarity features for one claim text."""
+    text = str(text or "")
+    tokens: dict[str, str] = {}
+    positions: dict[str, list[tuple[int, int]]] = {}
+    spans: list[tuple[int, int]] = []
+    for match in _NAME_TOKEN_RE.finditer(text):
+        raw = match.group(1)
+        spans.append(match.span(1))
+        if not _is_name_like(raw):
+            continue
+        key = raw.casefold()
+        tokens.setdefault(key, raw)
+        positions.setdefault(key, []).append(match.span(1))
+
+    numbers: list[tuple[float, int]] = []
+    for match in _NUM_POS_RE.finditer(text):
+        raw = match.group(1)
+        start, end = match.span(1)
+        if any(s <= start < e or s < end <= e for s, e in spans):
+            continue
+        if _YEAR_RE.match(raw.lstrip("-").replace(",", "")):
+            continue
+        if start >= 1 and text[start - 1] == "[" and end < len(text) and text[end] == "]":
+            continue
+        if start >= 2 and text[start - 1] == "." and text[start - 2].isalnum():
+            continue  # version number such as Qwen2.5
+        try:
+            value = float(raw.replace(",", ""))
+        except ValueError:
+            continue
+        numbers.append((value, start))
+
+    return {
+        "tokens": tokens,
+        "positions": positions,
+        "numbers": numbers,
+        "positive": {m.group(0).casefold() for m in _POS_RE.finditer(text)},
+        "negative": {m.group(0).casefold() for m in _NEG_RE.finditer(text)},
+    }
+
+
+def _nearest_number(feature: dict, token_key: str,
+                    window: int = NUMERIC_WINDOW) -> tuple[float, float] | None:
+    """(char-distance, value) of the closest number to any occurrence of token."""
+    best: tuple[float, float] | None = None
+    for start, end in feature["positions"].get(token_key, ()):
+        for value, pos in feature["numbers"]:
+            distance = min(abs(pos - start), abs(pos - end))
+            if distance <= window and (best is None or distance < best[0]):
+                best = (float(distance), value)
+    return best
+
+
+def cosine_distance(a: np.ndarray, b: np.ndarray) -> float | None:
+    na, nb = np.linalg.norm(a), np.linalg.norm(b)
+    if na == 0 or nb == 0:
+        return None
+    return 1.0 - float(a @ b / (na * nb))
+
+
 # ---------------------------------------------------------------------------
-# steps
+# common steps
 # ---------------------------------------------------------------------------
 
 def load_graph_claims() -> tuple[list[dict], dict, dict]:
@@ -246,6 +425,44 @@ def load_graph_claims() -> tuple[list[dict], dict, dict]:
     return claims, by_id, {"coverage": coverage, "direction_counts": direction_counts,
                            "unmapped": unmapped}
 
+
+def load_reviewed_pairs() -> tuple[pd.DataFrame, str, set, set]:
+    df = pd.read_csv(REVIEW_DATASET)
+    label_col = "label" if "label" in df.columns else "human_label"
+    id_pairs: set[tuple[str, str]] = set()
+    text_pairs: set[tuple[str, str]] = set()
+    for row in df.itertuples(index=False):
+        a_id, b_id = _clean(row.claim_a_id), _clean(row.claim_b_id)
+        if a_id and b_id:
+            id_pairs.add(tuple(sorted((a_id, b_id))))
+        a_tx, b_tx = norm_text(row.claim_a_text), norm_text(row.claim_b_text)
+        if a_tx and b_tx:
+            text_pairs.add(tuple(sorted((a_tx, b_tx))))
+    return df, label_col, id_pairs, text_pairs
+
+
+def chroma_id_convention_stats() -> dict | None:
+    """Report how claim embeddings are keyed (elementId vs legacy int)."""
+    try:
+        from embeddings.store import _claims_col
+        col = _claims_col()
+        ids = col.get(limit=200_000, include=[])["ids"]
+        element_style = sum(1 for i in ids if i.startswith("claim_") and ":" in i)
+        int_style = sum(1 for i in ids
+                        if i.startswith("claim_") and i[len("claim_"):].isdigit())
+        return {
+            "total": len(ids),
+            "elementId_style": element_style,
+            "legacy_int_style": int_style,
+            "other": len(ids) - element_style - int_style,
+        }
+    except Exception as exc:  # noqa: BLE001
+        return {"error": str(exc)}
+
+
+# ---------------------------------------------------------------------------
+# structured mode (original Prompt-1 behaviour, unchanged except for dispatch)
+# ---------------------------------------------------------------------------
 
 def relaxed_preview(claims: list[dict]) -> dict:
     """Report-only yield preview if subject (or metric) alone were used."""
@@ -327,27 +544,8 @@ def scan_rules(claims: list[dict]) -> tuple[dict, dict]:
     return found, stats
 
 
-def load_reviewed_pairs() -> tuple[pd.DataFrame, str, set, set]:
-    df = pd.read_csv(REVIEW_DATASET)
-    label_col = "label" if "label" in df.columns else "human_label"
-    id_pairs: set[tuple[str, str]] = set()
-    text_pairs: set[tuple[str, str]] = set()
-    for row in df.itertuples(index=False):
-        a_id, b_id = _clean(row.claim_a_id), _clean(row.claim_b_id)
-        if a_id and b_id:
-            id_pairs.add(tuple(sorted((a_id, b_id))))
-        a_tx, b_tx = norm_text(row.claim_a_text), norm_text(row.claim_b_text)
-        if a_tx and b_tx:
-            text_pairs.add(tuple(sorted((a_tx, b_tx))))
-    return df, label_col, id_pairs, text_pairs
-
-
 def compute_distances(kept: dict, by_id: dict) -> tuple[dict, dict, int, int, int, str]:
-    """Cosine distances from stored embeddings.
-
-    Embedding lookup: ``claim_<elementId>`` first, then ``claim_<int claim_id>``
-    for the 254 legacy-migrated claims.
-    """
+    """Cosine distances from stored embeddings (structured mode)."""
     from embeddings.store import _claims_col  # local import: opens ChromaDB lazily
 
     col = _claims_col()
@@ -389,25 +587,6 @@ def compute_distances(kept: dict, by_id: dict) -> tuple[dict, dict, int, int, in
         distances[pair] = 1.0 - float(va @ vb / (na * nb))
     return (distances, embeddings, len(claims_needed), missing, fallback_used,
             str(getattr(col, "metadata", None)))
-
-
-def chroma_id_convention_stats() -> dict | None:
-    """Report how claim embeddings are keyed (elementId vs legacy int)."""
-    try:
-        from embeddings.store import _claims_col
-        col = _claims_col()
-        ids = col.get(limit=200_000, include=[])["ids"]
-        element_style = sum(1 for i in ids if i.startswith("claim_") and ":" in i)
-        int_style = sum(1 for i in ids
-                        if i.startswith("claim_") and i[len("claim_"):].isdigit())
-        return {
-            "total": len(ids),
-            "elementId_style": element_style,
-            "legacy_int_style": int_style,
-            "other": len(ids) - element_style - int_style,
-        }
-    except Exception as exc:  # noqa: BLE001
-        return {"error": str(exc)}
 
 
 def distance_space_probe(col, embeddings: dict, kept: dict) -> list[dict]:
@@ -523,24 +702,9 @@ def sanity_check(df: pd.DataFrame, label_col: str, by_id: dict) -> list[dict]:
     return results
 
 
-# ---------------------------------------------------------------------------
-# main
-# ---------------------------------------------------------------------------
-
-def main() -> int:
-    try:
-        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-    except Exception:  # noqa: BLE001
-        pass
-
-    parser = argparse.ArgumentParser(description="Mine contradiction candidates (no LLM).")
-    parser.add_argument("--cap", type=int, default=DEFAULT_CAP,
-                        help=f"max rows written to the review CSV (default {DEFAULT_CAP})")
-    parser.add_argument("--dry-run", action="store_true",
-                        help="print everything but write no files")
-    args = parser.parse_args()
-
-    print("=== Axion candidate mining (no LLM calls, no labels) ===")
+def run_structured(args) -> int:
+    """Original Prompt-1 structured-field miner (0 pairs on the current graph)."""
+    print("=== Axion structured candidate mining (no LLM calls, no labels) ===")
     print(f"[mine] Neo4j: {NEO4J_URI}")
 
     df, label_col, id_pairs, text_pairs = load_reviewed_pairs()
@@ -549,7 +713,6 @@ def main() -> int:
           f"{len(id_pairs)} id-pairs, {len(text_pairs)} text-pairs)")
 
     claims, by_id, graph_info = load_graph_claims()
-
     coverage = graph_info["coverage"]
     print(f"[mine] structured-field coverage of {len(claims)} claims: "
           f"subject non-empty {coverage['subject']}, metric non-empty {coverage['metric']}, "
@@ -716,6 +879,7 @@ def main() -> int:
     report = {
         "generated_at": date.today().isoformat(),
         "script": "eval/mine_contradiction_candidates.py",
+        "mode": "structured",
         "model": "none — no LLM calls were made",
         "gate_value": "not applied — mining is independent of CONTRADICTION_MAX_DISTANCE",
         "prompt_hash": "n/a — no prompt used",
@@ -768,6 +932,571 @@ def main() -> int:
             json.dump(report, fh, indent=2, ensure_ascii=False)
         print(f"\n[mine] wrote {REPORT_PATH}")
     return 0
+
+
+# ---------------------------------------------------------------------------
+# text-heuristic mode
+# ---------------------------------------------------------------------------
+
+def load_claim_vectors(claims: list[dict]):
+    """Return (collection, claim_vec, doc_to_claim, missing, fallback_used, docs)."""
+    from embeddings.store import _claims_col  # local import: opens ChromaDB lazily
+
+    col = _claims_col()
+    data = col.get(include=["embeddings"], limit=200_000)
+    doc_vec = {doc: np.asarray(vec, dtype=float)
+               for doc, vec in zip(data["ids"], data["embeddings"])}
+
+    claim_vec: dict[str, np.ndarray] = {}
+    doc_to_claim: dict[str, str] = {}
+    fallback_used = 0
+    for claim in claims:
+        legacy = claim.get("legacy_claim_id")
+        candidates = [f"claim_{claim['claim_id']}"]
+        if isinstance(legacy, int) and not isinstance(legacy, bool):
+            candidates.append(f"claim_{legacy}")
+        for index, doc_id in enumerate(candidates):
+            if doc_id in doc_vec:
+                claim_vec[claim["claim_id"]] = doc_vec[doc_id]
+                doc_to_claim[doc_id] = claim["claim_id"]
+                if index > 0:
+                    fallback_used += 1
+                break
+    missing = [c["claim_id"] for c in claims if c["claim_id"] not in claim_vec]
+    return col, claim_vec, doc_to_claim, missing, fallback_used, len(doc_vec)
+
+
+def build_retrieval_pool(claims: list[dict], claim_vec: dict, doc_to_claim: dict,
+                         by_id: dict, col, pool_distance: float,
+                         top_n: int) -> tuple[dict, dict]:
+    """Top-N neighbour pairs, deduped, cross-paper, distance <= pool_distance."""
+    stats = {
+        "claims_queried": 0,
+        "neighbor_slots": 0,
+        "unresolved_neighbor_ids": 0,
+        "self_hits": 0,
+        "same_paper_hits": 0,
+        "missing_arxiv_hits": 0,
+        "above_pool_distance_hits": 0,
+        "unique_pairs_within_distance": 0,
+    }
+    pairs: dict[tuple[str, str], float] = {}
+    ids = [c["claim_id"] for c in claims if c["claim_id"] in claim_vec]
+    batch_size = 250  # 2 batches = exactly 500 claims per progress line
+    last_report = 0
+
+    for start in range(0, len(ids), batch_size):
+        chunk = ids[start:start + batch_size]
+        result = col.query(
+            query_embeddings=[claim_vec[cid].tolist() for cid in chunk],
+            n_results=top_n,
+            include=["distances"],
+        )
+        for cid, row_ids, row_dists in zip(chunk, result["ids"], result["distances"]):
+            stats["claims_queried"] += 1
+            stats["neighbor_slots"] += len(row_ids)
+            a = by_id[cid]
+            for doc_id, distance in zip(row_ids, row_dists):
+                other = doc_to_claim.get(doc_id)
+                if other is None:
+                    stats["unresolved_neighbor_ids"] += 1
+                    continue
+                if other == cid:
+                    stats["self_hits"] += 1
+                    continue
+                b = by_id[other]
+                if not a["arxiv_id"] or not b["arxiv_id"]:
+                    stats["missing_arxiv_hits"] += 1
+                    continue
+                if a["arxiv_id"] == b["arxiv_id"]:
+                    stats["same_paper_hits"] += 1
+                    continue
+                if float(distance) > pool_distance:
+                    stats["above_pool_distance_hits"] += 1
+                    continue
+                pair = (cid, other) if cid <= other else (other, cid)
+                old = pairs.get(pair)
+                if old is None or float(distance) < old:
+                    pairs[pair] = float(distance)
+        if stats["claims_queried"] - last_report >= PROGRESS_EVERY or start + batch_size >= len(ids):
+            last_report = stats["claims_queried"]
+            print(f"[mine:text] retrieval: {stats['claims_queried']}/{len(ids)} claims "
+                  f"queried, {len(pairs)} unique cross-paper pairs <= {pool_distance}")
+
+    stats["unique_pairs_within_distance"] = len(pairs)
+    return pairs, stats
+
+
+def filter_pool(pairs: dict, by_id: dict, id_pairs: set, text_pairs: set,
+                min_distance: float) -> tuple[dict, dict]:
+    """Apply the reviewed-set / duplicate-text / tiny-distance exclusions."""
+    counts = {
+        "reviewed_by_claim_ids": 0,
+        "reviewed_by_text": 0,
+        "identical_claim_texts": 0,
+        "duplicate_text_pairs": 0,
+        "empty_text": 0,
+        "distance_below_min": 0,
+    }
+    pool: dict[tuple[str, str], float] = {}
+    seen_text_pairs: set[tuple[str, str]] = set()
+    # Closest first, so duplicate text pairs keep their best-scoring instance.
+    ordered = sorted(pairs.items(), key=lambda kv: (kv[1], kv[0][0], kv[0][1]))
+    for pair, distance in ordered:
+        if pair in id_pairs:
+            counts["reviewed_by_claim_ids"] += 1
+            continue
+        a, b = by_id[pair[0]], by_id[pair[1]]
+        text_a, text_b = norm_text(a["text"]), norm_text(b["text"])
+        if not text_a or not text_b:
+            counts["empty_text"] += 1
+            continue
+        if text_a == text_b:
+            counts["identical_claim_texts"] += 1
+            continue
+        text_pair = tuple(sorted((text_a, text_b)))
+        if text_pair in text_pairs:
+            counts["reviewed_by_text"] += 1
+            continue
+        if distance < min_distance:
+            counts["distance_below_min"] += 1
+            continue
+        if text_pair in seen_text_pairs:
+            counts["duplicate_text_pairs"] += 1
+            continue
+        seen_text_pairs.add(text_pair)
+        pool[pair] = distance
+    counts["total_excluded"] = sum(counts.values())
+    return pool, counts
+
+
+def score_pair(a: dict, b: dict, fa: dict, fb: dict) -> dict:
+    """Score one pair with the five independent signals."""
+    shared = set(fa["tokens"]) & set(fb["tokens"])
+    benchmark_keys = sorted(k for k in shared if k in BENCHMARK_TOKENS)
+    model_keys = sorted(k for k in shared if k not in BENCHMARK_TOKENS)
+
+    pos_a, neg_a = fa["positive"], fa["negative"]
+    pos_b, neg_b = fb["positive"], fb["negative"]
+    polarity_fired = bool((pos_a and neg_b) or (neg_a and pos_b))
+    cross_pairs = sorted([f"{p}->{n}" for p in pos_a for n in neg_b]
+                         + [f"{n}->{p}" for n in neg_a for p in pos_b])
+
+    numeric: dict = {"fired": False, "shared_token": None, "number_a": None,
+                     "number_b": None, "relative_difference": None}
+    for key in sorted(shared):
+        near_a = _nearest_number(fa, key)
+        near_b = _nearest_number(fb, key)
+        if near_a is None or near_b is None:
+            continue
+        rd = relative_difference(near_a[1], near_b[1])
+        if rd is None or rd <= REL_DIFF_THRESHOLD:
+            continue
+        if numeric["relative_difference"] is None or rd > numeric["relative_difference"]:
+            numeric = {
+                "fired": True,
+                "shared_token": fa["tokens"].get(key, key),
+                "number_a": near_a[1],
+                "number_b": near_b[1],
+                "relative_difference": round(rd, 6),
+            }
+
+    same_subject = bool(a["subject_key"] and a["subject_key"] == b["subject_key"])
+    same_metric = bool(a["metric_key"] and a["metric_key"] == b["metric_key"])
+    opposite = (a["sign"] is not None and b["sign"] is not None
+                and a["sign"] * b["sign"] == -1)
+    structured = {
+        "fired": bool(same_subject and same_metric and opposite),
+        "same_subject": same_subject,
+        "same_metric": same_metric,
+        "opposite_direction": opposite,
+        "subject": a["subject_key"] if same_subject else None,
+        "metric": a["metric_key"] if same_metric else None,
+        "direction_a": a["direction"],
+        "direction_b": b["direction"],
+    }
+
+    signals = {
+        "shared_benchmark": {
+            "fired": bool(benchmark_keys),
+            "tokens": [fa["tokens"].get(k, k) for k in benchmark_keys],
+        },
+        "shared_model": {
+            "fired": bool(model_keys),
+            "tokens": [fa["tokens"].get(k, k) for k in model_keys],
+        },
+        "opposite_polarity": {
+            "fired": polarity_fired,
+            "positive_a": sorted(pos_a)[:10],
+            "negative_a": sorted(neg_a)[:10],
+            "positive_b": sorted(pos_b)[:10],
+            "negative_b": sorted(neg_b)[:10],
+            "cross": cross_pairs[:10],
+        },
+        "numeric_disagreement": numeric,
+        "structured_direction": structured,
+    }
+    return {
+        "signals": signals,
+        "score": int(sum(1 for detail in signals.values() if detail["fired"])),
+    }
+
+
+def rank_key(pair: tuple[str, str], scored: dict, distances: dict) -> tuple:
+    distance = distances.get(pair)
+    return (-scored[pair]["score"],
+            distance if distance is not None else float("inf"),
+            pair[0], pair[1])
+
+
+def select_pairs(pool: dict, scored: dict, distances: dict, by_id: dict,
+                 cap: int, per_paper_pair: int) -> tuple[list, list, list, int]:
+    """Return (ranked, eligible-after-paper-cap, selected, cap skips)."""
+    ranked = sorted(pool, key=lambda pair: rank_key(pair, scored, distances))
+    counts: Counter = Counter()
+    eligible: list[tuple[str, str]] = []
+    skipped = 0
+    for pair in ranked:
+        paper_pair = tuple(sorted((by_id[pair[0]]["arxiv_id"],
+                                   by_id[pair[1]]["arxiv_id"])))
+        if counts[paper_pair] >= per_paper_pair:
+            skipped += 1
+            continue
+        counts[paper_pair] += 1
+        eligible.append(pair)
+    return ranked, eligible, eligible[: max(cap, 0)], skipped
+
+
+def text_sanity_check(df: pd.DataFrame, label_col: str, by_id: dict,
+                      features: dict, claim_vec: dict, pool: dict,
+                      scored: dict, distances: dict, cap: int) -> list[dict]:
+    """Score the reviewed CONTRADICTS pairs separately; rank against the pool."""
+    positives = df[df[label_col].astype(str).str.strip().str.upper() == "CONTRADICTS"]
+    pool_keys = [rank_key(pair, scored, distances) for pair in pool]
+    results = []
+    for row in positives.itertuples(index=False):
+        a_id, b_id = _clean(row.claim_a_id), _clean(row.claim_b_id)
+        entry: dict = {
+            "pair_id": _clean(row.pair_id),
+            "claim_id_a": a_id,
+            "claim_id_b": b_id,
+        }
+        a, b = by_id.get(a_id), by_id.get(b_id)
+        if a is None or b is None:
+            entry.update({"in_live_graph": False,
+                          "note": "claim(s) not found in the live graph"})
+            results.append(entry)
+            continue
+        result = score_pair(a, b, features[a_id], features[b_id])
+        dist = None
+        if a_id in claim_vec and b_id in claim_vec:
+            dist = cosine_distance(claim_vec[a_id], claim_vec[b_id])
+        pair = (a_id, b_id) if a_id <= b_id else (b_id, a_id)
+        key = (-result["score"], dist if dist is not None else float("inf"),
+               pair[0], pair[1])
+        rank = 1 + sum(1 for other in pool_keys if other < key)
+        entry.update({
+            "in_live_graph": True,
+            "score": result["score"],
+            "signals_fired": [name for name, detail in result["signals"].items()
+                              if detail["fired"]],
+            "signals": result["signals"],
+            "cosine_distance": round(dist, 6) if dist is not None else None,
+            "rank_among_pool": rank,
+            "pool_size": len(pool),
+            "would_rank_within_cap_ignoring_paper_pair_cap": rank <= cap,
+        })
+        results.append(entry)
+    return results
+
+
+def write_text_csv(path: Path, selected: list, by_id: dict,
+                   distances: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", newline="", encoding="utf-8") as fh:
+        writer = csv.writer(fh)
+        writer.writerow([
+            "pair_id", "claim_id_a", "claim_id_b", "arxiv_id_a", "arxiv_id_b",
+            "text_a", "text_b", "section_a", "section_b", "cosine_distance",
+            "human_label",
+        ])
+        for index, pair in enumerate(selected, start=1):
+            a, b = by_id[pair[0]], by_id[pair[1]]
+            writer.writerow([
+                f"cand_{index:04d}", pair[0], pair[1],
+                a["arxiv_id"], b["arxiv_id"],
+                _WS_RE.sub(" ", a["text"]).strip(),
+                _WS_RE.sub(" ", b["text"]).strip(),
+                _WS_RE.sub(" ", a["section"]).strip(),
+                _WS_RE.sub(" ", b["section"]).strip(),
+                f"{distances[pair]:.6f}" if distances.get(pair) is not None else "",
+                "",
+            ])
+
+
+def run_text(args) -> int:
+    print("=== Axion text-heuristic candidate mining (no LLM calls, no labels) ===")
+    print(f"[mine:text] Neo4j: {NEO4J_URI}")
+
+    df, label_col, id_pairs, text_pairs = load_reviewed_pairs()
+    print(f"[mine:text] reviewed dataset: {REVIEW_DATASET} "
+          f"({len(df)} rows, label column '{label_col}', "
+          f"{len(id_pairs)} id-pairs, {len(text_pairs)} text-pairs)")
+
+    claims, by_id, _graph_info = load_graph_claims()
+
+    id_stats = chroma_id_convention_stats()
+    if id_stats and "error" not in id_stats:
+        print(f"[mine:text] ChromaDB claim-id conventions: {id_stats}")
+    else:
+        print(f"[mine:text] ChromaDB id-convention probe skipped: {id_stats}")
+
+    col, claim_vec, doc_to_claim, missing, fallback_used, doc_count = \
+        load_claim_vectors(claims)
+    print(f"[mine:text] embeddings: {len(claim_vec)}/{len(claims)} claims resolved "
+          f"({len(missing)} missing, {fallback_used} via legacy-int fallback, "
+          f"{doc_count} docs in collection)")
+    if missing:
+        print(f"[mine:text] claims without a usable embedding are not queried "
+              f"(first 5: {missing[:5]})")
+
+    print(f"[mine:text] building pool: top-{args.neighbors} neighbours per claim, "
+          f"cross-paper, distance <= {args.pool_distance}")
+    raw_pairs, retrieval = build_retrieval_pool(
+        claims, claim_vec, doc_to_claim, by_id, col,
+        args.pool_distance, args.neighbors)
+    print(f"[mine:text] raw pool: {len(raw_pairs)} unique cross-paper pairs "
+          f"(from {retrieval['neighbor_slots']} neighbour slots; "
+          f"{retrieval['unresolved_neighbor_ids']} unresolved, "
+          f"{retrieval['self_hits']} self, {retrieval['same_paper_hits']} same-paper, "
+          f"{retrieval['missing_arxiv_hits']} missing arxiv, "
+          f"{retrieval['above_pool_distance_hits']} above distance)")
+
+    pool, exclusions = filter_pool(raw_pairs, by_id, id_pairs, text_pairs,
+                                   args.min_pair_distance)
+    print(f"[mine:text] exclusions: {exclusions['reviewed_by_claim_ids']} already reviewed "
+          f"by ids, {exclusions['reviewed_by_text']} already reviewed by text, "
+          f"{exclusions['identical_claim_texts']} claims with identical text, "
+          f"{exclusions['duplicate_text_pairs']} duplicate text pairs, "
+          f"{exclusions['empty_text']} empty text, "
+          f"{exclusions['distance_below_min']} distance < {args.min_pair_distance} "
+          f"-> pool size {len(pool)}")
+
+    print(f"[mine:text] extracting features for {len(claims)} claims...")
+    features: dict[str, dict] = {}
+    for index, claim in enumerate(claims, start=1):
+        features[claim["claim_id"]] = claim_features(claim["text"])
+        if index % PROGRESS_EVERY == 0:
+            print(f"[mine:text] features: {index}/{len(claims)} claims")
+
+    scored: dict[tuple[str, str], dict] = {}
+    signal_counts: Counter = Counter()
+    score_counts: Counter = Counter()
+    for index, pair in enumerate(pool, start=1):
+        result = score_pair(by_id[pair[0]], by_id[pair[1]],
+                            features[pair[0]], features[pair[1]])
+        scored[pair] = result
+        score_counts[result["score"]] += 1
+        for name, detail in result["signals"].items():
+            if detail["fired"]:
+                signal_counts[name] += 1
+        if index % 2000 == 0:
+            print(f"[mine:text] scoring: {index}/{len(pool)} pairs")
+
+    distances = pool  # Chroma distance is 1-cosine (verified in Prompt 1)
+    ranked, eligible_after_cap, selected, skipped = select_pairs(
+        pool, scored, distances, by_id, args.cap, args.per_paper_pair)
+    selected_signal_counts: Counter = Counter()
+    selected_score_counts: Counter = Counter()
+    for pair in selected:
+        for name, detail in scored[pair]["signals"].items():
+            if detail["fired"]:
+                selected_signal_counts[name] += 1
+        selected_score_counts[scored[pair]["score"]] += 1
+
+    paper_pairs = {tuple(sorted((by_id[pair[0]]["arxiv_id"],
+                                 by_id[pair[1]]["arxiv_id"]))) for pair in selected}
+    selected_distances = [distances[pair] for pair in selected]
+    distance_stats = dist_stats(selected_distances)
+
+    report = {
+        "pool": {
+            "size": len(pool),
+            "raw_unique_pairs_within_distance": len(raw_pairs),
+            "retrieval": retrieval,
+            "exclusions": exclusions,
+        },
+        "signal_counts": {name: signal_counts.get(name, 0) for name in (
+            "shared_benchmark", "shared_model", "opposite_polarity",
+            "numeric_disagreement", "structured_direction")},
+        "score_distribution": {str(score): score_counts.get(score, 0)
+                               for score in range(6)},
+        "selection": {
+            "cap": args.cap,
+            "selected": len(selected),
+            "per_paper_pair_cap": args.per_paper_pair,
+            "skipped_by_paper_pair_cap": skipped,
+            "paper_pairs_represented": len(paper_pairs),
+            "eligible_after_paper_pair_cap": len(eligible_after_cap),
+            "not_selected_beyond_cap": max(len(eligible_after_cap) - len(selected), 0),
+            "selected_signal_counts": {
+                name: selected_signal_counts.get(name, 0) for name in (
+                    "shared_benchmark", "shared_model", "opposite_polarity",
+                    "numeric_disagreement", "structured_direction")},
+            "selected_score_distribution": {
+                str(score): selected_score_counts.get(score, 0)
+                for score in range(6)},
+            "distance": distance_stats,
+        },
+        "polarity_words": {
+            "positive": sorted(POLARITY_POSITIVE),
+            "negative": sorted(POLARITY_NEGATIVE),
+        },
+        "benchmark_tokens": sorted(BENCHMARK_TOKENS),
+        "numeric_window_chars": NUMERIC_WINDOW,
+    }
+
+    sanity = text_sanity_check(df, label_col, by_id, features, claim_vec,
+                               pool, scored, distances, args.cap)
+    report["sanity_check_reviewed_contradicts"] = sanity
+    report["sanity_check_note"] = (
+        "Only 4 reviewed CONTRADICTS pairs exist; far too few to judge the miner. "
+        "These pairs are excluded from the candidate pool and were scored in a "
+        "separate pass for a coverage sanity check only."
+    )
+
+    print("\n=== Text-heuristic mining report ===")
+    print(f"[report] pool size: {len(pool)} unique cross-paper pairs")
+    print(f"[report] signal counts (pool): "
+          + ", ".join(f"{name}={count}" for name, count in report["signal_counts"].items()))
+    print(f"[report] score distribution (pool, 0..5): "
+          + ", ".join(f"{score}={count}" for score, count in
+                      report["score_distribution"].items()))
+    print(f"[report] selected {len(selected)} of {len(ranked)} ranked pairs "
+          f"(cap {args.cap}, max {args.per_paper_pair} per paper pair; "
+          f"{skipped} skipped by the paper-pair cap)")
+    print(f"[report] selected score distribution (0..5): "
+          + ", ".join(f"{score}={count}" for score, count in
+                      report["selection"]["selected_score_distribution"].items()))
+    print(f"[report] selected distance min/median/max: "
+          f"{distance_stats['min']}/{distance_stats['median']}/{distance_stats['max']}")
+    print(f"[report] polarity positive words ({len(POLARITY_POSITIVE)}): "
+          f"{', '.join(sorted(POLARITY_POSITIVE))}")
+    print(f"[report] polarity negative words ({len(POLARITY_NEGATIVE)}): "
+          f"{', '.join(sorted(POLARITY_NEGATIVE))}")
+
+    print("\n=== Sanity check: reviewed CONTRADICTS pairs scored separately "
+          "(excluded from the pool) ===")
+    print(f"[mine:text] rows with {label_col} == CONTRADICTS: {len(sanity)}")
+    for entry in sanity:
+        if not entry.get("in_live_graph"):
+            print(f"  pair_id={entry['pair_id']}: {entry.get('note')}")
+            continue
+        print(f"  pair_id={entry['pair_id']}  score={entry['score']}/5  "
+              f"distance={entry['cosine_distance']}  "
+              f"rank=#{entry['rank_among_pool']} of {entry['pool_size']}  "
+              f"top-{args.cap}={entry['would_rank_within_cap_ignoring_paper_pair_cap']}  "
+              f"signals={entry['signals_fired']}")
+    print("[report] Only 4 reviewed CONTRADICTS pairs exist; that is far too few "
+          "to judge the miner.")
+
+    payload = {
+        "meta": {
+            "generated_at": date.today().isoformat(),
+            "script": "eval/mine_contradiction_candidates.py",
+            "mode": "text",
+            "model": "none — no LLM calls were made",
+            "gate_value": {
+                "retrieval_pool_max_cosine_distance": args.pool_distance,
+                "min_pair_cosine_distance": args.min_pair_distance,
+                "production_gate": "not applied — pool is deliberately wider",
+            },
+            "prompt_hash": "n/a — no prompt used",
+            "dataset": {
+                "path": str(REVIEW_DATASET),
+                "rows": int(len(df)),
+                "label_column": label_col,
+                "used_for": ["exclusions", "sanity check only"],
+            },
+            "graph_claims": len(claims),
+            "claims_queried": retrieval["claims_queried"],
+            "embedding_coverage": {
+                "claims": len(claim_vec),
+                "missing": len(missing),
+                "legacy_int_fallback_used": fallback_used,
+                "docs_in_collection": doc_count,
+            },
+            "chroma_id_conventions": id_stats,
+            "outputs": {
+                "review_csv": str(TEXT_OUT_PATH),
+                "signals_json": str(TEXT_REPORT_PATH),
+            },
+        },
+        "report": report,
+        "signals_by_pair_id": {},
+    }
+
+    for index, pair in enumerate(selected, start=1):
+        pair_id = f"cand_{index:04d}"
+        result = scored[pair]
+        payload["signals_by_pair_id"][pair_id] = {
+            "signals": result["signals"],
+            "score": result["score"],
+            "cosine_distance": round(distances[pair], 6),
+            "paper_pair": sorted((by_id[pair[0]]["arxiv_id"],
+                                  by_id[pair[1]]["arxiv_id"])),
+        }
+
+    if not args.dry_run:
+        write_text_csv(TEXT_OUT_PATH, selected, by_id, distances)
+        RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+        with open(TEXT_REPORT_PATH, "w", encoding="utf-8") as fh:
+            json.dump(payload, fh, indent=2, ensure_ascii=False)
+        print(f"\n[mine:text] wrote {TEXT_OUT_PATH} ({len(selected)} data rows)")
+        print(f"[mine:text] wrote {TEXT_REPORT_PATH}")
+    else:
+        print(f"\n[mine:text] dry run: would write {TEXT_OUT_PATH} "
+              f"({len(selected)} data rows)")
+        print(f"[mine:text] dry run: would write {TEXT_REPORT_PATH}")
+    return 0
+
+
+# ---------------------------------------------------------------------------
+# main
+# ---------------------------------------------------------------------------
+
+def main() -> int:
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:  # noqa: BLE001
+        pass
+
+    parser = argparse.ArgumentParser(
+        description="Mine contradiction candidates (no LLM, no labels).")
+    parser.add_argument("--mode", choices=["text", "structured"], default="text",
+                        help="text = heuristic retrieval pool (default); "
+                             "structured = original Prompt-1 rules")
+    parser.add_argument("--cap", type=int, default=DEFAULT_CAP,
+                        help=f"max rows written to the review CSV (default {DEFAULT_CAP})")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="print everything but write no files")
+    parser.add_argument("--pool-distance", type=float, default=POOL_DISTANCE,
+                        help=f"text mode: max cosine distance for the pool "
+                             f"(default {POOL_DISTANCE})")
+    parser.add_argument("--min-pair-distance", type=float, default=MIN_PAIR_DISTANCE,
+                        help=f"text mode: drop pairs closer than this "
+                             f"(default {MIN_PAIR_DISTANCE})")
+    parser.add_argument("--per-paper-pair", type=int, default=PER_PAPER_PAIR_CAP,
+                        help=f"text mode: max pairs per unordered paper pair "
+                             f"(default {PER_PAPER_PAIR_CAP})")
+    parser.add_argument("--neighbors", type=int, default=TOP_NEIGHBORS,
+                        help=f"text mode: retrieval neighbours per claim "
+                             f"(default {TOP_NEIGHBORS})")
+    args = parser.parse_args()
+
+    if args.mode == "structured":
+        return run_structured(args)
+    return run_text(args)
 
 
 if __name__ == "__main__":

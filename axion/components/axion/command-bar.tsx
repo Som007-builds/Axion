@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Search, ArrowRight, Clock, Sparkles } from 'lucide-react'
+import { Search, ArrowRight, Clock, Loader2 } from 'lucide-react'
 
 interface CommandBarProps {
   onSubmit: (query: string) => void
@@ -15,7 +15,7 @@ export function CommandBar({ onSubmit, recentQueries = [], isLoading }: CommandB
   const [showRecent, setShowRecent] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // ⌘K keyboard shortcut
+  // ⌘K / Ctrl+K keyboard shortcut
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -46,21 +46,21 @@ export function CommandBar({ onSubmit, recentQueries = [], isLoading }: CommandB
 
   return (
     <div className="relative">
-      <form onSubmit={handleSubmit} className="relative">
+      <form onSubmit={handleSubmit} role="search" className="relative">
         <div
           className={`
-            relative flex items-center rounded-xl border transition-all duration-200
+            relative flex items-center border bg-paper transition-colors duration-150
             ${isFocused
-              ? 'border-[rgba(59,130,246,0.3)] bg-[var(--axion-surface-2)] shadow-[0_0_20px_rgba(59,130,246,0.1)]'
-              : 'border-[var(--axion-border-subtle)] bg-[var(--axion-surface-1)] hover:border-[rgba(59,130,246,0.15)]'
+              ? 'border-ink ring-[3px] ring-ink/15'
+              : 'border-ink/40 hover:border-ink/70'
             }
           `}
         >
-          <div className="flex items-center pl-4">
+          <div className="flex items-center pl-3.5">
             {isLoading ? (
-              <Sparkles className="h-4 w-4 text-[#3b82f6] animate-pulse" />
+              <Loader2 className="h-4 w-4 animate-spin text-ink" aria-hidden="true" />
             ) : (
-              <Search className="h-4 w-4 text-[#475569]" />
+              <Search className="h-4 w-4 text-ink/50" aria-hidden="true" />
             )}
           </div>
           <input
@@ -71,22 +71,24 @@ export function CommandBar({ onSubmit, recentQueries = [], isLoading }: CommandB
             onFocus={() => { setIsFocused(true); setShowRecent(true) }}
             onBlur={() => { setIsFocused(false); setTimeout(() => setShowRecent(false), 200) }}
             placeholder="Ask a research question across your knowledge graph..."
+            aria-label="Ask a research question"
             disabled={isLoading}
-            className="flex-1 bg-transparent px-3 py-3 text-sm text-[#f0f6ff] placeholder:text-[#334155] focus:outline-none disabled:opacity-50"
+            className="h-11 min-w-0 flex-1 bg-transparent px-3 text-[15px] text-ink placeholder:text-ink/35 focus:outline-none disabled:opacity-60"
           />
-          <div className="flex items-center gap-2 pr-3">
+          <div className="flex items-center gap-2 pr-2.5">
             {!isFocused && !value && (
-              <kbd className="hidden items-center gap-0.5 rounded-md border border-[var(--axion-border-subtle)] bg-[var(--axion-surface-2)] px-1.5 py-0.5 font-mono text-[10px] text-[#334155] sm:flex">
+              <kbd className="cg-mono-meta hidden items-center gap-0.5 border border-ink/30 px-1.5 py-0.5 text-[10px] text-ink/50 sm:flex">
                 ⌘K
               </kbd>
             )}
             {value && (
               <button
                 type="submit"
+                aria-label="Submit research query"
                 disabled={isLoading}
-                className="flex h-6 w-6 items-center justify-center rounded-md bg-[#3b82f6] text-white transition-all duration-150 hover:bg-[#2563eb] disabled:opacity-50"
+                className="flex h-7 w-7 items-center justify-center bg-ink text-paper transition-colors duration-150 hover:bg-ink-soft disabled:opacity-50 focus-visible:outline-none"
               >
-                <ArrowRight className="h-3 w-3" />
+                <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
               </button>
             )}
           </div>
@@ -95,18 +97,24 @@ export function CommandBar({ onSubmit, recentQueries = [], isLoading }: CommandB
 
       {/* Recent Queries Dropdown */}
       {showRecent && recentQueries.length > 0 && !value && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-2 rounded-xl border border-[var(--axion-border-subtle)] bg-[var(--axion-surface-2)] p-1 shadow-[0_8px_32px_rgba(0,0,0,0.5)] animate-fade-up">
-          <div className="px-3 py-2">
-            <span className="text-[10px] font-medium uppercase tracking-wider text-[#334155]">Recent</span>
+        <div
+          role="listbox"
+          aria-label="Recent queries"
+          className="animate-fade-up absolute left-0 right-0 top-full z-50 mt-1 border border-ink/40 bg-paper p-1"
+        >
+          <div className="px-3 pt-2 pb-1.5">
+            <span className="cg-overline text-ink/50">Recent</span>
           </div>
           {recentQueries.slice(0, 5).map((query, i) => (
             <button
               key={i}
+              role="option"
+              aria-selected={false}
               onClick={() => handleRecentSelect(query)}
-              className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-[#94a3b8] transition-colors duration-100 hover:bg-[rgba(59,130,246,0.06)] hover:text-[#f0f6ff]"
+              className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm text-ink-soft transition-colors duration-100 hover:bg-ink/5 hover:text-ink focus-visible:outline-none"
             >
-              <Clock className="h-3.5 w-3.5 shrink-0 text-[#334155]" />
-              <span className="truncate">{query}</span>
+              <Clock className="h-3.5 w-3.5 shrink-0 text-ink/40" aria-hidden="true" />
+              <span className="min-w-0 truncate">{query}</span>
             </button>
           ))}
         </div>

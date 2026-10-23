@@ -1,0 +1,7789 @@
+{
+  "meta": {
+    "generated_at": "2026-10-21",
+    "script": "eval/mine_contradiction_candidates.py",
+    "mode": "text",
+    "model": "none — no LLM calls were made",
+    "gate_value": {
+      "retrieval_pool_max_cosine_distance": 0.55,
+      "min_pair_cosine_distance": 0.05,
+      "production_gate": "not applied — pool is deliberately wider"
+    },
+    "prompt_hash": "n/a — no prompt used",
+    "dataset": {
+      "path": "D:\\AI-Projects\\schimesh\\eval\\Data\\axion_pairs.csv",
+      "rows": 286,
+      "label_column": "label",
+      "used_for": [
+        "exclusions",
+        "sanity check only"
+      ]
+    },
+    "graph_claims": 2389,
+    "claims_queried": 2389,
+    "embedding_coverage": {
+      "claims": 2389,
+      "missing": 0,
+      "legacy_int_fallback_used": 254,
+      "docs_in_collection": 2389
+    },
+    "chroma_id_conventions": {
+      "total": 2389,
+      "elementId_style": 2135,
+      "legacy_int_style": 254,
+      "other": 0
+    },
+    "outputs": {
+      "review_csv": "D:\\AI-Projects\\schimesh\\eval\\human_review\\contradiction_candidates_review.csv",
+      "signals_json": "D:\\AI-Projects\\schimesh\\eval\\results\\mining_signals_2026-10-21.json"
+    }
+  },
+  "report": {
+    "pool": {
+      "size": 1863,
+      "raw_unique_pairs_within_distance": 2116,
+      "retrieval": {
+        "claims_queried": 2389,
+        "neighbor_slots": 19112,
+        "unresolved_neighbor_ids": 0,
+        "self_hits": 2389,
+        "same_paper_hits": 13463,
+        "missing_arxiv_hits": 0,
+        "above_pool_distance_hits": 667,
+        "unique_pairs_within_distance": 2116
+      },
+      "exclusions": {
+        "reviewed_by_claim_ids": 225,
+        "reviewed_by_text": 2,
+        "identical_claim_texts": 0,
+        "duplicate_text_pairs": 26,
+        "empty_text": 0,
+        "distance_below_min": 0,
+        "total_excluded": 253
+      }
+    },
+    "signal_counts": {
+      "shared_benchmark": 28,
+      "shared_model": 78,
+      "opposite_polarity": 139,
+      "numeric_disagreement": 66,
+      "structured_direction": 0
+    },
+    "score_distribution": {
+      "0": 1626,
+      "1": 168,
+      "2": 64,
+      "3": 5,
+      "4": 0,
+      "5": 0
+    },
+    "selection": {
+      "cap": 150,
+      "selected": 150,
+      "per_paper_pair_cap": 5,
+      "skipped_by_paper_pair_cap": 632,
+      "paper_pairs_represented": 78,
+      "eligible_after_paper_pair_cap": 1231,
+      "not_selected_beyond_cap": 1081,
+      "selected_signal_counts": {
+        "shared_benchmark": 26,
+        "shared_model": 65,
+        "opposite_polarity": 67,
+        "numeric_disagreement": 65,
+        "structured_direction": 0
+      },
+      "selected_score_distribution": {
+        "0": 0,
+        "1": 82,
+        "2": 63,
+        "3": 5,
+        "4": 0,
+        "5": 0
+      },
+      "distance": {
+        "n": 150,
+        "min": 0.237618,
+        "median": 0.426496,
+        "max": 0.525002
+      }
+    },
+    "polarity_words": {
+      "positive": [
+        "better",
+        "boost",
+        "boosted",
+        "boosts",
+        "effective",
+        "enhance",
+        "enhanced",
+        "enhances",
+        "exceed",
+        "exceeded",
+        "exceeds",
+        "faster",
+        "gain",
+        "gained",
+        "gains",
+        "help",
+        "helped",
+        "helps",
+        "higher",
+        "improve",
+        "improved",
+        "improvement",
+        "improves",
+        "improving",
+        "increase",
+        "increased",
+        "increases",
+        "increasing",
+        "outperform",
+        "outperformed",
+        "outperforming",
+        "outperforms",
+        "stronger",
+        "succeeds",
+        "success",
+        "superior",
+        "win",
+        "wins",
+        "won"
+      ],
+      "negative": [
+        "decrease",
+        "decreased",
+        "decreases",
+        "decreasing",
+        "degradation",
+        "degrade",
+        "degraded",
+        "degrades",
+        "degrading",
+        "drop",
+        "dropped",
+        "drops",
+        "fail",
+        "failed",
+        "failing",
+        "fails",
+        "failure",
+        "harm",
+        "harms",
+        "hurt",
+        "hurts",
+        "ineffective",
+        "inferior",
+        "lose",
+        "loses",
+        "loss",
+        "losses",
+        "lost",
+        "lower",
+        "reduce",
+        "reduced",
+        "reduces",
+        "slower",
+        "struggle",
+        "struggled",
+        "struggles",
+        "underperform",
+        "underperformed",
+        "underperforms",
+        "weaker",
+        "worse",
+        "worsen",
+        "worsened",
+        "worsens"
+      ]
+    },
+    "benchmark_tokens": [
+      "aime",
+      "alfworld",
+      "alpaca-eval",
+      "alpacaeval",
+      "anli",
+      "arc",
+      "arc-challenge",
+      "arc-easy",
+      "arena-hard",
+      "asdiv",
+      "atari",
+      "babyai",
+      "bbh",
+      "big-bench",
+      "bigbench",
+      "billsum",
+      "boolq",
+      "chartqa",
+      "chatbot-arena",
+      "cifar-10",
+      "cifar-100",
+      "cnn-dailymail",
+      "coco",
+      "codeforces",
+      "cola",
+      "commonsenseqa",
+      "commonvoice",
+      "dm-control",
+      "docvqa",
+      "enwik8",
+      "glue",
+      "govreport",
+      "gpqa",
+      "gqa",
+      "gsm-8k",
+      "gsm8k",
+      "hellaswag",
+      "hotpotqa",
+      "humaneval",
+      "ifeval",
+      "imagenet",
+      "iwslt",
+      "jericho",
+      "lambada",
+      "legalbench",
+      "librispeech",
+      "livecodebench",
+      "lmsys",
+      "longvideobench",
+      "math500",
+      "mathvision",
+      "mathvista",
+      "mbpp",
+      "medqa",
+      "minigrid",
+      "mmlu",
+      "mmlu-pro",
+      "mmlu-redux",
+      "mmmu",
+      "mmmu-pro",
+      "mnli",
+      "mrpc",
+      "mt-bench",
+      "mtbench",
+      "mujoco",
+      "multi-news",
+      "musique",
+      "naturalquestions",
+      "olympiadbench",
+      "openbookqa",
+      "piqa",
+      "procgen",
+      "ptb",
+      "pubmedqa",
+      "qasper",
+      "qnli",
+      "qqp",
+      "rewardbench",
+      "rte",
+      "samsum",
+      "scan",
+      "scienceqa",
+      "scienceworld",
+      "scitldr",
+      "squad",
+      "squad-2",
+      "squad2",
+      "sst-2",
+      "sts-b",
+      "superglue",
+      "svamp",
+      "swe-bench",
+      "swebench",
+      "tabfact",
+      "terminal-bench",
+      "textvqa",
+      "textworld",
+      "triviaqa",
+      "truthfulqa",
+      "videomme",
+      "vqa",
+      "webqs",
+      "webquestions",
+      "webshop",
+      "wikitext",
+      "wikitext-103",
+      "wikitext-2",
+      "winogrande",
+      "wmt",
+      "wnli",
+      "writingprompt",
+      "wt103",
+      "xsum"
+    ],
+    "numeric_window_chars": 120,
+    "sanity_check_reviewed_contradicts": [
+      {
+        "pair_id": "0",
+        "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:15",
+        "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:207",
+        "in_live_graph": true,
+        "score": 0,
+        "signals_fired": [],
+        "signals": {
+          "shared_benchmark": {
+            "fired": false,
+            "tokens": []
+          },
+          "shared_model": {
+            "fired": false,
+            "tokens": []
+          },
+          "opposite_polarity": {
+            "fired": false,
+            "positive_a": [
+              "better"
+            ],
+            "negative_a": [],
+            "positive_b": [
+              "better"
+            ],
+            "negative_b": [],
+            "cross": []
+          },
+          "numeric_disagreement": {
+            "fired": false,
+            "shared_token": null,
+            "number_a": null,
+            "number_b": null,
+            "relative_difference": null
+          },
+          "structured_direction": {
+            "fired": false,
+            "same_subject": false,
+            "same_metric": false,
+            "opposite_direction": false,
+            "subject": null,
+            "metric": null,
+            "direction_a": "",
+            "direction_b": ""
+          }
+        },
+        "cosine_distance": 0.18016,
+        "rank_among_pool": 238,
+        "pool_size": 1863,
+        "would_rank_within_cap_ignoring_paper_pair_cap": false
+      },
+      {
+        "pair_id": "96",
+        "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:11",
+        "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:198",
+        "in_live_graph": true,
+        "score": 0,
+        "signals_fired": [],
+        "signals": {
+          "shared_benchmark": {
+            "fired": false,
+            "tokens": []
+          },
+          "shared_model": {
+            "fired": false,
+            "tokens": []
+          },
+          "opposite_polarity": {
+            "fired": false,
+            "positive_a": [
+              "improves"
+            ],
+            "negative_a": [],
+            "positive_b": [
+              "outperforms"
+            ],
+            "negative_b": [],
+            "cross": []
+          },
+          "numeric_disagreement": {
+            "fired": false,
+            "shared_token": null,
+            "number_a": null,
+            "number_b": null,
+            "relative_difference": null
+          },
+          "structured_direction": {
+            "fired": false,
+            "same_subject": false,
+            "same_metric": false,
+            "opposite_direction": false,
+            "subject": null,
+            "metric": null,
+            "direction_a": "",
+            "direction_b": ""
+          }
+        },
+        "cosine_distance": 0.247491,
+        "rank_among_pool": 243,
+        "pool_size": 1863,
+        "would_rank_within_cap_ignoring_paper_pair_cap": false
+      },
+      {
+        "pair_id": "124",
+        "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:702",
+        "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:1802",
+        "in_live_graph": true,
+        "score": 0,
+        "signals_fired": [],
+        "signals": {
+          "shared_benchmark": {
+            "fired": false,
+            "tokens": []
+          },
+          "shared_model": {
+            "fired": false,
+            "tokens": []
+          },
+          "opposite_polarity": {
+            "fired": false,
+            "positive_a": [
+              "outperforms"
+            ],
+            "negative_a": [],
+            "positive_b": [],
+            "negative_b": [],
+            "cross": []
+          },
+          "numeric_disagreement": {
+            "fired": false,
+            "shared_token": null,
+            "number_a": null,
+            "number_b": null,
+            "relative_difference": null
+          },
+          "structured_direction": {
+            "fired": false,
+            "same_subject": false,
+            "same_metric": false,
+            "opposite_direction": false,
+            "subject": null,
+            "metric": null,
+            "direction_a": "",
+            "direction_b": ""
+          }
+        },
+        "cosine_distance": 0.501931,
+        "rank_among_pool": 1332,
+        "pool_size": 1863,
+        "would_rank_within_cap_ignoring_paper_pair_cap": false
+      },
+      {
+        "pair_id": "215",
+        "claim_id_a": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:200",
+        "claim_id_b": "4:17c98ca7-7e93-4774-b196-eeeb427c5537:11",
+        "in_live_graph": true,
+        "score": 1,
+        "signals_fired": [
+          "opposite_polarity"
+        ],
+        "signals": {
+          "shared_benchmark": {
+            "fired": false,
+            "tokens": []
+          },
+          "shared_model": {
+            "fired": false,
+            "tokens": []
+          },
+          "opposite_polarity": {
+            "fired": true,
+            "positive_a": [],
+            "negative_a": [
+              "struggles"
+            ],
+            "positive_b": [
+              "improves"
+            ],
+            "negative_b": [],
+            "cross": [
+              "struggles->improves"
+            ]
+          },
+          "numeric_disagreement": {
+            "fired": false,
+            "shared_token": null,
+            "number_a": null,
+            "number_b": null,
+            "relative_difference": null
+          },
+          "structured_direction": {
+            "fired": false,
+            "same_subject": false,
+            "same_metric": false,
+            "opposite_direction": false,
+            "subject": null,
+            "metric": null,
+            "direction_a": "",
+            "direction_b": ""
+          }
+        },
+        "cosine_distance": 0.274785,
+        "rank_among_pool": 72,
+        "pool_size": 1863,
+        "would_rank_within_cap_ignoring_paper_pair_cap": true
+      }
+    ],
+    "sanity_check_note": "Only 4 reviewed CONTRADICTS pairs exist; far too few to judge the miner. These pairs are excluded from the candidate pool and were scored in a separate pass for a coverage sanity check only."
+  },
+  "signals_by_pair_id": {
+    "cand_0001": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "Chain-of-Thought"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "higher"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "reduces"
+          ],
+          "cross": [
+            "higher->reduces"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "Chain-of-Thought",
+          "number_a": 13.4,
+          "number_b": 40.0,
+          "relative_difference": 0.665
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 3,
+      "cosine_distance": 0.266888,
+      "paper_pair": [
+        "2201.11903",
+        "2205.10625"
+      ]
+    },
+    "cand_0002": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": true,
+          "tokens": [
+            "SQuAD"
+          ]
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "improvement"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "reduces"
+          ],
+          "cross": [
+            "improvement->reduces"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "SQuAD",
+          "number_a": 2.0,
+          "number_b": 22.1,
+          "relative_difference": 0.909502
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 3,
+      "cosine_distance": 0.4168,
+      "paper_pair": [
+        "2301.13379",
+        "2605.26112v1"
+      ]
+    },
+    "cand_0003": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "V100"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "faster"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "reduced"
+          ],
+          "cross": [
+            "faster->reduced"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "V100",
+          "number_a": 4.1,
+          "number_b": 0.0,
+          "relative_difference": 1.0
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 3,
+      "cosine_distance": 0.459538,
+      "paper_pair": [
+        "2605.23878v1",
+        "2605.26111v1"
+      ]
+    },
+    "cand_0004": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": true,
+          "tokens": [
+            "SQuAD"
+          ]
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "improvement"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "loss",
+            "reduces"
+          ],
+          "cross": [
+            "improvement->loss",
+            "improvement->reduces"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "SQuAD",
+          "number_a": 2.0,
+          "number_b": 20.0,
+          "relative_difference": 0.9
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 3,
+      "cosine_distance": 0.514302,
+      "paper_pair": [
+        "2210.11610",
+        "2605.26112v1"
+      ]
+    },
+    "cand_0005": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "V100"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "faster"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "reduces"
+          ],
+          "cross": [
+            "faster->reduces"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "V100",
+          "number_a": 4.1,
+          "number_b": 25.0,
+          "relative_difference": 0.836
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 3,
+      "cosine_distance": 0.525002,
+      "paper_pair": [
+        "2605.26106v1",
+        "2605.26111v1"
+      ]
+    },
+    "cand_0006": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "F1-score"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "outperforms"
+          ],
+          "negative_a": [],
+          "positive_b": [
+            "improvement"
+          ],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "F1-score",
+          "number_a": 10.0,
+          "number_b": 2.1,
+          "relative_difference": 0.79
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.253102,
+      "paper_pair": [
+        "2605.23901v1",
+        "2605.26087v1"
+      ]
+    },
+    "cand_0007": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "F1-score"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "outperforms"
+          ],
+          "negative_a": [],
+          "positive_b": [
+            "outperforming"
+          ],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "F1-score",
+          "number_a": 10.0,
+          "number_b": 0.84,
+          "relative_difference": 0.916
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.281194,
+      "paper_pair": [
+        "2605.23901v1",
+        "2605.26100v1"
+      ]
+    },
+    "cand_0008": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "Chain-of-Thought"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [],
+          "negative_a": [
+            "reduces"
+          ],
+          "positive_b": [
+            "better"
+          ],
+          "negative_b": [],
+          "cross": [
+            "reduces->better"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.284466,
+      "paper_pair": [
+        "2201.11903",
+        "2210.11610"
+      ]
+    },
+    "cand_0009": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "Chain-of-Thought"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "reduces"
+          ],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "Chain-of-Thought",
+          "number_a": 60.8,
+          "number_b": 40.0,
+          "relative_difference": 0.342105
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.315188,
+      "paper_pair": [
+        "2201.11903",
+        "2205.10625"
+      ]
+    },
+    "cand_0010": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "F1-score"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "improvement"
+          ],
+          "negative_a": [],
+          "positive_b": [
+            "outperforms"
+          ],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "F1-score",
+          "number_a": 2.1,
+          "number_b": 12.5,
+          "relative_difference": 0.832
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.324607,
+      "paper_pair": [
+        "2207.05221",
+        "2605.26087v1"
+      ]
+    },
+    "cand_0011": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": true,
+          "tokens": [
+            "WikiText-103"
+          ]
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "WikiText-103",
+          "number_a": 20.5,
+          "number_b": 17.42,
+          "relative_difference": 0.150244
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.328962,
+      "paper_pair": [
+        "2605.26099v1",
+        "2605.26106v1"
+      ]
+    },
+    "cand_0012": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "NVIDIA"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "NVIDIA",
+          "number_a": 8.0,
+          "number_b": 30.0,
+          "relative_difference": 0.733333
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.329579,
+      "paper_pair": [
+        "2605.26106v1",
+        "2605.26111v1"
+      ]
+    },
+    "cand_0013": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "NVIDIA"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "NVIDIA",
+          "number_a": 8.0,
+          "number_b": 10.0,
+          "relative_difference": 0.2
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.336944,
+      "paper_pair": [
+        "2605.23903v1",
+        "2605.26111v1"
+      ]
+    },
+    "cand_0014": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "IMDB"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "improves"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "IMDB",
+          "number_a": 5.5,
+          "number_b": 85.5,
+          "relative_difference": 0.935673
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.339144,
+      "paper_pair": [
+        "2210.11610",
+        "2605.23901v1"
+      ]
+    },
+    "cand_0015": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "F1-score"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "outperforms"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "F1-score",
+          "number_a": 10.0,
+          "number_b": 92.1,
+          "relative_difference": 0.891422
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.34078,
+      "paper_pair": [
+        "2605.23901v1",
+        "2605.26114v1"
+      ]
+    },
+    "cand_0016": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "NVIDIA"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "NVIDIA",
+          "number_a": 64.0,
+          "number_b": 8.0,
+          "relative_difference": 0.875
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.345241,
+      "paper_pair": [
+        "2605.23903v1",
+        "2605.26111v1"
+      ]
+    },
+    "cand_0017": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "F1-score"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "outperforms"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "F1-score",
+          "number_a": 10.0,
+          "number_b": 0.72,
+          "relative_difference": 0.928
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.361701,
+      "paper_pair": [
+        "2207.05221",
+        "2605.23901v1"
+      ]
+    },
+    "cand_0018": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "NVIDIA"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "NVIDIA",
+          "number_a": 8.0,
+          "number_b": 64.0,
+          "relative_difference": 0.875
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.363071,
+      "paper_pair": [
+        "2605.23903v1",
+        "2605.26111v1"
+      ]
+    },
+    "cand_0019": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": true,
+          "tokens": [
+            "GSM8K"
+          ]
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [
+            "improves"
+          ],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "GSM8K",
+          "number_a": 95.5,
+          "number_b": 82.1,
+          "relative_difference": 0.140314
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "increases",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.363399,
+      "paper_pair": [
+        "2210.11610",
+        "2607.28627v1"
+      ]
+    },
+    "cand_0020": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "NVIDIA"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "NVIDIA",
+          "number_a": 12.0,
+          "number_b": 64.0,
+          "relative_difference": 0.8125
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.365667,
+      "paper_pair": [
+        "2605.23903v1",
+        "2605.26100v1"
+      ]
+    },
+    "cand_0021": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "F1-score"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "outperforming"
+          ],
+          "negative_a": [],
+          "positive_b": [
+            "outperforms"
+          ],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "F1-score",
+          "number_a": 0.84,
+          "number_b": 12.5,
+          "relative_difference": 0.9328
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.367707,
+      "paper_pair": [
+        "2207.05221",
+        "2605.26100v1"
+      ]
+    },
+    "cand_0022": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "F1-score"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "improvement"
+          ],
+          "negative_a": [],
+          "positive_b": [
+            "outperforming"
+          ],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "F1-score",
+          "number_a": 2.1,
+          "number_b": 0.84,
+          "relative_difference": 0.6
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.369358,
+      "paper_pair": [
+        "2605.26087v1",
+        "2605.26100v1"
+      ]
+    },
+    "cand_0023": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "NVIDIA"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "NVIDIA",
+          "number_a": 3.0,
+          "number_b": 64.0,
+          "relative_difference": 0.953125
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.370203,
+      "paper_pair": [
+        "2605.23903v1",
+        "2605.26108v1"
+      ]
+    },
+    "cand_0024": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "NVIDIA"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "NVIDIA",
+          "number_a": 8.0,
+          "number_b": 3.0,
+          "relative_difference": 0.625
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.371325,
+      "paper_pair": [
+        "2605.26108v1",
+        "2605.26111v1"
+      ]
+    },
+    "cand_0025": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "V100"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "reduces"
+          ],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "V100",
+          "number_a": 20.0,
+          "number_b": 25.0,
+          "relative_difference": 0.2
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.378739,
+      "paper_pair": [
+        "2605.26106v1",
+        "2605.26112v1"
+      ]
+    },
+    "cand_0026": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "V100"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "reduces"
+          ],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "V100",
+          "number_a": 3.0,
+          "number_b": 25.0,
+          "relative_difference": 0.88
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.381535,
+      "paper_pair": [
+        "2605.26106v1",
+        "2605.26108v1"
+      ]
+    },
+    "cand_0027": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "NVIDIA"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "faster"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "NVIDIA",
+          "number_a": 1.8,
+          "number_b": 12.0,
+          "relative_difference": 0.85
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.38281,
+      "paper_pair": [
+        "2605.23878v1",
+        "2605.26100v1"
+      ]
+    },
+    "cand_0028": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "F1-score"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "outperforms"
+          ],
+          "negative_a": [],
+          "positive_b": [
+            "outperforms"
+          ],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "F1-score",
+          "number_a": 12.5,
+          "number_b": 5.0,
+          "relative_difference": 0.6
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.383605,
+      "paper_pair": [
+        "2207.05221",
+        "2605.23901v1"
+      ]
+    },
+    "cand_0029": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "V100"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [
+            "reduces"
+          ],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "V100",
+          "number_a": 25.0,
+          "number_b": 12.0,
+          "relative_difference": 0.52
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.392797,
+      "paper_pair": [
+        "2605.26100v1",
+        "2605.26106v1"
+      ]
+    },
+    "cand_0030": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "V100"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "reduced"
+          ],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "V100",
+          "number_a": 12.0,
+          "number_b": 0.0,
+          "relative_difference": 1.0
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.397755,
+      "paper_pair": [
+        "2605.23878v1",
+        "2605.26100v1"
+      ]
+    },
+    "cand_0031": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "NVIDIA",
+            "V100"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "NVIDIA",
+          "number_a": 30.0,
+          "number_b": 10.0,
+          "relative_difference": 0.666667
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.400094,
+      "paper_pair": [
+        "2605.23903v1",
+        "2605.26106v1"
+      ]
+    },
+    "cand_0032": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "V100"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "V100",
+          "number_a": 20.0,
+          "number_b": 12.0,
+          "relative_difference": 0.4
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.407347,
+      "paper_pair": [
+        "2605.26100v1",
+        "2605.26112v1"
+      ]
+    },
+    "cand_0033": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "F1-score"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "improvement"
+          ],
+          "negative_a": [],
+          "positive_b": [
+            "outperforms"
+          ],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "F1-score",
+          "number_a": 2.1,
+          "number_b": 5.0,
+          "relative_difference": 0.58
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.409179,
+      "paper_pair": [
+        "2605.23901v1",
+        "2605.26087v1"
+      ]
+    },
+    "cand_0034": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "FID"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "improves"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "FID",
+          "number_a": 23.1,
+          "number_b": 34.1,
+          "relative_difference": 0.322581
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.409331,
+      "paper_pair": [
+        "2605.23903v1",
+        "2605.26108v1"
+      ]
+    },
+    "cand_0035": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "FID"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "improves"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "FID",
+          "number_a": 18.2,
+          "number_b": 34.1,
+          "relative_difference": 0.466276
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.410273,
+      "paper_pair": [
+        "2605.23903v1",
+        "2605.26108v1"
+      ]
+    },
+    "cand_0036": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "F1-score"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "improvement"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "F1-score",
+          "number_a": 2.1,
+          "number_b": 92.1,
+          "relative_difference": 0.977199
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.412052,
+      "paper_pair": [
+        "2605.26087v1",
+        "2605.26114v1"
+      ]
+    },
+    "cand_0037": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "F1-score"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "outperforming"
+          ],
+          "negative_a": [],
+          "positive_b": [
+            "outperforms"
+          ],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "F1-score",
+          "number_a": 92.1,
+          "number_b": 12.5,
+          "relative_difference": 0.864278
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.422933,
+      "paper_pair": [
+        "2207.05221",
+        "2605.26106v1"
+      ]
+    },
+    "cand_0038": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "H100"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "H100",
+          "number_a": 8.0,
+          "number_b": 4.0,
+          "relative_difference": 0.5
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": "no_effect"
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.42306,
+      "paper_pair": [
+        "2605.26111v1",
+        "2607.28627v1"
+      ]
+    },
+    "cand_0039": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "NVIDIA"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "NVIDIA",
+          "number_a": 30.0,
+          "number_b": 64.0,
+          "relative_difference": 0.53125
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.423806,
+      "paper_pair": [
+        "2605.23903v1",
+        "2605.26106v1"
+      ]
+    },
+    "cand_0040": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "FID"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [
+            "improves"
+          ],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "FID",
+          "number_a": 12.45,
+          "number_b": 23.1,
+          "relative_difference": 0.461039
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.427309,
+      "paper_pair": [
+        "2605.23902v1",
+        "2605.26108v1"
+      ]
+    },
+    "cand_0041": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "F1-score"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [
+            "outperforms"
+          ],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "F1-score",
+          "number_a": 92.1,
+          "number_b": 12.5,
+          "relative_difference": 0.864278
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.430298,
+      "paper_pair": [
+        "2207.05221",
+        "2605.26092v1"
+      ]
+    },
+    "cand_0042": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "NVIDIA",
+            "V100"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "NVIDIA",
+          "number_a": 35000.0,
+          "number_b": 30.0,
+          "relative_difference": 0.999143
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.432481,
+      "paper_pair": [
+        "2605.26106v1",
+        "2605.26108v1"
+      ]
+    },
+    "cand_0043": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": true,
+          "tokens": [
+            "CIFAR-10"
+          ]
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [
+            "reduces"
+          ],
+          "positive_b": [],
+          "negative_b": [
+            "reduces"
+          ],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "CIFAR-10",
+          "number_a": 30.0,
+          "number_b": 12.2,
+          "relative_difference": 0.593333
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.433148,
+      "paper_pair": [
+        "2210.11610",
+        "2605.26087v1"
+      ]
+    },
+    "cand_0044": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "NVIDIA"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "NVIDIA",
+          "number_a": 35.6,
+          "number_b": 0.57,
+          "relative_difference": 0.983989
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.433237,
+      "paper_pair": [
+        "2605.23859v1",
+        "2605.26115v1"
+      ]
+    },
+    "cand_0045": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "V100"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "reduced"
+          ],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "V100",
+          "number_a": 1.0,
+          "number_b": 0.0,
+          "relative_difference": 1.0
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.435536,
+      "paper_pair": [
+        "2605.23878v1",
+        "2605.26092v1"
+      ]
+    },
+    "cand_0046": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "F1-score"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "outperforms"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "F1-score",
+          "number_a": 10.0,
+          "number_b": 92.1,
+          "relative_difference": 0.891422
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.436885,
+      "paper_pair": [
+        "2605.23901v1",
+        "2605.26092v1"
+      ]
+    },
+    "cand_0047": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "NVIDIA"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "NVIDIA",
+          "number_a": 8.0,
+          "number_b": 35000.0,
+          "relative_difference": 0.999771
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.438609,
+      "paper_pair": [
+        "2605.26108v1",
+        "2605.26111v1"
+      ]
+    },
+    "cand_0048": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": true,
+          "tokens": [
+            "CIFAR-10"
+          ]
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [
+            "outperforms"
+          ],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "CIFAR-10",
+          "number_a": 1.0,
+          "number_b": 8.0,
+          "relative_difference": 0.875
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.439811,
+      "paper_pair": [
+        "2605.23901v1",
+        "2605.26087v1"
+      ]
+    },
+    "cand_0049": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "VLM"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "increase"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "decreases",
+            "degrades"
+          ],
+          "cross": [
+            "increase->decreases",
+            "increase->degrades"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": "yes"
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.443282,
+      "paper_pair": [
+        "2605.23898v1",
+        "2607.28609v1"
+      ]
+    },
+    "cand_0050": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "F1-score"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "improvement"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "F1-score",
+          "number_a": 2.1,
+          "number_b": 0.72,
+          "relative_difference": 0.657143
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.445243,
+      "paper_pair": [
+        "2207.05221",
+        "2605.26087v1"
+      ]
+    },
+    "cand_0051": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": true,
+          "tokens": [
+            "SQuAD"
+          ]
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "reduces"
+          ],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "SQuAD",
+          "number_a": 2.0,
+          "number_b": 22.1,
+          "relative_difference": 0.909502
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.447906,
+      "paper_pair": [
+        "2301.13379",
+        "2605.26112v1"
+      ]
+    },
+    "cand_0052": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "F1-score"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "F1-score",
+          "number_a": 92.1,
+          "number_b": 0.72,
+          "relative_difference": 0.992182
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.45225,
+      "paper_pair": [
+        "2207.05221",
+        "2605.26114v1"
+      ]
+    },
+    "cand_0053": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "FID"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [
+            "improves"
+          ],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "FID",
+          "number_a": 12.45,
+          "number_b": 18.2,
+          "relative_difference": 0.315934
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.45348,
+      "paper_pair": [
+        "2605.23902v1",
+        "2605.26108v1"
+      ]
+    },
+    "cand_0054": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": true,
+          "tokens": [
+            "GLUE"
+          ]
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "increase"
+          ],
+          "negative_a": [],
+          "positive_b": [
+            "gain"
+          ],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "GLUE",
+          "number_a": 15.0,
+          "number_b": 2.5,
+          "relative_difference": 0.833333
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.453743,
+      "paper_pair": [
+        "2605.26106v1",
+        "2605.26112v1"
+      ]
+    },
+    "cand_0055": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "FID"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "FID",
+          "number_a": 12.45,
+          "number_b": 25.8,
+          "relative_difference": 0.517442
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": "increases"
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.458983,
+      "paper_pair": [
+        "2605.23902v1",
+        "2607.28624v1"
+      ]
+    },
+    "cand_0056": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "F1-score"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "outperforms"
+          ],
+          "negative_a": [],
+          "positive_b": [
+            "outperforming"
+          ],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "F1-score",
+          "number_a": 10.0,
+          "number_b": 92.1,
+          "relative_difference": 0.891422
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.475141,
+      "paper_pair": [
+        "2605.23901v1",
+        "2605.26106v1"
+      ]
+    },
+    "cand_0057": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "F1-score"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "outperforming"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "F1-score",
+          "number_a": 0.84,
+          "number_b": 0.72,
+          "relative_difference": 0.142857
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.483355,
+      "paper_pair": [
+        "2207.05221",
+        "2605.26100v1"
+      ]
+    },
+    "cand_0058": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "GPT-3"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [],
+          "negative_a": [
+            "struggles"
+          ],
+          "positive_b": [
+            "outperforms"
+          ],
+          "negative_b": [],
+          "cross": [
+            "struggles->outperforms"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.488786,
+      "paper_pair": [
+        "2112.00114",
+        "2201.11903"
+      ]
+    },
+    "cand_0059": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "LoRA"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "LoRA",
+          "number_a": 512.0,
+          "number_b": 256.0,
+          "relative_difference": 0.5
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.489922,
+      "paper_pair": [
+        "2605.26102v1",
+        "2605.26111v1"
+      ]
+    },
+    "cand_0060": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "PSNR"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "improvement"
+          ],
+          "negative_a": [],
+          "positive_b": [
+            "improves"
+          ],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "PSNR",
+          "number_a": 25.67,
+          "number_b": 12.0,
+          "relative_difference": 0.532528
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.49398,
+      "paper_pair": [
+        "2605.23903v1",
+        "2605.26111v1"
+      ]
+    },
+    "cand_0061": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "NVIDIA"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "NVIDIA",
+          "number_a": 2.1,
+          "number_b": 8.0,
+          "relative_difference": 0.7375
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.495557,
+      "paper_pair": [
+        "2605.23859v1",
+        "2605.26111v1"
+      ]
+    },
+    "cand_0062": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "dB",
+            "PSNR"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "improvement"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "dB",
+          "number_a": 3.2,
+          "number_b": 34.2,
+          "relative_difference": 0.906433
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.498367,
+      "paper_pair": [
+        "2605.23903v1",
+        "2605.26111v1"
+      ]
+    },
+    "cand_0063": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "F1-score"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "outperforming"
+          ],
+          "negative_a": [],
+          "positive_b": [
+            "outperforming"
+          ],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "F1-score",
+          "number_a": 92.1,
+          "number_b": 0.84,
+          "relative_difference": 0.990879
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.501468,
+      "paper_pair": [
+        "2605.26100v1",
+        "2605.26106v1"
+      ]
+    },
+    "cand_0064": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "NVIDIA",
+            "V100"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "NVIDIA",
+          "number_a": 35000.0,
+          "number_b": 200.0,
+          "relative_difference": 0.994286
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.502556,
+      "paper_pair": [
+        "2605.23903v1",
+        "2605.26108v1"
+      ]
+    },
+    "cand_0065": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "GPT-3"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [
+            "struggles"
+          ],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "GPT-3",
+          "number_a": 90.0,
+          "number_b": 33.0,
+          "relative_difference": 0.633333
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.505165,
+      "paper_pair": [
+        "2112.00114",
+        "2201.11903"
+      ]
+    },
+    "cand_0066": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "MLLM"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [
+            "loss"
+          ],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "MLLM",
+          "number_a": 80.0,
+          "number_b": 0.95,
+          "relative_difference": 0.988125
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.505621,
+      "paper_pair": [
+        "2605.23902v1",
+        "2605.26104v1"
+      ]
+    },
+    "cand_0067": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": true,
+          "tokens": [
+            "SQuAD"
+          ]
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [
+            "outperforms"
+          ],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "SQuAD",
+          "number_a": 2.0,
+          "number_b": 10.0,
+          "relative_difference": 0.8
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.506843,
+      "paper_pair": [
+        "2605.26106v1",
+        "2605.26112v1"
+      ]
+    },
+    "cand_0068": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "NVIDIA"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": true,
+          "shared_token": "NVIDIA",
+          "number_a": 15.0,
+          "number_b": 35000.0,
+          "relative_difference": 0.999571
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 2,
+      "cosine_distance": 0.509267,
+      "paper_pair": [
+        "2605.23903v1",
+        "2605.26108v1"
+      ]
+    },
+    "cand_0069": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "better"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "struggles"
+          ],
+          "cross": [
+            "better->struggles"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.237618,
+      "paper_pair": [
+        "2201.11903",
+        "2205.10625"
+      ]
+    },
+    "cand_0070": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": true,
+          "tokens": [
+            "GSM8K"
+          ]
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.251444,
+      "paper_pair": [
+        "2201.11903",
+        "2210.11610"
+      ]
+    },
+    "cand_0071": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "improved"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "reduces"
+          ],
+          "cross": [
+            "improved->reduces"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.279219,
+      "paper_pair": [
+        "2201.11903",
+        "2205.10625"
+      ]
+    },
+    "cand_0072": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": true,
+          "tokens": [
+            "GSM8K"
+          ]
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "improves",
+            "increasing"
+          ],
+          "negative_a": [],
+          "positive_b": [
+            "improves"
+          ],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.290883,
+      "paper_pair": [
+        "2210.11610",
+        "2605.26106v1"
+      ]
+    },
+    "cand_0073": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": true,
+          "tokens": [
+            "GSM8K"
+          ]
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "improves",
+            "increasing"
+          ],
+          "negative_a": [],
+          "positive_b": [
+            "improves"
+          ],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.315824,
+      "paper_pair": [
+        "2210.11610",
+        "2605.26106v1"
+      ]
+    },
+    "cand_0074": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "improvement"
+          ],
+          "negative_a": [],
+          "positive_b": [
+            "increasing"
+          ],
+          "negative_b": [
+            "decreases"
+          ],
+          "cross": [
+            "improvement->decreases"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.318112,
+      "paper_pair": [
+        "2112.00114",
+        "2210.11610"
+      ]
+    },
+    "cand_0075": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": true,
+          "tokens": [
+            "GSM8K"
+          ]
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "improves"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "unclear",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.331547,
+      "paper_pair": [
+        "2210.11610",
+        "2607.28601v1"
+      ]
+    },
+    "cand_0076": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": true,
+          "tokens": [
+            "GSM8K"
+          ]
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "improves",
+            "increasing"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.336794,
+      "paper_pair": [
+        "2210.11610",
+        "2605.26106v1"
+      ]
+    },
+    "cand_0077": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [],
+          "negative_a": [
+            "reduces"
+          ],
+          "positive_b": [
+            "increase",
+            "increases"
+          ],
+          "negative_b": [],
+          "cross": [
+            "reduces->increase",
+            "reduces->increases"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.358036,
+      "paper_pair": [
+        "2605.26100v1",
+        "2605.26110v1"
+      ]
+    },
+    "cand_0078": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "LORA"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [
+            "gain"
+          ],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.36273,
+      "paper_pair": [
+        "2605.26102v1",
+        "2605.26104v1"
+      ]
+    },
+    "cand_0079": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "improvement"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "reduces"
+          ],
+          "cross": [
+            "improvement->reduces"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.362856,
+      "paper_pair": [
+        "2207.05221",
+        "2210.11610"
+      ]
+    },
+    "cand_0080": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": true,
+          "tokens": [
+            "GSM8K"
+          ]
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "improves",
+            "increasing"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.368154,
+      "paper_pair": [
+        "2210.11610",
+        "2605.26106v1"
+      ]
+    },
+    "cand_0081": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": true,
+          "tokens": [
+            "GSM8K"
+          ]
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "improves",
+            "increasing"
+          ],
+          "negative_a": [],
+          "positive_b": [
+            "improves"
+          ],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": "unclear"
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.377345,
+      "paper_pair": [
+        "2605.26106v1",
+        "2607.28601v1"
+      ]
+    },
+    "cand_0082": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [],
+          "negative_a": [
+            "reduces"
+          ],
+          "positive_b": [
+            "outperforms"
+          ],
+          "negative_b": [
+            "drop"
+          ],
+          "cross": [
+            "reduces->outperforms"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.378759,
+      "paper_pair": [
+        "2207.05221",
+        "2210.11610"
+      ]
+    },
+    "cand_0083": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [],
+          "negative_a": [
+            "decrease"
+          ],
+          "positive_b": [
+            "higher"
+          ],
+          "negative_b": [],
+          "cross": [
+            "decrease->higher"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.380396,
+      "paper_pair": [
+        "2112.00114",
+        "2605.26099v1"
+      ]
+    },
+    "cand_0084": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": true,
+          "tokens": [
+            "GSM8K"
+          ]
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "improves",
+            "increasing"
+          ],
+          "negative_a": [],
+          "positive_b": [
+            "outperforms"
+          ],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": "increases"
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.384666,
+      "paper_pair": [
+        "2605.26106v1",
+        "2607.28627v1"
+      ]
+    },
+    "cand_0085": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "increasing"
+          ],
+          "negative_a": [
+            "decreases"
+          ],
+          "positive_b": [
+            "outperforms"
+          ],
+          "negative_b": [],
+          "cross": [
+            "decreases->outperforms"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.38878,
+      "paper_pair": [
+        "2112.00114",
+        "2605.26106v1"
+      ]
+    },
+    "cand_0086": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": true,
+          "tokens": [
+            "GSM8K"
+          ]
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "improves",
+            "increasing"
+          ],
+          "negative_a": [],
+          "positive_b": [
+            "improves"
+          ],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": "unclear"
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.388783,
+      "paper_pair": [
+        "2605.26106v1",
+        "2607.28601v1"
+      ]
+    },
+    "cand_0087": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "improves"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "reduces"
+          ],
+          "cross": [
+            "improves->reduces"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.389122,
+      "paper_pair": [
+        "2605.23898v1",
+        "2605.26104v1"
+      ]
+    },
+    "cand_0088": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "better"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "degradation",
+            "loss"
+          ],
+          "cross": [
+            "better->degradation",
+            "better->loss"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "increases",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.389608,
+      "paper_pair": [
+        "2605.23901v1",
+        "2607.28624v1"
+      ]
+    },
+    "cand_0089": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": true,
+          "tokens": [
+            "GSM8K"
+          ]
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.392108,
+      "paper_pair": [
+        "2201.11903",
+        "2210.11610"
+      ]
+    },
+    "cand_0090": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [],
+          "negative_a": [
+            "reduces"
+          ],
+          "positive_b": [
+            "increase"
+          ],
+          "negative_b": [],
+          "cross": [
+            "reduces->increase"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.395289,
+      "paper_pair": [
+        "2605.26102v1",
+        "2605.26111v1"
+      ]
+    },
+    "cand_0091": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [],
+          "negative_a": [
+            "degradation"
+          ],
+          "positive_b": [
+            "effective"
+          ],
+          "negative_b": [],
+          "cross": [
+            "degradation->effective"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.396758,
+      "paper_pair": [
+        "2605.23901v1",
+        "2605.26092v1"
+      ]
+    },
+    "cand_0092": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [],
+          "negative_a": [
+            "reduce"
+          ],
+          "positive_b": [
+            "faster"
+          ],
+          "negative_b": [],
+          "cross": [
+            "reduce->faster"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.39848,
+      "paper_pair": [
+        "2605.23904v1",
+        "2605.26112v1"
+      ]
+    },
+    "cand_0093": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": true,
+          "tokens": [
+            "GSM8K"
+          ]
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "improves",
+            "increasing"
+          ],
+          "negative_a": [],
+          "positive_b": [
+            "outperforms"
+          ],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": "increases"
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.398917,
+      "paper_pair": [
+        "2605.26106v1",
+        "2607.28627v1"
+      ]
+    },
+    "cand_0094": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [],
+          "negative_a": [
+            "reduces"
+          ],
+          "positive_b": [
+            "outperforms"
+          ],
+          "negative_b": [],
+          "cross": [
+            "reduces->outperforms"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.401397,
+      "paper_pair": [
+        "2207.05221",
+        "2605.23901v1"
+      ]
+    },
+    "cand_0095": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [],
+          "negative_a": [
+            "reduced"
+          ],
+          "positive_b": [
+            "effective"
+          ],
+          "negative_b": [],
+          "cross": [
+            "reduced->effective"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.402738,
+      "paper_pair": [
+        "2205.10625",
+        "2605.23859v1"
+      ]
+    },
+    "cand_0096": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": true,
+          "tokens": [
+            "GSM8K"
+          ]
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "improves",
+            "increasing"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.408306,
+      "paper_pair": [
+        "2201.11903",
+        "2605.26106v1"
+      ]
+    },
+    "cand_0097": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "outperforms"
+          ],
+          "negative_a": [],
+          "positive_b": [
+            "outperforms"
+          ],
+          "negative_b": [
+            "drop"
+          ],
+          "cross": [
+            "outperforms->drop"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.4093,
+      "paper_pair": [
+        "2207.05221",
+        "2210.11610"
+      ]
+    },
+    "cand_0098": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "outperforms"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "degradation"
+          ],
+          "cross": [
+            "outperforms->degradation"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.409414,
+      "paper_pair": [
+        "2605.23901v1",
+        "2605.26087v1"
+      ]
+    },
+    "cand_0099": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": true,
+          "tokens": [
+            "GSM8K"
+          ]
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "outperforms"
+          ],
+          "negative_a": [],
+          "positive_b": [
+            "improves"
+          ],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "increases",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.411237,
+      "paper_pair": [
+        "2210.11610",
+        "2607.28627v1"
+      ]
+    },
+    "cand_0100": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "better"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "degradation",
+            "loss"
+          ],
+          "cross": [
+            "better->degradation",
+            "better->loss"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "increases",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.412498,
+      "paper_pair": [
+        "2605.23901v1",
+        "2607.28624v1"
+      ]
+    },
+    "cand_0101": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": true,
+          "tokens": [
+            "GSM8K"
+          ]
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "improves"
+          ],
+          "negative_a": [],
+          "positive_b": [
+            "improves"
+          ],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "increases",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.412882,
+      "paper_pair": [
+        "2210.11610",
+        "2607.28627v1"
+      ]
+    },
+    "cand_0102": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "improves"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "degradation"
+          ],
+          "cross": [
+            "improves->degradation"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.413213,
+      "paper_pair": [
+        "2605.23898v1",
+        "2605.23901v1"
+      ]
+    },
+    "cand_0103": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "improves"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "reduces"
+          ],
+          "cross": [
+            "improves->reduces"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.414305,
+      "paper_pair": [
+        "2201.11903",
+        "2205.10625"
+      ]
+    },
+    "cand_0104": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "NVIDIA"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.417941,
+      "paper_pair": [
+        "2605.23859v1",
+        "2605.26115v1"
+      ]
+    },
+    "cand_0105": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": true,
+          "tokens": [
+            "GSM8K"
+          ]
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "improves"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "unclear",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.419742,
+      "paper_pair": [
+        "2201.11903",
+        "2607.28601v1"
+      ]
+    },
+    "cand_0106": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "GB"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.424516,
+      "paper_pair": [
+        "2605.23859v1",
+        "2605.23903v1"
+      ]
+    },
+    "cand_0107": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [],
+          "negative_a": [
+            "reduce"
+          ],
+          "positive_b": [
+            "improves"
+          ],
+          "negative_b": [],
+          "cross": [
+            "reduce->improves"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.425683,
+      "paper_pair": [
+        "2605.23904v1",
+        "2605.26112v1"
+      ]
+    },
+    "cand_0108": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "increase"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "reduce"
+          ],
+          "cross": [
+            "increase->reduce"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.427719,
+      "paper_pair": [
+        "2207.05221",
+        "2605.23903v1"
+      ]
+    },
+    "cand_0109": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [],
+          "negative_a": [
+            "degradation"
+          ],
+          "positive_b": [
+            "improvement"
+          ],
+          "negative_b": [
+            "degradation"
+          ],
+          "cross": [
+            "degradation->improvement"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.427891,
+      "paper_pair": [
+        "2605.23901v1",
+        "2605.26092v1"
+      ]
+    },
+    "cand_0110": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [],
+          "negative_a": [
+            "reduces"
+          ],
+          "positive_b": [
+            "improves"
+          ],
+          "negative_b": [],
+          "cross": [
+            "reduces->improves"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.429097,
+      "paper_pair": [
+        "2207.05221",
+        "2605.23859v1"
+      ]
+    },
+    "cand_0111": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [],
+          "negative_a": [
+            "degradation"
+          ],
+          "positive_b": [
+            "improvement"
+          ],
+          "negative_b": [
+            "degradation"
+          ],
+          "cross": [
+            "degradation->improvement"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.429671,
+      "paper_pair": [
+        "2605.23901v1",
+        "2605.26092v1"
+      ]
+    },
+    "cand_0112": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "faster"
+          ],
+          "negative_a": [
+            "reduced"
+          ],
+          "positive_b": [
+            "increase"
+          ],
+          "negative_b": [],
+          "cross": [
+            "reduced->increase"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.432747,
+      "paper_pair": [
+        "2605.23898v1",
+        "2605.23901v1"
+      ]
+    },
+    "cand_0113": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [],
+          "negative_a": [
+            "reduce"
+          ],
+          "positive_b": [
+            "improves"
+          ],
+          "negative_b": [],
+          "cross": [
+            "reduce->improves"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.433439,
+      "paper_pair": [
+        "2605.23904v1",
+        "2605.26112v1"
+      ]
+    },
+    "cand_0114": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "improvement"
+          ],
+          "negative_a": [],
+          "positive_b": [
+            "outperforms"
+          ],
+          "negative_b": [
+            "drop"
+          ],
+          "cross": [
+            "improvement->drop"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.433766,
+      "paper_pair": [
+        "2210.11610",
+        "2605.23901v1"
+      ]
+    },
+    "cand_0115": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "improves"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "lower"
+          ],
+          "cross": [
+            "improves->lower"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.43395,
+      "paper_pair": [
+        "2205.10625",
+        "2605.23859v1"
+      ]
+    },
+    "cand_0116": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "higher"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "degradation",
+            "loss"
+          ],
+          "cross": [
+            "higher->degradation",
+            "higher->loss"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "modestly",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.434277,
+      "paper_pair": [
+        "2605.23901v1",
+        "2607.28611v1"
+      ]
+    },
+    "cand_0117": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "faster"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "reduces"
+          ],
+          "cross": [
+            "faster->reduces"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.435312,
+      "paper_pair": [
+        "2605.26110v1",
+        "2605.26111v1"
+      ]
+    },
+    "cand_0118": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [],
+          "negative_a": [
+            "reduce"
+          ],
+          "positive_b": [
+            "increase"
+          ],
+          "negative_b": [],
+          "cross": [
+            "reduce->increase"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.435725,
+      "paper_pair": [
+        "2605.23904v1",
+        "2605.26112v1"
+      ]
+    },
+    "cand_0119": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "better"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "loss"
+          ],
+          "cross": [
+            "better->loss"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "increases",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.436945,
+      "paper_pair": [
+        "2605.23901v1",
+        "2607.28624v1"
+      ]
+    },
+    "cand_0120": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "VLM"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "increase"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": "unclear"
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.438789,
+      "paper_pair": [
+        "2605.23898v1",
+        "2607.28624v1"
+      ]
+    },
+    "cand_0121": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [],
+          "negative_a": [
+            "fail",
+            "lower"
+          ],
+          "positive_b": [
+            "outperforms"
+          ],
+          "negative_b": [],
+          "cross": [
+            "fail->outperforms",
+            "lower->outperforms"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.438831,
+      "paper_pair": [
+        "2112.00114",
+        "2605.26106v1"
+      ]
+    },
+    "cand_0122": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "increasing"
+          ],
+          "negative_a": [
+            "decreases"
+          ],
+          "positive_b": [
+            "improves"
+          ],
+          "negative_b": [],
+          "cross": [
+            "decreases->improves"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.43898,
+      "paper_pair": [
+        "2112.00114",
+        "2605.23901v1"
+      ]
+    },
+    "cand_0123": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "increasing"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "reduces"
+          ],
+          "cross": [
+            "increasing->reduces"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.439648,
+      "paper_pair": [
+        "2605.26099v1",
+        "2605.26106v1"
+      ]
+    },
+    "cand_0124": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [],
+          "negative_a": [
+            "reduces"
+          ],
+          "positive_b": [
+            "improves"
+          ],
+          "negative_b": [],
+          "cross": [
+            "reduces->improves"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.440321,
+      "paper_pair": [
+        "2605.23903v1",
+        "2605.26105v1"
+      ]
+    },
+    "cand_0125": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "LoRA"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "gain"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.440528,
+      "paper_pair": [
+        "2605.26102v1",
+        "2605.26104v1"
+      ]
+    },
+    "cand_0126": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "increase"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "reduces"
+          ],
+          "cross": [
+            "increase->reduces"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.441391,
+      "paper_pair": [
+        "2605.23898v1",
+        "2605.26104v1"
+      ]
+    },
+    "cand_0127": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "higher"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "degradation",
+            "loss"
+          ],
+          "cross": [
+            "higher->degradation",
+            "higher->loss"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "modestly",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.442563,
+      "paper_pair": [
+        "2605.23901v1",
+        "2607.28611v1"
+      ]
+    },
+    "cand_0128": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [],
+          "negative_a": [
+            "struggle"
+          ],
+          "positive_b": [
+            "improves"
+          ],
+          "negative_b": [],
+          "cross": [
+            "struggle->improves"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.44311,
+      "paper_pair": [
+        "2605.23898v1",
+        "2605.26104v1"
+      ]
+    },
+    "cand_0129": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "faster"
+          ],
+          "negative_a": [
+            "reduced"
+          ],
+          "positive_b": [],
+          "negative_b": [
+            "reduces"
+          ],
+          "cross": [
+            "faster->reduces"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.445561,
+      "paper_pair": [
+        "2605.23898v1",
+        "2605.26112v1"
+      ]
+    },
+    "cand_0130": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "outperforms"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "reduces"
+          ],
+          "cross": [
+            "outperforms->reduces"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.446626,
+      "paper_pair": [
+        "2605.23901v1",
+        "2605.26112v1"
+      ]
+    },
+    "cand_0131": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "outperforms"
+          ],
+          "negative_a": [],
+          "positive_b": [
+            "outperforms"
+          ],
+          "negative_b": [
+            "drop"
+          ],
+          "cross": [
+            "outperforms->drop"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.446788,
+      "paper_pair": [
+        "2210.11610",
+        "2605.23901v1"
+      ]
+    },
+    "cand_0132": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [],
+          "negative_a": [
+            "degrade"
+          ],
+          "positive_b": [
+            "increase"
+          ],
+          "negative_b": [
+            "degradation"
+          ],
+          "cross": [
+            "degrade->increase"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.447021,
+      "paper_pair": [
+        "2605.23878v1",
+        "2605.23901v1"
+      ]
+    },
+    "cand_0133": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": true,
+          "tokens": [
+            "GSM8K"
+          ]
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "improves"
+          ],
+          "negative_a": [],
+          "positive_b": [
+            "improves"
+          ],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "unclear",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.44738,
+      "paper_pair": [
+        "2210.11610",
+        "2607.28601v1"
+      ]
+    },
+    "cand_0134": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "increase"
+          ],
+          "negative_a": [
+            "degradation"
+          ],
+          "positive_b": [
+            "higher"
+          ],
+          "negative_b": [],
+          "cross": [
+            "degradation->higher"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": "modestly"
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.447381,
+      "paper_pair": [
+        "2605.23878v1",
+        "2607.28611v1"
+      ]
+    },
+    "cand_0135": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [],
+          "negative_a": [
+            "reduces"
+          ],
+          "positive_b": [
+            "increase"
+          ],
+          "negative_b": [],
+          "cross": [
+            "reduces->increase"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.44755,
+      "paper_pair": [
+        "2605.23901v1",
+        "2605.26110v1"
+      ]
+    },
+    "cand_0136": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [],
+          "negative_a": [
+            "decrease"
+          ],
+          "positive_b": [
+            "increase",
+            "increases"
+          ],
+          "negative_b": [],
+          "cross": [
+            "decrease->increase",
+            "decrease->increases"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.448372,
+      "paper_pair": [
+        "2605.23901v1",
+        "2605.26100v1"
+      ]
+    },
+    "cand_0137": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "improves"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "degrade"
+          ],
+          "cross": [
+            "improves->degrade"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.449864,
+      "paper_pair": [
+        "2605.23898v1",
+        "2605.23901v1"
+      ]
+    },
+    "cand_0138": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [],
+          "negative_a": [
+            "degradation"
+          ],
+          "positive_b": [
+            "improvement"
+          ],
+          "negative_b": [
+            "degradation"
+          ],
+          "cross": [
+            "degradation->improvement"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.450326,
+      "paper_pair": [
+        "2605.23901v1",
+        "2605.26092v1"
+      ]
+    },
+    "cand_0139": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "higher"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "loss"
+          ],
+          "cross": [
+            "higher->loss"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "modestly",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.452434,
+      "paper_pair": [
+        "2605.23901v1",
+        "2607.28611v1"
+      ]
+    },
+    "cand_0140": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "increasing"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "reduces"
+          ],
+          "cross": [
+            "increasing->reduces"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.452718,
+      "paper_pair": [
+        "2605.26099v1",
+        "2605.26106v1"
+      ]
+    },
+    "cand_0141": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [],
+          "negative_a": [
+            "reduces"
+          ],
+          "positive_b": [
+            "increase"
+          ],
+          "negative_b": [],
+          "cross": [
+            "reduces->increase"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.454048,
+      "paper_pair": [
+        "2605.23859v1",
+        "2605.26114v1"
+      ]
+    },
+    "cand_0142": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "increasing"
+          ],
+          "negative_a": [
+            "decreases"
+          ],
+          "positive_b": [
+            "outperform"
+          ],
+          "negative_b": [],
+          "cross": [
+            "decreases->outperform"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.454192,
+      "paper_pair": [
+        "2112.00114",
+        "2605.23901v1"
+      ]
+    },
+    "cand_0143": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "better"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "degradation"
+          ],
+          "cross": [
+            "better->degradation"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "increases",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.455738,
+      "paper_pair": [
+        "2605.23901v1",
+        "2607.28627v1"
+      ]
+    },
+    "cand_0144": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": true,
+          "tokens": [
+            "GSM8K"
+          ]
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [
+            "improves",
+            "increasing"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.455896,
+      "paper_pair": [
+        "2201.11903",
+        "2605.26106v1"
+      ]
+    },
+    "cand_0145": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "increases"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "losses"
+          ],
+          "cross": [
+            "increases->losses"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "unclear",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.456594,
+      "paper_pair": [
+        "2605.23902v1",
+        "2607.28611v1"
+      ]
+    },
+    "cand_0146": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "improvement"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "reduced"
+          ],
+          "cross": [
+            "improvement->reduced"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.456969,
+      "paper_pair": [
+        "2605.26102v1",
+        "2605.26111v1"
+      ]
+    },
+    "cand_0147": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [],
+          "negative_a": [
+            "reduces"
+          ],
+          "positive_b": [
+            "increasing"
+          ],
+          "negative_b": [
+            "decrease"
+          ],
+          "cross": [
+            "reduces->increasing"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.457952,
+      "paper_pair": [
+        "2210.11610",
+        "2605.23901v1"
+      ]
+    },
+    "cand_0148": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [],
+          "negative_a": [
+            "fail",
+            "lower"
+          ],
+          "positive_b": [
+            "increase"
+          ],
+          "negative_b": [],
+          "cross": [
+            "fail->increase",
+            "lower->increase"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.459485,
+      "paper_pair": [
+        "2112.00114",
+        "2201.11903"
+      ]
+    },
+    "cand_0149": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": true,
+          "tokens": [
+            "Gpt-5"
+          ]
+        },
+        "opposite_polarity": {
+          "fired": false,
+          "positive_a": [],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "decrease"
+          ],
+          "cross": []
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": ""
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.46146,
+      "paper_pair": [
+        "2605.23904v1",
+        "2605.26087v1"
+      ]
+    },
+    "cand_0150": {
+      "signals": {
+        "shared_benchmark": {
+          "fired": false,
+          "tokens": []
+        },
+        "shared_model": {
+          "fired": false,
+          "tokens": []
+        },
+        "opposite_polarity": {
+          "fired": true,
+          "positive_a": [
+            "effective"
+          ],
+          "negative_a": [],
+          "positive_b": [],
+          "negative_b": [
+            "loss",
+            "lower"
+          ],
+          "cross": [
+            "effective->loss",
+            "effective->lower"
+          ]
+        },
+        "numeric_disagreement": {
+          "fired": false,
+          "shared_token": null,
+          "number_a": null,
+          "number_b": null,
+          "relative_difference": null
+        },
+        "structured_direction": {
+          "fired": false,
+          "same_subject": false,
+          "same_metric": false,
+          "opposite_direction": false,
+          "subject": null,
+          "metric": null,
+          "direction_a": "",
+          "direction_b": "decreases"
+        }
+      },
+      "score": 1,
+      "cosine_distance": 0.462845,
+      "paper_pair": [
+        "2605.26106v1",
+        "2607.28611v1"
+      ]
+    }
+  }
+}

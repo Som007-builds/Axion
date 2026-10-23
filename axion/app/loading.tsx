@@ -1,9 +1,21 @@
+import Image from 'next/image'
+
 export default function Loading() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-black">
-      <div className="flex items-center gap-3 text-[#94a3b8]">
-        <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#3b82f6] border-t-transparent" />
-        <span className="font-mono text-xs">Loading Axion…</span>
+    <div className="cg-grid flex min-h-screen items-center justify-center">
+      <div className="flex flex-col items-center gap-4">
+        <Image
+          src="/axion-logo.png"
+          alt="AXION — Scientific Intelligence System"
+          width={1672}
+          height={941}
+          priority
+          className="h-16 w-auto object-contain"
+        />
+        <span className="cg-overline text-ink/70">AXION SYSTEM</span>
+        <span className="cg-mono-meta animate-pulse text-xs text-ink-soft">
+          Loading workspace…
+        </span>
       </div>
     </div>
   )

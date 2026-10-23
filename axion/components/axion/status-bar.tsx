@@ -8,49 +8,56 @@ export function StatusBar() {
   const { data, error } = useSWR<GraphStats>('stats', getStats, {
     refreshInterval: 60000,
   })
-  // Real health probe (Neo4j + ChromaDB). /api/health returns 503 when a
-  // datastore is down, which surfaces here as an error.
+  // Real health probe. /api/health returns 503 when a datastore is down,
+  // which surfaces here as an error.
   const { data: health } = useSWR('health', getHealth, { refreshInterval: 60000 })
 
   const isConnected = !error && !!data && !!health
-  const statusLabel = isConnected ? 'System online' : 'Degraded / offline'
 
   return (
-    <footer className="flex h-7 shrink-0 items-center justify-between border-t border-[var(--axion-border-subtle)] bg-[var(--axion-surface-1)] px-4">
-      <div className="flex items-center gap-4">
+    <footer className="flex h-8 shrink-0 items-center justify-between border-t border-ink/40 px-4 pb-2">
+      <div className="flex min-w-0 items-center gap-4">
         {/* Connection Status */}
-        <div className="flex items-center gap-1.5">
-          <div className={`h-1.5 w-1.5 rounded-full ${isConnected ? 'bg-[#10b981]' : 'bg-[#f43f5e]'}`}>
-            {isConnected && (
-              <div className="h-1.5 w-1.5 rounded-full bg-[#10b981] animate-status-pulse" />
+        <div className="flex shrink-0 items-center gap-2">
+          {/* Monochrome health: filled square online / outlined "!" offline */}
+          <span
+            aria-hidden="true"
+            className={isConnected
+              ? 'inline-block h-2 w-2 bg-ink'
+              : 'inline-flex h-2.5 w-2.5 items-center justify-center border-[1.5px] border-ink'}
+          >
+            {!isConnected && (
+              <span className="bg-ink block h-0.5 w-[2px]" />
             )}
-          </div>
-          <span className="font-mono text-[10px] text-[#334155]">
-            {statusLabel}
+          </span>
+          <span className="cg-mono-meta text-[10px] text-ink/70">
+            {isConnected ? 'SYSTEM ONLINE' : 'SYSTEM OFFLINE'}
           </span>
         </div>
 
         {/* Divider */}
-        <div className="h-3 w-px bg-[var(--axion-border-subtle)]" />
+        <div aria-hidden="true" className="h-3 w-px bg-ink/30" />
 
         {/* Stats */}
-        {data && (
-          <>
-            <span className="font-mono text-[10px] text-[#334155]">
-              {data.papers.toLocaleString()} papers
-            </span>
-            <span className="font-mono text-[10px] text-[#334155]">
-              {data.claims.toLocaleString()} claims
-            </span>
-            <span className="font-mono text-[10px] text-[#334155]">
-              {data.contradictions.toLocaleString()} contradictions
-            </span>
-          </>
-        )}
+        <div className="flex min-w-0 items-center gap-4 overflow-hidden">
+          {data && (
+            <>
+              <span className="cg-mono-meta whitespace-nowrap text-[10px] text-ink/50">
+                {data.papers.toLocaleString()} papers
+              </span>
+              <span className="cg-mono-meta whitespace-nowrap text-[10px] text-ink/50">
+                {data.claims.toLocaleString()} claims
+              </span>
+              <span className="cg-mono-meta whitespace-nowrap text-[10px] text-ink/50">
+                {data.contradictions.toLocaleString()} contradictions
+              </span>
+            </>
+          )}
+        </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        <span className="font-mono text-[10px] text-[#1e293b]">
+      <div className="flex shrink-0 items-center gap-3">
+        <span className="cg-mono-meta text-[10px] text-ink/40">
           AXION v2.30
         </span>
       </div>

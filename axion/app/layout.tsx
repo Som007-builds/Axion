@@ -1,22 +1,24 @@
 import type { Metadata } from 'next'
-import { Inter, JetBrains_Mono, Outfit } from 'next/font/google'
+import { Newsreader, Hanken_Grotesk, DM_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
-const inter = Inter({ 
-  subsets: ["latin"],
-  variable: '--font-inter',
-});
+const newsreader = Newsreader({
+  subsets: ['latin'],
+  style: ['normal', 'italic'],
+  variable: '--font-newsreader',
+})
 
-const jetbrainsMono = JetBrains_Mono({ 
-  subsets: ["latin"],
-  variable: '--font-jetbrains-mono',
-});
+const hankenGrotesk = Hanken_Grotesk({
+  subsets: ['latin'],
+  variable: '--font-hanken',
+})
 
-const outfit = Outfit({
-  subsets: ["latin"],
-  variable: '--font-outfit',
-});
+const dmMono = DM_Mono({
+  weight: ['300', '400', '500'],
+  subsets: ['latin'],
+  variable: '--font-dm-mono',
+})
 
 export const metadata: Metadata = {
   title: 'AXION — Scientific Intelligence System',
@@ -47,8 +49,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="dark bg-black" suppressHydrationWarning>
-      <body className={`${inter.variable} ${jetbrainsMono.variable} ${outfit.variable} font-sans antialiased`} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={`${newsreader.variable} ${hankenGrotesk.variable} ${dmMono.variable} cg-grid font-sans antialiased`}
+        suppressHydrationWarning
+      >
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Axion Research Intelligence Platform",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/Som007-builds/Axion.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "1813aea2827e36e8ec4626fbb12adea84cdd4882"
+    },
+    "viewBox": [1270, 688]
+  },
+  "components": [
+    {
+      "id": "arxiv",
+      "type": "external",
+      "label": "arXiv",
+      "sublabel": "topic search + PDFs",
+      "pos": [40, 160],
+      "size": [120, 68],
+      "sources": [{ "path": "ingestion/arxiv_client.py" }]
+    },
+    {
+      "id": "ingest",
+      "type": "backend",
+      "label": "Ingestion",
+      "sublabel": "search + parse",
+      "pos": [230, 160],
+      "size": [140, 68],
+      "sources": [{ "path": "ingestion/pdf_parser.py" }, { "path": "ingestion/scheduler.py" }]
+    },
+    {
+      "id": "reader",
+      "type": "backend",
+      "label": "Reader agent",
+      "sublabel": "claim extraction",
+      "pos": [440, 160],
+      "size": [140, 68],
+      "sources": [{ "path": "agents/reader.py" }]
+    },
+    {
+      "id": "stores",
+      "type": "database",
+      "label": "Knowledge stores",
+      "sublabel": "Neo4j · ChromaDB",
+      "pos": [650, 160],
+      "size": [150, 68],
+      "sources": [{ "path": "graph/neo4j_queries.py" }, { "path": "embeddings/store.py" }]
+    },
+    {
+      "id": "coordinator",
+      "type": "backend",
+      "label": "Coordinator v2",
+      "sublabel": "plan · reflect · answer",
+      "pos": [870, 160],
+      "size": [140, 68],
+      "sources": [{ "path": "agents/coordinator_v2.py" }]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "FastAPI",
+      "sublabel": "22 /api routes",
+      "pos": [870, 380],
+      "size": [120, 68],
+      "sources": [{ "path": "api/main.py" }]
+    },
+    {
+      "id": "web",
+      "type": "frontend",
+      "label": "Next.js workspace",
+      "sublabel": "6 views",
+      "pos": [870, 580],
+      "size": [140, 68],
+      "sources": [{ "path": "axion/app/page.tsx" }, { "path": "axion/lib/api-client.ts" }]
+    },
+    {
+      "id": "analysis",
+      "type": "backend",
+      "label": "Analysis agents",
+      "sublabel": "edges · gaps · experiments",
+      "pos": [650, 380],
+      "size": [150, 68],
+      "sources": [{ "path": "agents/contradiction.py" }, { "path": "agents/gap_finder.py" }, { "path": "agents/experiment_recommender.py" }]
+    },
+    {
+      "id": "llm",
+      "type": "external",
+      "label": "LLM router",
+      "sublabel": "Groq → Gemini",
+      "tag": "all agents",
+      "pos": [440, 380],
+      "size": [140, 68],
+      "sources": [{ "path": "llm.py" }]
+    },
+    {
+      "id": "ops",
+      "type": "backend",
+      "label": "CLI + scheduler",
+      "sublabel": "APScheduler",
+      "pos": [230, 380],
+      "size": [140, 68],
+      "sources": [{ "path": "main.py" }]
+    },
+    {
+      "id": "queue",
+      "type": "messagebus",
+      "label": "RQ + Redis",
+      "sublabel": "job queue",
+      "pos": [1080, 380],
+      "size": [150, 68],
+      "sources": [{ "path": "jobs/worker.py" }, { "path": "jobs/store.py" }]
+    }
+  ],
+  "connections": [
+    { "from": "arxiv", "to": "ingest", "label": "search" },
+    { "from": "ingest", "to": "reader", "label": "parse" },
+    { "from": "reader", "to": "stores", "label": "claims" },
+    { "from": "stores", "to": "coordinator", "label": "retrieval", "variant": "emphasis" },
+    { "from": "coordinator", "to": "api", "label": "cited report", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "labelDy": 60 },
+    { "from": "api", "to": "web", "label": "REST", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" },
+    { "from": "analysis", "to": "stores", "label": "verdicts", "variant": "dashed" },
+    { "from": "llm", "to": "reader", "label": "extract", "variant": "dashed" },
+    { "from": "llm", "to": "analysis", "label": "judge", "variant": "dashed" },
+    { "from": "ops", "to": "ingest", "label": "scheduler", "variant": "dashed" },
+    { "from": "api", "to": "queue", "label": "202 + job id", "variant": "dashed" },
+    { "from": "queue", "to": "coordinator", "label": "worker executes", "variant": "dashed", "fromSide": "top", "toSide": "bottom", "via": [[1155, 280], [940, 280]] }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Evidence path",
+      "items": [
+        "arXiv is the only source; PDFs are parsed into 800/100-character chunks",
+        "Each claim keeps its section, base confidence, and evidence span",
+        "Neo4j and ChromaDB are written independently, not transactionally"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Reasoning rules",
+      "items": [
+        "Contradictions pass a vector-distance gate, then an LLM judge and a three-part guard",
+        "Confidence = base + 0.08·supports − 0.12·contradictions, clamped to [0.05, 0.98]",
+        "Reader, analysis agents, and Coordinator v2 all call llm.py"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Honest gaps",
+      "items": [
+        "One shared AXION_API_KEY; no per-user identity or TLS",
+        "Gap confidence is not persisted, so the API returns null",
+        "Only 4 CONTRADICTS pairs, so judge precision and recall stay indicative"
+      ]
+    }
+  ]
+}

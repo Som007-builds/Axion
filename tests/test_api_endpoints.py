@@ -116,6 +116,7 @@ def test_compute_endpoints_disabled_when_no_secret():
         assert client.post("/api/ingestion/trigger").status_code == 503
         assert client.post("/api/query", json={"question": "hi"}).status_code == 503
         assert client.post("/api/confidence/recalculate").status_code == 503
+        assert client.get("/api/jobs").status_code == 503
 
 
 def test_trigger_rejects_missing_or_wrong_secret():
@@ -219,8 +220,11 @@ def test_job_list_is_key_guarded_and_clamps_limit():
         client.get("/api/jobs?limit=99999", headers={"x-api-key": "k3y"})
         assert store.return_value.list_recent.call_args.args[0] == 100
 
-    without_key = client.get("/api/jobs")
-    assert without_key.status_code == 401
+        # Missing key is 401 while the server has a key configured. Keep this
+        # request inside the patch: in CI there is no .env, so an unpatched
+        # config would fail closed with 503 instead.
+        without_key = client.get("/api/jobs")
+        assert without_key.status_code == 401
 
 
 # ─── Metrics ──────────────────────────────────────────────────────────────────

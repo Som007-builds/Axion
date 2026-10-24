@@ -263,7 +263,7 @@ What is missing:
 Status: Legacy SQLite paths and prototypes are no longer active.
 
 What exists now:
-- Older SQLite schema and queries have been moved to [archive/](archive/) (e.g., `graph_queries_sqlite.py`, `graph_schema_sqlite.py`, `coordinator_v1.py`).
+- Older SQLite schema, queries, and coordinator v1 were removed on 2026-10-24 (recoverable from git history). The legacy `data/db/axion.db` file and migration utility remain for reference.
 - The legacy Streamlit UI (`ui/`) and older graph scripts (like `graph/queries.py`) have been entirely removed from the main branch, fully replaced by the Axion Next.js frontend and Neo4j backend.
 
 ---

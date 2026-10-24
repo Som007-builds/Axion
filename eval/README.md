@@ -149,9 +149,9 @@ harness's same-paper exclusion they are 100% UNRELATED:
 | test | 1 | 18 | 26 | 10 (all UNRELATED) |
 
 On `test.csv` the majority baseline scores accuracy 1.0 / macro F1 0.33 — pure
-artifact. `eval/Data/Labeled_pairs.csv` (the split source) is 0 bytes.
-`--include-same-paper` shows the other view, but those pairs are never scored in
-production.
+artifact. `eval/Data/Labeled_pairs.csv` (the split source) was a 0-byte
+placeholder and was deleted on 2026-10-24. `--include-same-paper` shows the other
+view, but those pairs are never scored in production.
 
 ### Reading the numbers
 

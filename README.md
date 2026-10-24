@@ -135,7 +135,7 @@ Maturity legend: **✅ Implemented** · **🟡 Works with caveats** · **🧪 Ex
 | 4 | **Claim provenance & evidence spans** | 🟡 | Claims are linked to paper, section, base confidence, and an evidence span, exposed via `/api/claims/{id}/provenance` (✅). The provenance UI and `/api/claims` subject/metric fields are **not fully surfaced yet** (🟡). |
 | 5 | **Neo4j knowledge graph** | ✅ | `Paper`, `Claim`, and `Gap` nodes with typed edges and property indexes (`graph/neo4j_schema.py`, `graph/neo4j_queries.py`). `Benchmark`/`Dataset`/`Method` constraints are declared but **not populated by any code**. |
 | 6 | **ChromaDB vector retrieval** | ✅ | Local persistent vectors via `all-MiniLM-L6-v2` (384-dim) for claims and paper chunks (`embeddings/store.py`). Embeddings are local; no embedding API cost. |
-| 7 | **Contradiction & support analysis** | 🟡 | Semantic neighbours above a distance threshold are passed to an LLM that labels the relationship and writes an explanation + confidence (`agents/contradiction.py`). These are **LLM-assisted hypotheses, not verified facts**, and are unmeasured (see evaluation). |
+| 7 | **Contradiction & support analysis** | 🟡 | Semantic neighbours above a distance threshold are passed to an LLM that labels the relationship and writes an explanation + confidence (`agents/contradiction.py`). These are **LLM-assisted hypotheses, not verified facts**; a four-variant pilot measured them (see evaluation), but the sample is too small for a production precision claim. |
 | 8 | **Research-gap discovery** | 🟡 | Mines future-work/limitation text and clusters of related claims (`agents/gap_finder.py`). Stored gap confidence is **not persisted** (the API returns `null`), so it is not shown in the UI. |
 | 9 | **Experiment proposal generation** | 🟡 | For a contradiction, an LLM designs a minimal resolving experiment (dataset, models, metric, decision rule, cost) stored on the `CONTRADICTS` edge (`agents/experiment_recommender.py`). Feasibility is not validated. |
 | 10 | **Graph-based confidence updates** | 🟡 | Recomputes `confidence = base + 0.08·supports − 0.12·contradictions`, clamped to `[0.05, 0.98]` (`agents/confidence_updater.py`). This is a **heuristic score, not a calibrated probability**. |
@@ -949,12 +949,13 @@ Recorded baselines (`eval/results/`, 2026-08):
 | LLM (`llm_axion_pairs_prefix_baseline.json`) | 0.8427 | 0.4822 | 0.15 / 0.50 |
 
 The `CONTRADICTS` class is thin: **4 positive pairs** make its precision and recall
-noisy, so every `CONTRADICTS` figure below is indicative, not measured. The older
-`train.csv` / `val.csv` / `test.csv` splits are obsolete — their positives are
-same-paper pairs the agent refuses to score, and `eval/Data/Labeled_pairs.csv` is
-0 bytes, so they cannot be regenerated — and are kept for history only.
+noisy, so every `CONTRADICTS` figure below is pilot evidence, not a stable
+production estimate. The older `train.csv` / `val.csv` / `test.csv` splits are
+obsolete — their positives are same-paper pairs the agent refuses to score, and
+the 0-byte `eval/Data/Labeled_pairs.csv` placeholder was deleted on 2026-10-24,
+so they cannot be regenerated — and are kept for history only.
 
-### The retrieval gate is measured; the judge is not (yet)
+### The retrieval gate and judge are both measured — the judge is a pilot
 
 The two halves of contradiction detection need two different measurements:
 
@@ -966,24 +967,24 @@ The two halves of contradiction detection need two different measurements:
   `CONTRADICTION_MAX_DISTANCE=0.35` passes **42.6 %** (57.4 % fewer judge calls)
   while 80 % of claims still keep at least one candidate. Pair distances: min
   0.000, p50 0.379, p90 0.538, p99 0.652, max 0.769.
-- **The LLM judge itself is not measured on the new prompt yet.** That needs a
-  full `--predictor llm` run, which requires provider quota. The run is currently
-  **blocked**: the free tiers allow 200,000 Groq tokens/day and **20
-  `gemini-3.8-flash` requests/day**, both exhausted. No post-change LLM metrics
-  are claimed anywhere in this document. The code-level changes (stricter prompt
-  with a worked example, three-part decomposition guard, distance gate) are
-  described under [How the research pipeline works](#how-the-research-pipeline-works),
-  covered by unit tests, and sanity-checked by a hand-built 6-pair probe with 6/6
-  agreement.
+- **The LLM judge has a pre-registered four-variant pilot.** On the 224-row
+  audit, A stopped 208/220 verified false positives and kept 3/4 confirmed
+  contradictions; B 219/220 and 0/4; C 220/220 and 1/4; D 220/220 and 0/4. On the
+  full 286-row set, C flags one pair (1 TP, 0 FP) but misses 3/4; A flags 15
+  (3 TP, 12 FP). The 0.35 gate drops one confirmed contradiction (pair 124), and
+  A/B agree on only 22/34 gate-passing pairs. Read this as pilot evidence: only
+  4 positives, 18/24 pairwise comparisons overlap, and D changes provider and
+  model. See `eval/results/ablation_summary.md` and
+  `eval/results/judge_ablation.md`.
 
 ### What a valid evaluation requires
 
-A meaningful benchmark needs **more reviewed positives** — 4 `CONTRADICTS` pairs
-cannot support a precision claim — and a paid (or generously limited) LLM key so
-the full set can be re-run after any prompt change. Until then, report `f1_macro`
-(rather than accuracy), always print the class mix and `warnings`, and never cite
-a single run as proof of quality. Proposed (currently unverified) targets are
-documented in `eval/README.md`: macro F1 ≥ 0.55 and `CONTRADICTS` recall ≥ 0.60.
+The pilot is complete, but a meaningful benchmark still needs **more reviewed
+positives** — 4 `CONTRADICTS` pairs cannot support a precision claim — plus
+replicate runs and a same-model baseline. Until then, report `f1_macro` (rather
+than accuracy), always print the class mix and `warnings`, and never cite a single
+run as proof of quality. Proposed (currently unverified) targets are documented in
+`eval/README.md`: macro F1 ≥ 0.55 and `CONTRADICTS` recall ≥ 0.60.
 
 ---
 
@@ -994,11 +995,10 @@ deliberately not hidden.
 
 ### Correctness and evaluation
 
-- **No trustworthy production-aligned contradiction evaluation.** The reviewed
-  set (`axion_pairs.csv`) has only **4 `CONTRADICTS` pairs**, and the post-change
-  LLM run is blocked on provider quota — so precision and recall for that class
-  are indicative at best (details in
-  [Evaluation and testing](#evaluation-and-testing)).
+- **No production-grade contradiction evaluation.** The reviewed set
+  (`axion_pairs.csv`) has only **4 `CONTRADICTS` pairs**; the completed
+  four-variant pilot is directionally useful but too small for a stable ranking
+  (details in [Evaluation and testing](#evaluation-and-testing)).
 - **LLM relationship judgments can be wrong.** Complementary findings can be
   flagged as contradictions when parameter scopes differ. Mitigations are in
   place and covered by tests — a stricter prompt, a deterministic
@@ -1122,11 +1122,11 @@ new features.
 
 **Planned / in progress**
 
-1. **Production-aligned evaluation** — the harness, dataset, and baselines exist
-   (`eval/`), but `axion_pairs.csv` holds only 4 reviewed `CONTRADICTS` pairs, so
-   per-class numbers are noisy; the post-change end-to-end run is currently
-   **blocked on provider quota** (Groq 200k tokens/day, Gemini 20 requests/day on
-   the free tier).
+1. **Production-aligned evaluation** — the harness, dataset, baselines, and a
+   pre-registered four-variant ablation exist (`eval/`), but `axion_pairs.csv`
+   holds only 4 reviewed `CONTRADICTS` pairs, so per-class numbers are noisy.
+   Next: expand the reviewed positives, replicate runs, and test the original
+   production model.
 2. **Claim quality and evidence-aware adjudication** — make parse failures
    distinguishable from genuine negatives and improve structured extraction.
 3. **Researcher verification and correction workflows** — let users accept,

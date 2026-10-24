@@ -1,7 +1,7 @@
 # Axion — Full System Guide (right now)
 
-**Snapshot:** 2026-10-17 · `main` @ `c5afca9` · this file replaces the previous
-point-in-time status report.
+**Snapshot:** 2026-10-24 · `main` @ `a273b5d` · eval complete; demo-ready with
+caveats. This file replaces the previous point-in-time status report.
 
 This is the operational guide to Axion **as it exists today**: what the system
 is, what is in it, how to start it, verify it and troubleshoot it — and what is
@@ -35,27 +35,41 @@ Two things make it more than a document Q&A bot: everything is **claim-level wit
 provenance**, and the headline workflow is **contradiction-first** — surface the
 conflict, explain it, and propose the minimal experiment that would settle it.
 
-**Honest posture:** the pipeline works end to end and is deployed, tested and
-authenticated; the statistics of the contradiction classifier are *not* yet
-trustworthy (see §11), and the system is a self-hosted prototype, not a
-multi-tenant product (§13).
+**Honest posture:** the pipeline works end to end, is tested and authenticated,
+and the contradiction classifier now has a pre-registered four-variant pilot
+(§11). That pilot is still too small to support a production precision claim,
+and the system remains a self-hosted prototype, not a multi-tenant product
+(§13).
 
 ---
 
-## 2. Right-now snapshot (verified 2026-10-17)
+## 2. Right-now snapshot (verified 2026-10-24)
 
 | Area | State |
 | :--- | :--- |
-| **Live corpus** | 48 papers · 2,389 claims · 2,389 vectors · 224 `CONTRADICTS` · 132 `SUPPORTS` · 93 `RELATED_TO` · 18 gaps · 36 experiment designs |
-| **Stack** | 5 containers (`neo4j`, `redis`, `api`, `worker`, `web`), all healthy |
-| **API** | 23 routes (22 under `/api` + `/healthz`), OpenAPI at `/docs` |
+| **Live corpus** | 48 papers · 2,389 claims · 224 `CONTRADICTS` · 132 `SUPPORTS` (last verified 2026-10-23); prior snapshot also recorded 93 `RELATED_TO`, 18 gaps, 36 experiment designs |
+| **Stack** | 5 Compose services defined; **not running at last check** (Docker daemon stopped). API and web were smoke-tested locally on 2026-10-23 |
+| **API** | 23 routes (22 under `/api` + `/healthz`), OpenAPI at `/docs`; `/api/health` returned `200` with Neo4j + Chroma connected and 2,389 claims |
 | **Auth** | Shared `AXION_API_KEY` on every write/compute route **and** job polling; fail-closed |
 | **Background work** | Durable RQ + Redis queue, separate `worker` process; `202` + `GET /api/jobs/{id}`; cross-process verified |
-| **LLM chain** | `groq` (`openai/gpt-oss-20b`) → `gemini` (`gemini-3.8-flash`, thinking disabled); Claude available, not in the chain |
-| **Tests** | **229 passed / 12 deselected** offline; integration suite needs live services; CI on every push |
-| **Frontend** | Next.js 16.2.6 (standalone), React 19, TS 5.7, Tailwind v4; `pnpm lint` 0 errors (2 known warnings) |
-| **Eval** | `axion_pairs.csv` (286 pairs: 4/11/271); baselines recorded; retrieval gate measured; **post-change LLM run blocked on quota** |
-| **Blocker** | `GROQ_API_KEY` / `GEMINI_API_KEY` must be reissued — both free tiers are exhausted (200k tokens/day Groq; 20 requests/day Gemini) |
+| **LLM chain** | `groq` (`openai/gpt-oss-20b`) → `gemini` (`gemini-3.8-flash`, thinking disabled); Claude available, not in the chain. Keys are present; live quota is not guaranteed |
+| **Tests** | **229 passed / 12 deselected** offline; **15** judge-ablation tests; integration suite needs live services; CI on every push |
+| **Frontend** | Next.js 16.2.6 (standalone), React 19, TS 5.7, Tailwind v4; `pnpm lint` 0 errors (2 known warnings); `pnpm build` passes |
+| **Eval** | **Complete**: four-variant judge ablation on 286 reviewed pairs + 224-row audit; pre-registered report, summary, chart data and 1,144-line cache under `eval/results/` |
+| **Demo posture** | Ready for a controlled, scripted demo; not a hands-off live demo or production launch (§2.1) |
+
+### 2.1 Demo readiness (2026-10-24)
+
+**Ready:** offline eval walkthrough, graph/UI browsing on the existing corpus,
+API health, frontend production build.
+
+**Not ready without a runbook:** the Compose stack is stopped; live LLM calls
+depend on provider quota; only 4 confirmed contradictions exist in the audit.
+
+**Minimum demo path:** start Docker Desktop → `docker compose up -d --build` →
+wait for health → open `http://localhost:3000` → run one known query → show the
+contradiction view and `eval/results/ablation_summary.md`. Do not ingest papers
+or run a fresh multi-paper query on stage unless quota and latency are known.
 
 ---
 
@@ -68,6 +82,9 @@ cp .env.example .env          # then fill in the values below
 docker compose up -d --build  # build both images and start all five services
 docker compose ps             # expect: neo4j/redis/api/web healthy, worker up
 ```
+
+> At the 2026-10-24 check the Docker daemon was stopped and no services were
+> running. Start Docker Desktop before this command.
 
 Required in `.env` before first start:
 
@@ -338,8 +355,9 @@ curl http://localhost:8000/api/jobs/<job_id> -H "X-API-Key: $AXION_API_KEY"
 
 If **every** provider is unavailable the chain raises
 `All LLM providers exhausted after retries. Chain tried: [...]` → the job fails
-cleanly and the error is logged. That is exactly what happens today, because
-both free-tier quotas are exhausted (§2).
+cleanly and the error is logged. This happened during the 2026-10-17
+quota-blocked run. The keys are present now and the ablation completed, but live
+quota is not guaranteed; keep a cached/scripted demo path.
 
 ---
 
@@ -375,6 +393,7 @@ Non-env constants in `config.py`: embedding model `all-MiniLM-L6-v2`,
 
 ```bash
 pytest                  # offline suite: 229 passed, 12 deselected (no services needed)
+pytest eval/tests/test_judge_ablation.py -q   # 15 offline ablation tests
 pytest -m integration   # opt-in: needs live Neo4j + ChromaDB (and sometimes LLM)
 pytest tests/test_jobs.py -q          # queue + worker policy
 pytest tests/test_llm_router.py -q    # provider fallback, cooldown, retries
@@ -391,7 +410,7 @@ test that needs real provider quota.
 
 ## 11. Evaluation state (the honest version)
 
-Two different questions, two different answers:
+Two questions, two answers.
 
 **Retrieval — measured, deterministic.** `eval/measure_gate.py` replays the
 production top-8 search over all 2,389 claims (11,602 unique pairs):
@@ -403,27 +422,62 @@ production top-8 search over all 2,389 claims (11,602 unique pairs):
 
 Pair distances: min 0.000, p50 0.379, p90 0.538, p99 0.652, max 0.769.
 
-**Judging — not measured on the new prompt.** `eval/Data/axion_pairs.csv`
-(286 reviewed cross-paper pairs: 4 `CONTRADICTS` / 11 `SUPPORTS` / 271
-`UNRELATED`) with these recorded baselines:
+**Judging — measured in a pre-registered four-variant pilot (2026-10-23).**
+The full reviewed set is `eval/Data/axion_pairs.csv` (286 cross-paper pairs:
+4 `CONTRADICTS` / 11 `SUPPORTS` / 271 `UNRELATED`). The primary metric is the
+224-row human audit `eval/Data/contradicts_review_labeled.csv` (220 verified
+false positives, 4 confirmed contradictions).
 
-| Predictor | Accuracy | Macro F1 | `CONTRADICTS` P / R |
-| :--- | ---: | ---: | ---: |
-| majority (all `UNRELATED`) | 0.9476 | 0.3244 | 0.00 / 0.00 |
-| random (fixed seed) | 0.3706 | 0.2191 | 0.13 / 0.38 |
-| LLM (prefix baseline, pre-change prompt) | 0.8427 | 0.4822 | 0.15 / 0.50 |
+Primary audit result:
 
-The re-run against the **new prompt + demotion guard** died at pair 10/286 when
-both free tiers ran out (Groq 200k tokens/day; Gemini 20 `gemini-3.8-flash`
-requests/day). No post-change metric is claimed anywhere in this repository. The
-fixes are covered by unit tests and a 6-pair hand-built probe (6/6 agreement),
-which is *not* a benchmark. The human audit of the existing graph found only
-**4 of 224** auto-detected contradictions to be real (~1.8 % precision) — that
-number is why the gate and prompt work happened.
+| Variant | Configuration | FPs stopped / 220 | TP kept / 4 |
+| :--- | :--- | ---: | ---: |
+| A | gate 0.95; old prompt; guard off; `groq/openai/gpt-oss-20b` | 208/220 | 3/4 |
+| B | gate 0.35; old prompt; guard off; `groq/openai/gpt-oss-20b` | 219/220 | 0/4 |
+| C | gate 0.35; current prompt; guard on; `groq/openai/gpt-oss-20b` | 220/220 | 1/4 |
+| D | gate 0.35; current prompt; guard on; `gemini/gemini-3.8-flash` | 220/220 | 0/4 |
 
-To finish this: reissue the two LLM keys, expand the reviewed `CONTRADICTS` set
-(4 positives cannot support a precision claim), then run
-`python eval/run_eval.py --predictor llm --dataset axion_pairs.csv`.
+Full-set `CONTRADICTS` metrics (precision / recall / macro F1):
+
+| Variant | Flagged | TP | FP | Precision (95% CI) | Recall (95% CI) | Macro F1 |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: |
+| A | 15 | 3 | 12 | 0.200 [0.070, 0.452] | 0.750 [0.301, 0.954] | 0.532 |
+| B | 1 | 0 | 1 | 0.000 [0.000, 0.793] | 0.000 [0.000, 0.490] | 0.354 |
+| C | 1 | 1 | 0 | 1.000 [0.207, 1.000] | 0.250 [0.046, 0.699] | 0.514 |
+| D | 0 | 0 | 0 | n/a | 0.000 [0.000, 0.490] | 0.380 |
+
+What the pilot says:
+
+- **C suppresses all 220 verified false positives but keeps only 1/4 confirmed
+  contradictions.** A keeps 3/4 but leaves 12 verified false positives. B keeps
+  0/4; D flags nothing on the full set, so its precision is undefined.
+- **The 0.35 gate drops pair `124`** (distance `0.501931`), one of the four
+  confirmed contradictions, before B/C/D judge it. A's 0.95 gate keeps it.
+- **A/B self-consistency is 22/34** on gate-passing pairs (0.647 [0.479, 0.785]);
+  12 verdicts flip with the same model and prompt. A single run is not stable.
+- **C's guard did nothing on this dataset** (0 demotions); C-without-guard is
+  identical to C. The B-vs-C difference is attributable to the prompt, not the
+  guard.
+- **18 of 24 pairwise comparisons are `within noise`** under overlapping Wilson
+  95% intervals; this is a descriptive screen, not a hypothesis test.
+
+Read this as **pilot evidence, not a production estimate**:
+
+- Only 4 confirmed positives; one-pair changes move precision and recall a lot.
+- 62 of the 286 full-set rows come from `labeled_pairs_cleaned` with unverified
+  negative provenance; the primary audit uses only the 224 reviewed rows.
+- D changes both provider and model, so it is not a clean estimate of model
+  strength. A–C use the current `openai/gpt-oss-20b`; the original 1.8% production
+  figure came from `llama-3.1-8b-instant` at gate 0.95 with the old prompt, so the
+  model swap is unmeasured.
+- More reviewed positives, replicate runs, and a same-model baseline are needed
+  before claiming a stable ranking.
+
+Artifacts: `eval/results/judge_ablation.md` (pre-registered report),
+`eval/results/judge_ablation.json` (machine-readable),
+`eval/results/ablation_summary.md` (launch summary),
+`eval/results/ablation_chart_data.json` (chart aggregates), and
+`eval/results/ablation_cache.jsonl` (1,144 rows; resumable).
 
 ---
 
@@ -437,8 +491,9 @@ To finish this: reissue the two LLM keys, expand the reviewed `CONTRADICTS` set
 - **Datastores are loopback-bound** (Neo4j, Redis). The API and web UI are not.
 - **Errors are generic** to clients and detailed in logs.
 - **Rotations done:** `AXION_API_KEY`, `TRIGGER_SECRET`, Neo4j password.
-  **Outstanding:** `GROQ_API_KEY` and `GEMINI_API_KEY` must be reissued (they
-  were exposed in a config dump and are currently rate-capped anyway).
+  **Current LLM keys:** present and used for the completed ablation. Rotate
+  `GROQ_API_KEY` / `GEMINI_API_KEY` before exposing this checkout or its config
+  to anyone else; the earlier config dump exposed them.
 - **Not present:** TLS/reverse proxy, per-user identity, quotas, secret manager,
   scheduled backups, APOC restriction.
 
@@ -448,8 +503,9 @@ Do not expose this stack to an untrusted network as-is.
 
 ## 13. What is not true yet (do not claim it)
 
-1. **No trustworthy contradiction-quality number.** The new prompt's precision
-   and recall are unmeasured (§11); only the retrieval gate is measured.
+1. **No production-grade contradiction-quality number.** A pre-registered pilot
+   exists (§11), but only 4 confirmed positives and C keeps 1/4; do not claim
+   high precision or a stable variant ranking.
 2. **No per-user auth or multi-tenancy.** One shared key, no accounts, roles, or
    quotas.
 3. **No production deployment story.** Plain HTTP, no reverse proxy, no domain,
@@ -466,7 +522,8 @@ Do not expose this stack to an untrusted network as-is.
 8. **Coverage is ML/LLM-flavoured** (the default scheduler topics are all
    LLM-related); no domain guarantees.
 9. **No migration framework** — schema changes are ad-hoc scripts.
-10. **Live LLM features are down until keys are reissued** (quota exhausted).
+10. **Live LLM features depend on provider quota.** The keys are present, but a
+    fresh multi-paper run can still hit free-tier limits.
 
 ---
 
@@ -492,7 +549,8 @@ Do not expose this stack to an untrusted network as-is.
 If this file and another doc disagree, trust them in this order:
 `PROJECT_INFO.md` (inventory) → `README.md` (usage) → this file (current
 operation) → `progress.md` (history/checklist). Anything about evaluation
-semantics and targets lives in `eval/README.md`.
+results lives in `eval/results/judge_ablation.md`; harness semantics and targets
+live in `eval/README.md`.
 
 Finally: the on-disk folder is still named `schimesh` while the project, the
 GitHub repository and every artefact are **Axion**; the old

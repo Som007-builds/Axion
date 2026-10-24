@@ -249,16 +249,10 @@ What must never belong here:
 - graph domain logic that should be in graph/
 - frontend presentation code
 
-### archive/
-Purpose:
-Historical or deprecated implementations.
-
-What belongs here:
-- older coordinator code
-- legacy SQLite-based prototypes
-
-What must never belong here:
-- active runtime logic that the main pipeline depends on
+### Legacy code (removed 2026-10-24)
+The old SQLite prototype and the superseded 2026-10-21 ablation copy were deleted.
+Recover them from git history if needed; do not add new legacy code to the active
+tree.
 
 ---
 
@@ -392,7 +386,7 @@ Why it is used:
 - it is a fast retrieval layer over texts and claims
 
 ### SQLite
-The active runtime code does not use SQLite for production logic. The repository contains legacy SQLite-related scripts in archive/ and a configuration field pointing to a SQLite path, but the current implementation is graph-first and uses Neo4j plus ChromaDB. The archive code is historical only.
+The active runtime code does not use SQLite for production logic. The legacy SQLite scripts were removed on 2026-10-24 (recoverable from git history), and `config.py` still exposes a legacy `DB_PATH`; the current implementation is graph-first and uses Neo4j plus ChromaDB.
 
 ---
 

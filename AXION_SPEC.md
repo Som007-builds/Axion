@@ -603,7 +603,6 @@ This architecture positions AXION as an infrastructure layer for scientific reas
 │   └── store.py                  # ChromaDB client & vector operations
 ├── ingestion/                    # ArXiv client, PDF parser, scheduler
 ├── eval/                         # Evaluation harness (run_eval.py)
-├── archive/                      # Deprecated SQLite layer (reference only)
 ├── tests/                        # Unit + opt-in integration test suite
 ├── config.py                     # Configuration loader (Neo4j, Chroma, Keys)
 ├── llm.py                        # Multi-provider LLM inference API

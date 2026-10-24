@@ -188,7 +188,7 @@ the honest "what not" list.
 ### 4.2 Correctness / data limitations
 
 - **Same-paper claims are never compared.** By design `check_pair()` refuses two claims from the same `arxiv_id` (and, since the rebuild, only when *both* ids are non-empty). This is correct for real-world contradictions; the old same-paper-heavy labelled splits are superseded by `eval/Data/axion_pairs.csv` (see §8.2).
-- **Low and now-measured contradiction precision.** A review of the 224 auto-detected CONTRADICTS edges found only **4 real ones** (11 SUPPORTS, 209 UNRELATED) — ~1.8% precision. On the rebuilt reference set the current LLM baseline reaches macro F1 0.48 and CONTRADICTS precision 0.15.
+- **Low and now-measured contradiction precision.** A review of the 224 auto-detected CONTRADICTS edges found only **4 real ones** (11 SUPPORTS, 209 UNRELATED) — ~1.8% precision. A pre-registered four-variant ablation now measures the old and current prompt/gate: A flags 15 full-set pairs (3 TP, 12 FP; macro F1 0.532), C flags 1 (1 TP, 0 FP; macro F1 0.514), and C keeps only 1/4 confirmed contradictions. Treat this as pilot evidence, not a production estimate.
 - **Contradiction/relationship detection is LLM-judged**, not verified. False positives and false negatives are expected; the reference set now puts a number on them.
 - **Gap confidence is not stored**, so the UI shows no confidence for gaps.
 - **No human-in-the-loop correction.** Users cannot accept/reject/edit a claim, contradiction, or experiment design, and nothing is fed back into the system.
@@ -320,7 +320,7 @@ Embeddings live in `embeddings/store.py`; graph access in `graph/neo4j_*.py`.
 | ChromaDB | `data/db/chroma/` | claim embeddings |
 | Papers | `data/papers/` | downloaded PDFs |
 | Backups | `data/backups/` | graph backup utility output |
-| Legacy SQLite | `data/db/axion.db` | retired; migration archived under `archive/` |
+| Legacy SQLite | `data/db/axion.db` | retired; migration utility remains in `graph/migrate_to_neo4j.py` |
 | HF model cache | `~/.cache/huggingface` (container volume `hf_cache`) | sentence-transformers model |
 
 ### 5.6 API reference (23 endpoints)
@@ -423,7 +423,7 @@ Verified live on 2026-10-17 against the containerized stack (`GET /api/stats`).
 
 ⚠️ Data-integrity notes:
 - The old labelled eval set's positives were all same-paper pairs; superseded by `eval/Data/axion_pairs.csv` (see §8.2).
-- `eval/Data/Labeled_pairs.csv` is 0 bytes (Windows case collision); `axion_pairs.csv` is the reference set now.
+- `eval/Data/Labeled_pairs.csv` was a 0-byte placeholder (Windows case collision) and was deleted on 2026-10-24; `axion_pairs.csv` is the reference set now.
 - Ad-hoc migration/fix scripts in `graph/` (`migrate_*.py`, `fix_*.py`) have been run against this data; there is no migration log.
 
 ---
@@ -497,17 +497,23 @@ cross-paper pairs (4 CONTRADICTS / 11 SUPPORTS / 271 UNRELATED), built by
 
 **Headline finding:** the review found only **4 of 224** auto-detected
 CONTRADICTS are real (11 SUPPORTS, 209 UNRELATED) — production contradiction
-precision is **~1.8%**. Recorded baselines on the reference set:
+precision is **~1.8%**. The pre-registered four-variant ablation (2026-10-23)
+then measured the old/current prompt and gate on the 286-row reference set:
 
-| predictor | accuracy | macro F1 | CONTRADICTS P / R |
-| :--- | ---: | ---: | :--- |
-| majority | 0.9476 | 0.3244 | 0.00 / 0.00 |
-| random (seed 0) | 0.3706 | 0.2191 | — |
-| llm (`openai/gpt-oss-20b`) | 0.8427 | 0.4822 | 0.154 / 0.500 |
+| variant | gate / prompt / guard | flagged | TP | FP | CONTRADICTS P | CONTRADICTS R | macro F1 |
+| :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: |
+| A | 0.95 / old / off | 15 | 3 | 12 | 0.200 | 0.750 | 0.532 |
+| B | 0.35 / old / off | 1 | 0 | 1 | 0.000 | 0.000 | 0.354 |
+| C | 0.35 / current / on | 1 | 1 | 0 | 1.000 | 0.250 | 0.514 |
+| D | 0.35 / current / on (Gemini) | 0 | 0 | 0 | n/a | 0.000 | 0.380 |
 
-The old splits remain unusable for the record: every SUPPORTS/CONTRADICTS label
-was a same-paper pair, so the production-aligned eval was 100% UNRELATED and the
-majority baseline scored accuracy 1.0 / macro F1 0.33. Targets still to meet:
+Primary audit: A stops 208/220 verified false positives and keeps 3/4 confirmed
+contradictions; B 219/220 and 0/4; C 220/220 and 1/4; D 220/220 and 0/4. The 0.35
+gate drops one confirmed contradiction (pair 124), and A/B agree on only 22/34
+gate-passing pairs. Only 4 positives exist, so read this as a pilot, not a stable
+ranking. The old splits remain unusable for the record: every SUPPORTS/CONTRADICTS
+label was a same-paper pair, so the production-aligned eval was 100% UNRELATED and
+the majority baseline scored accuracy 1.0 / macro F1 0.33. Targets still to meet:
 macro F1 ≥ 0.55, CONTRADICTS precision/recall ≥ 0.60, p95 latency ≤ 4 s.
 
 ---
@@ -589,12 +595,12 @@ Consolidated (details and checkboxes in `progress.md`):
 
 **Open**
 - No per-user accounts (single shared `AXION_API_KEY`); no TLS.
-- Post-change LLM eval **blocked on provider quota** (Groq 200k tokens/day, Gemini 20 requests/day); CONTRADICTS has only 4 examples — expand the reviewed set. Macro F1 0.48 (prefix baseline) is the current honest number.
+- The four-variant judge ablation is complete (`eval/results/`), but CONTRADICTS has only 4 reviewed examples — expand the set before claiming a stable ranking. Macro F1 ranges 0.354–0.532 across variants; C keeps 1/4 confirmed contradictions.
 - Scheduler + metrics remain process-local; the worker must stay at 1 replica while the scheduler is enabled.
 - No job cancellation or per-stage progress.
 - Ingestion state `/api/ingestion/status` correctness now reported, but in-memory.
 - Gaps have no stored confidence.
-- Untracked docs + `eval/` now committed; `eval/Data/Labeled_pairs.csv` remains 0 bytes (historical).
+- Untracked docs + `eval/` now committed; the 0-byte `eval/Data/Labeled_pairs.csv` placeholder was deleted on 2026-10-24.
 - No Python-version marker; no hash-pinned deps.
 
 ---
@@ -604,14 +610,14 @@ Consolidated (details and checkboxes in `progress.md`):
 | Target | Estimate | What's left |
 | :--- | :--- | :--- |
 | **Founder/demo** | **~92%** | Polish; the core loop works and looks finished |
-| **Self-hosted MVP** | **~88–90%** | Auth ✅ + deployment ✅ + durable queue ✅; remaining: observability, ops docs, a defensible contradiction-quality measurement |
+| **Self-hosted MVP** | **~88–90%** | Auth ✅ + deployment ✅ + durable queue ✅ + four-variant eval pilot ✅; remaining: observability, ops docs, a larger reviewed eval |
 | **Multi-tenant SaaS** | **~50%** | Identity/tenancy, observability, valid eval, billing — 2–3+ months |
 
 **Verdict:** everything needed for a compelling demo exists, the stack is no
 longer trivially abusable (write/compute endpoints require a server-held key),
-and long work is durable and isolated from the request path. Shipping a *product*
-is now blocked mainly on **observability/ops** and a **larger, valid evaluation
-with provider quota** — not on features.
+and long work is durable and isolated from the request path. The judge ablation
+is complete but remains a small pilot. Shipping a *product* is now blocked mainly
+on **observability/ops** and a **larger, valid evaluation** — not on features.
 
 ---
 
@@ -620,7 +626,7 @@ with provider quota** — not on features.
 1. **P0 correctness/security** — ✅ done (stats, temporal, fail-closed secret, error leak, placeholders, degraded boot).
 2. **Offline-green tests + CI** — ✅ done (229 tests, GitHub Actions, type-checked build).
 3. **Deployment** — ✅ done (Dockerfiles, full-stack compose, healthchecks).
-4. **Valid evaluation** — ✅ reference set rebuilt + baselines recorded (`axion_pairs.csv`, macro F1 0.48) and the retrieval gate measured; ⏳ the post-change LLM run is blocked on provider quota and CONTRADICTS needs more reviewed positives.
+4. **Valid evaluation** — ✅ reference set rebuilt, retrieval gate measured, and a pre-registered four-variant ablation completed (`eval/results/`); ⏳ CONTRADICTS still needs more reviewed positives and replicate runs.
 5. **Auth + multi-user** — shared-key auth on compute endpoints ✅ done; real accounts, per-user rate limits still open.
 6. **Durable task queue** — ✅ done (RQ + Redis + `worker` service, cross-process verified); metrics/scheduler state still process-local.
 7. **Observability** — persistent metrics, tracing, alerting, structured logs.
@@ -632,7 +638,7 @@ with provider quota** — not on features.
 ## 14. Naming & branding
 
 - **Canonical name:** **Axion** (decided and applied 2026-10-16).
-- Rename pass **complete** in code, config, and docs: `config.py`, `api/main.py`, `main.py`, `embeddings/store.py`, `agents/synthesizer.py`, `archive/coordinator_v1.py`, `graph/migrate_to_neo4j.py`, `requirements.txt`, `axion/types/axion.ts`, `.env.example`, `docker-compose.yml` (container `axion_neo4j`), `tests/test_axion.py`, README, and all side docs. The legacy SQLite file was renamed to `data/db/axion.db`.
+- Rename pass **complete** in code, config, and docs: `config.py`, `api/main.py`, `main.py`, `embeddings/store.py`, `agents/synthesizer.py`, then-archived `archive/coordinator_v1.py`, `graph/migrate_to_neo4j.py`, `requirements.txt`, `axion/types/axion.ts`, `.env.example`, `docker-compose.yml` (container `axion_neo4j`), `tests/test_axion.py`, README, and all side docs. The legacy SQLite file was renamed to `data/db/axion.db`.
 - The **GitHub repo** was renamed to `Axion` (2026-10-17) and the `origin` remote re-pointed.
 - Remaining out-of-band artifact: the **on-disk folder** (`schimesh`).
 

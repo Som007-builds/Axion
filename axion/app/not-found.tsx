@@ -4,7 +4,7 @@ export default function NotFound() {
   return (
     <div className="cg-grid flex min-h-screen flex-col items-center justify-center px-6 py-10 text-center">
       <div className="w-full max-w-xl border border-ink/40 bg-paper px-8 py-10 text-left">
-        <span className="cg-overline text-ink/70">ERROR 404</span>
+        <span className="cg-overline text-ink-muted">ERROR 404</span>
         <p className="cg-display mt-3 text-5xl text-ink">404</p>
         <h1 className="cg-display mt-2 text-2xl text-ink">Page not found</h1>
         <p className="mt-3 text-sm leading-relaxed text-ink-soft">

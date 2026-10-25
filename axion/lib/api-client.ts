@@ -5,6 +5,7 @@ import type {
   ContradictionsResponse,
   Experiment,
   GapsResponse,
+  GapSource,
   CoordinatorOutput,
   IngestionStatus,
   ConfidenceDistribution,
@@ -125,8 +126,8 @@ export async function designExperiment(
 }
 
 // Research Gaps
-export async function getGaps(source?: 'semantic' | 'llm_synthesized'): Promise<GapsResponse> {
-  const params = source ? `?source=${source}` : ''
+export async function getGaps(source?: GapSource): Promise<GapsResponse> {
+  const params = source ? `?source=${encodeURIComponent(source)}` : ''
   return fetchApi<GapsResponse>(`/api/gaps${params}`)
 }
 
@@ -214,9 +215,13 @@ export async function getEvolution(
   )
 }
 
-export async function getDisputes(topic: string): Promise<DisputeTimeline> {
+export async function getDisputes(
+  topic: string,
+  yearStart = 2019,
+  yearEnd = 2026
+): Promise<DisputeTimeline> {
   return fetchApi<DisputeTimeline>(
-    `/api/temporal/disputes?topic=${encodeURIComponent(topic)}`
+    `/api/temporal/disputes?topic=${encodeURIComponent(topic)}&year_start=${yearStart}&year_end=${yearEnd}`
   )
 }
 

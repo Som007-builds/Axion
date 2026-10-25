@@ -16,10 +16,23 @@
   --cg-paper-secondary: #e6e0ce;
 
   --cg-ink: #1f2be0;
-  --cg-ink-soft: #5560e5;
+  --cg-ink-soft: #3f49d5;
+  --cg-ink-muted: #4c56df;
+  --cg-accent: #1f2be0;
+  --cg-border-strong: #1f2be0;
 
-  --cg-grid: rgba(31, 43, 224, 0.1);
+  --cg-grid: rgba(31, 43, 224, 0.065);
   --cg-ink-faint: rgba(31, 43, 224, 0.18);
+
+  --cg-scroll-thumb: rgba(31, 43, 224, 0.25);
+  --cg-scroll-thumb-hover: rgba(31, 43, 224, 0.45);
+  --cg-skeleton: rgba(31, 43, 224, 0.08);
+  --cg-cell-empty: rgba(31, 43, 224, 0.12);
+  --cg-overlay: rgba(31, 43, 224, 0.18);
+
+  --cg-graph-accent: 31, 43, 224;
+  --cg-graph-label: 31, 43, 224;
+  --cg-graph-halo: 240, 235, 222;
 
   --cg-grid-size: 24px;
   --cg-hairline: 1px;
@@ -51,7 +64,7 @@
   --popover: var(--cg-paper);
   --popover-foreground: var(--cg-ink);
 
-  --primary: var(--cg-ink);
+  --primary: var(--cg-accent);
   --primary-foreground: var(--cg-paper);
 
   --secondary: var(--cg-paper-secondary);
@@ -63,12 +76,12 @@
   --accent: rgba(31, 43, 224, 0.06);
   --accent-foreground: var(--cg-ink);
 
-  --destructive: var(--cg-ink);
+  --destructive: var(--cg-accent);
   --destructive-foreground: var(--cg-paper);
 
   --border: rgba(31, 43, 224, 0.35);
   --input: rgba(31, 43, 224, 0.35);
-  --ring: var(--cg-ink);
+  --ring: var(--cg-accent);
 
   /* Charts: monochrome ink ladder (unused semantically) */
   --chart-1: rgba(31, 43, 224, 1);
@@ -83,12 +96,83 @@
   /* ─── Sidebar ─────────────────────────────────────────────────────────── */
   --sidebar: var(--cg-paper);
   --sidebar-foreground: var(--cg-ink);
-  --sidebar-primary: var(--cg-ink);
+  --sidebar-primary: var(--cg-accent);
   --sidebar-primary-foreground: var(--cg-paper);
   --sidebar-accent: rgba(31, 43, 224, 0.06);
   --sidebar-accent-foreground: var(--cg-ink);
   --sidebar-border: rgba(31, 43, 224, 0.35);
   --sidebar-ring: var(--cg-ink);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   COBALT NIGHT
+   The same paper/ink system inverted. Foreground text is warm off-white;
+   periwinkle is reserved for interactive accents and filled marks.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.dark {
+  --cg-paper: #10131c;
+  --cg-paper-secondary: #191e2a;
+
+  --cg-ink: #f0eee8;          /* primary text / strong rules */
+  --cg-ink-soft: #a9b0c9;     /* secondary text */
+  --cg-ink-muted: #8f97b2;    /* metadata, still >= 4.5:1 */
+  --cg-accent: #8d99ff;       /* interactive accent */
+  --cg-border-strong: #4a5372;
+
+  --cg-grid: rgba(141, 153, 255, 0.065);
+  --cg-ink-faint: rgba(240, 238, 232, 0.16);
+
+  --cg-scroll-thumb: rgba(141, 153, 255, 0.3);
+  --cg-scroll-thumb-hover: rgba(141, 153, 255, 0.55);
+  --cg-skeleton: rgba(141, 153, 255, 0.1);
+  --cg-cell-empty: rgba(141, 153, 255, 0.14);
+  --cg-overlay: rgba(0, 0, 0, 0.62);
+
+  --cg-graph-accent: 141, 153, 255;
+  --cg-graph-label: 240, 238, 232;
+  --cg-graph-halo: 16, 19, 28;
+
+  --background: var(--cg-paper);
+  --foreground: var(--cg-ink);
+  --card: var(--cg-paper);
+  --card-foreground: var(--cg-ink);
+  --popover: var(--cg-paper);
+  --popover-foreground: var(--cg-ink);
+
+  --primary: var(--cg-accent);
+  --primary-foreground: var(--cg-paper);
+
+  --secondary: var(--cg-paper-secondary);
+  --secondary-foreground: var(--cg-ink);
+
+  --muted: rgba(141, 153, 255, 0.07);
+  --muted-foreground: var(--cg-ink-soft);
+
+  --accent: rgba(141, 153, 255, 0.1);
+  --accent-foreground: var(--cg-ink);
+
+  --destructive: var(--cg-accent);
+  --destructive-foreground: var(--cg-paper);
+
+  --border: rgba(169, 176, 201, 0.28);
+  --input: rgba(169, 176, 201, 0.34);
+  --ring: var(--cg-accent);
+
+  --chart-1: rgba(141, 153, 255, 1);
+  --chart-2: rgba(141, 153, 255, 0.75);
+  --chart-3: rgba(169, 176, 201, 0.68);
+  --chart-4: rgba(169, 176, 201, 0.42);
+  --chart-5: rgba(169, 176, 201, 0.22);
+
+  --sidebar: var(--cg-paper);
+  --sidebar-foreground: var(--cg-ink);
+  --sidebar-primary: var(--cg-accent);
+  --sidebar-primary-foreground: var(--cg-paper);
+  --sidebar-accent: rgba(141, 153, 255, 0.08);
+  --sidebar-accent-foreground: var(--cg-ink);
+  --sidebar-border: rgba(169, 176, 201, 0.28);
+  --sidebar-ring: var(--cg-accent);
 }
 
 @theme inline {
@@ -123,9 +207,11 @@
 
   /* Cobalt Grid first-class tokens */
   --color-paper: var(--cg-paper);
+  --color-paper-secondary: var(--cg-paper-secondary);
   --color-paper-2: var(--cg-paper-secondary);
   --color-ink: var(--cg-ink);
   --color-ink-soft: var(--cg-ink-soft);
+  --color-ink-muted: var(--cg-ink-muted);
 
   --radius-sm: var(--cg-radius);
   --radius-md: var(--cg-radius);
@@ -146,6 +232,10 @@
     color-scheme: light;
   }
 
+  html.dark {
+    color-scheme: dark;
+  }
+
   body {
     @apply bg-background text-foreground;
     overflow: hidden;
@@ -153,7 +243,7 @@
   }
 
   ::selection {
-    background: var(--cg-ink);
+    background: var(--cg-accent);
     color: var(--cg-paper);
   }
 
@@ -166,22 +256,22 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: rgba(31, 43, 224, 0.25);
+    background: var(--cg-scroll-thumb);
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(31, 43, 224, 0.45);
+    background: var(--cg-scroll-thumb-hover);
   }
 
   * {
     scrollbar-width: thin;
-    scrollbar-color: rgba(31, 43, 224, 0.25) transparent;
+    scrollbar-color: var(--cg-scroll-thumb) transparent;
   }
 
   /* Keyboard focus fallback for anything without a utility focus ring */
   a:focus-visible,
   button:focus-visible,
   [role='button']:focus-visible {
-    outline: 2px solid var(--cg-ink);
+    outline: 2px solid var(--cg-accent);
     outline-offset: 1px;
   }
 }
@@ -246,7 +336,7 @@
     transform: translateY(-50%);
     width: 2px;
     height: 20px;
-    background: var(--cg-ink);
+    background: var(--cg-accent);
   }
 
   /* ─── Restrained motion ────────────────────────────────────────────── */
@@ -281,7 +371,7 @@
 
   /* Restrained skeleton: ink at low opacity, slow pulse */
   .cg-skeleton {
-    background: rgba(31, 43, 224, 0.08);
+    background: var(--cg-skeleton);
     animation: cg-skeleton-pulse 1.8s ease-in-out infinite;
   }
 
@@ -298,22 +388,55 @@
   .cg-hatch {
     background-image: repeating-linear-gradient(
       -45deg,
-      var(--cg-ink) 0 1px,
+      var(--cg-accent) 0 1px,
       transparent 1px 4px
     );
   }
 
   /* Pixel-stack cells (Graph Evolution) */
   .cg-cell-filled {
-    background: var(--cg-ink);
+    background: var(--cg-accent);
   }
 
   .cg-cell-empty {
-    background: rgba(31, 43, 224, 0.12);
+    background: var(--cg-cell-empty);
   }
 
   .tabular-nums {
     font-variant-numeric: tabular-nums;
+  }
+
+  /* In dark mode, ink-as-fill becomes the interactive accent; ink-as-text
+     stays warm off-white via --cg-ink. This keeps one token system while
+     separating "words" from "controls". */
+  .dark .bg-ink {
+    background-color: var(--cg-accent);
+    color: var(--cg-paper);
+  }
+
+  .dark .hover\:bg-ink:hover {
+    background-color: var(--cg-accent);
+    color: var(--cg-paper);
+  }
+
+  .dark .hover\:bg-ink-soft:hover {
+    background-color: color-mix(in srgb, var(--cg-accent) 78%, var(--cg-paper));
+  }
+
+  .dark .border-ink {
+    border-color: var(--cg-border-strong);
+  }
+
+  .dark .border-l-ink {
+    border-left-color: var(--cg-accent);
+  }
+
+  .dark .bg-ink\/5 {
+    background-color: color-mix(in srgb, var(--cg-accent) 12%, transparent);
+  }
+
+  .dark .cg-rule-strong {
+    border-color: var(--cg-border-strong);
   }
 
   /* ─── Screen-reader helpers with real layout slots ─────────────────── */
@@ -327,6 +450,19 @@
     clip-path: inset(50%);
     white-space: nowrap;
   }
+}
+
+/* Unlayered keyboard focus rule: deliberately wins over utility
+   `focus-visible:outline-none` so every interactive control keeps a visible
+   indicator. */
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible,
+[role='button']:focus-visible,
+[role='option']:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--cg-accent);
+  outline-offset: 2px;
 }
 
 /* Global reduced-motion reset — genuine a11y requirement */

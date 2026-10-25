@@ -13,6 +13,7 @@ import { TimelineView } from '@/components/axion/timeline-view'
 import { GraphEvolution } from '@/components/axion/graph-evolution'
 import { KnowledgeGraph } from '@/components/axion/knowledge-graph'
 import { IngestionStatus } from '@/components/axion/ingestion-status'
+import { ThemeToggle } from '@/components/axion/theme-toggle'
 import { useIsClient } from '@/lib/use-is-client'
 
 const VIEW_TITLES: Record<AxionView, string> = {
@@ -25,12 +26,12 @@ const VIEW_TITLES: Record<AxionView, string> = {
 }
 
 const VIEW_DESCRIPTIONS: Record<AxionView, string> = {
-  'query': 'Ask questions across your scientific knowledge graph',
-  'knowledge-graph': 'Explore the interconnected network of papers, claims, and gaps',
-  'contradictions': 'Detected conflicts between research claims',
-  'gaps': 'Unexplored areas and missing connections in the literature',
-  'timeline': 'Track how scientific consensus evolves over time',
-  'evolution': 'Confidence distribution and claim drift analysis',
+  'query': 'Ask a question; the answer is synthesized from retrieved graph evidence',
+  'knowledge-graph': 'Explore papers, claims, and gaps; select a node or zoom in for labels',
+  'contradictions': 'Model-scored candidate conflicts — not yet verified by a human',
+  'gaps': 'Questions inferred from claim clusters and, when present, future-work text',
+  'timeline': 'Model-interpreted consensus evolution from retrieved claims',
+  'evolution': 'Heuristic claim-score distribution and the largest recomputations',
 }
 
 export default function AxionWorkspace() {
@@ -41,23 +42,38 @@ export default function AxionWorkspace() {
   const [recentQueries, setRecentQueries] = useState<string[]>([])
   const [queryPanelLoading, setQueryPanelLoading] = useState(false)
 
-  // Load recent queries from local storage
+  // Load recent queries from local storage. The query panel dispatches a
+  // custom event after each history change so this menu does not stay stale
+  // until a full reload.
   useEffect(() => {
     if (!isClient) return
-    try {
-      const stored = localStorage.getItem('axion-query-history')
-      if (stored) {
-        const parsed = JSON.parse(stored)
-        if (Array.isArray(parsed)) {
-          setRecentQueries(
-            parsed
-              .map((item: { question?: string }) => item.question)
-              .filter((q): q is string => typeof q === 'string')
-              .slice(0, 10)
-          )
+    const loadRecent = () => {
+      try {
+        const stored = localStorage.getItem('axion-query-history')
+        if (!stored) {
+          setRecentQueries([])
+          return
         }
+        const parsed = JSON.parse(stored)
+        setRecentQueries(
+          Array.isArray(parsed)
+            ? parsed
+                .map((item: { question?: string }) => item?.question)
+                .filter((q): q is string => typeof q === 'string')
+                .slice(0, 10)
+            : []
+        )
+      } catch {
+        setRecentQueries([])
       }
-    } catch {}
+    }
+    loadRecent()
+    window.addEventListener('axion:query-history', loadRecent)
+    window.addEventListener('storage', loadRecent)
+    return () => {
+      window.removeEventListener('axion:query-history', loadRecent)
+      window.removeEventListener('storage', loadRecent)
+    }
   }, [isClient])
 
   const handleCommandSubmit = useCallback((query: string) => {
@@ -85,7 +101,7 @@ export default function AxionWorkspace() {
 
   if (!isClient) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center">
+      <div className="flex h-dvh w-full items-center justify-center">
         <div className="flex flex-col items-center gap-4 px-10 py-8">
           <Image
             src="/axion-logo.png"
@@ -95,7 +111,7 @@ export default function AxionWorkspace() {
             priority
             className="h-20 w-auto object-contain"
           />
-          <span className="cg-overline text-ink/70">AXION SYSTEM</span>
+          <span className="cg-overline text-ink-muted">AXION SYSTEM</span>
           <div className="flex items-center gap-2">
             <span aria-hidden="true" className="inline-block h-2 w-2 bg-ink animate-cg-blink" />
             <span className="cg-mono-meta text-xs text-ink-soft">
@@ -108,13 +124,7 @@ export default function AxionWorkspace() {
   }
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden">
-      {/* Structural top rule inset from the page edges */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none fixed inset-x-3 top-2.5 z-40 h-[2px] bg-ink"
-      />
-
+    <div className="flex h-dvh w-full overflow-hidden">
       {/* Navigation Rail */}
       <NavRail
         activeView={activeView}
@@ -123,29 +133,46 @@ export default function AxionWorkspace() {
       />
 
       {/* Main Content Area */}
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+      <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
+        {/* Structural top rule, inset within the content column so it never
+            crosses the navigation rail. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-3 top-2.5 z-40 h-[2px] bg-ink"
+        />
         {/* Top Bar: Command Bar + View Title */}
-        <header className="flex shrink-0 flex-col gap-4 border-b border-ink/25 px-6 pt-6 pb-4">
-          {/* Command Bar */}
-          <CommandBar
-            onSubmit={handleCommandSubmit}
-            recentQueries={recentQueries}
-            isLoading={queryPanelLoading}
-          />
+        <header className="flex shrink-0 flex-col gap-3 border-b border-ink/25 px-4 pt-5 pb-3 sm:gap-4 sm:px-6 sm:pt-6 sm:pb-4">
+          {/* Command Bar, with the theme switch pinned to the top-left corner
+              of the content column instead of sitting in the title row. */}
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <div className="min-w-0 flex-1">
+              <CommandBar
+                onSubmit={handleCommandSubmit}
+                recentQueries={recentQueries}
+                isLoading={queryPanelLoading}
+              />
+            </div>
+          </div>
 
           {/* View Header */}
-          <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
+          <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
             <div className="min-w-0">
-              <h1 className="cg-display text-2xl text-ink">
+              <h1 className="cg-display text-xl text-ink sm:text-2xl">
                 {VIEW_TITLES[activeView]}
               </h1>
-              <p className="mt-0.5 text-sm text-ink-soft">
+              <p className="mt-0.5 max-w-2xl text-xs leading-relaxed text-ink-soft sm:text-sm">
                 {VIEW_DESCRIPTIONS[activeView]}
               </p>
             </div>
 
-            {/* Stats (compact, inline) */}
-            {activeView === 'query' && <DashboardStats />}
+            <div className="flex min-w-0 flex-wrap items-center gap-3">
+              {activeView === 'query' && (
+                <div className="hidden sm:block">
+                  <DashboardStats />
+                </div>
+              )}
+            </div>
           </div>
         </header>
 
@@ -156,7 +183,7 @@ export default function AxionWorkspace() {
             className="mx-auto h-full w-full max-w-[1440px] animate-fade-up"
           >
             {activeView === 'query' && (
-              <div className="mx-auto w-full max-w-[1200px] px-6 py-6">
+              <div className="mx-auto w-full max-w-[1200px] px-4 py-4 sm:px-6 sm:py-6">
                 <QueryPanel
                   externalQuery={commandQuery}
                   onQueryClear={() => setCommandQuery(null)}
@@ -170,25 +197,25 @@ export default function AxionWorkspace() {
             )}
 
             {activeView === 'contradictions' && (
-              <div className="mx-auto w-full max-w-[1200px] px-6 py-6">
+              <div className="mx-auto w-full max-w-[1200px] px-4 py-4 sm:px-6 sm:py-6">
                 <ContradictionList />
               </div>
             )}
 
             {activeView === 'gaps' && (
-              <div className="mx-auto w-full max-w-[1200px] px-6 py-6">
+              <div className="mx-auto w-full max-w-[1200px] px-4 py-4 sm:px-6 sm:py-6">
                 <GapList />
               </div>
             )}
 
             {activeView === 'timeline' && (
-              <div className="mx-auto w-full max-w-[1200px] px-6 py-6">
+              <div className="mx-auto w-full max-w-[1200px] px-4 py-4 sm:px-6 sm:py-6">
                 <TimelineView />
               </div>
             )}
 
             {activeView === 'evolution' && (
-              <div className="mx-auto w-full max-w-[1200px] px-6 py-6">
+              <div className="mx-auto w-full max-w-[1200px] px-4 py-4 sm:px-6 sm:py-6">
                 <GraphEvolution />
               </div>
             )}

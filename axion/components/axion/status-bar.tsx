@@ -15,7 +15,7 @@ export function StatusBar() {
   const isConnected = !error && !!data && !!health
 
   return (
-    <footer className="flex h-8 shrink-0 items-center justify-between border-t border-ink/40 px-4 pb-2">
+    <footer className="flex h-8 shrink-0 items-center justify-between gap-3 border-t border-ink/40 px-3 pb-2 sm:px-4">
       <div className="flex min-w-0 items-center gap-4">
         {/* Connection Status */}
         <div className="flex shrink-0 items-center gap-2">
@@ -30,7 +30,7 @@ export function StatusBar() {
               <span className="bg-ink block h-0.5 w-[2px]" />
             )}
           </span>
-          <span className="cg-mono-meta text-[10px] text-ink/70">
+          <span className="cg-mono-meta text-[10px] text-ink-muted">
             {isConnected ? 'SYSTEM ONLINE' : 'SYSTEM OFFLINE'}
           </span>
         </div>
@@ -38,17 +38,18 @@ export function StatusBar() {
         {/* Divider */}
         <div aria-hidden="true" className="h-3 w-px bg-ink/30" />
 
-        {/* Stats */}
-        <div className="flex min-w-0 items-center gap-4 overflow-hidden">
+        {/* Stats — hidden on phones where the footer cannot fit them without
+            silently clipping labels. The header carries the full counts. */}
+        <div className="hidden min-w-0 items-center gap-4 overflow-hidden sm:flex">
           {data && (
             <>
-              <span className="cg-mono-meta whitespace-nowrap text-[10px] text-ink/50">
+              <span className="cg-mono-meta whitespace-nowrap text-[10px] text-ink-muted">
                 {data.papers.toLocaleString()} papers
               </span>
-              <span className="cg-mono-meta whitespace-nowrap text-[10px] text-ink/50">
+              <span className="cg-mono-meta whitespace-nowrap text-[10px] text-ink-muted">
                 {data.claims.toLocaleString()} claims
               </span>
-              <span className="cg-mono-meta whitespace-nowrap text-[10px] text-ink/50">
+              <span className="cg-mono-meta whitespace-nowrap text-[10px] text-ink-muted">
                 {data.contradictions.toLocaleString()} contradictions
               </span>
             </>
@@ -57,7 +58,7 @@ export function StatusBar() {
       </div>
 
       <div className="flex shrink-0 items-center gap-3">
-        <span className="cg-mono-meta text-[10px] text-ink/40">
+        <span className="cg-mono-meta text-[10px] text-ink-muted">
           AXION v2.30
         </span>
       </div>

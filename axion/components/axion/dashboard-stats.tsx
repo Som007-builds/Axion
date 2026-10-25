@@ -58,7 +58,7 @@ export function DashboardStats() {
             className="flex items-center gap-2 border border-ink/25 bg-paper px-2.5 py-1.5 transition-colors duration-150 hover:border-ink/60"
           >
             <Icon className="h-3.5 w-3.5 text-ink" aria-hidden="true" />
-            <span className="cg-overline text-ink/55">{item.label}</span>
+            <span className="cg-overline text-ink-muted">{item.label}</span>
             {isLoading ? (
               <Skeleton className="h-3.5 w-8" />
             ) : (

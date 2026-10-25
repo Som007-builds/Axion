@@ -58,6 +58,19 @@ export function IngestionStatus({ externalOpen, onExternalClose }: IngestionStat
   const [isTriggering, setIsTriggering] = useState(false)
   const [pollingActive, setPollingActive] = useState(false)
   const [triggerError, setTriggerError] = useState<string | null>(null)
+  // After "Trigger New Ingestion" the previous run's completed snapshot is
+  // still the latest server-side progress. Keep the form visible instead of
+  // letting the progress sync immediately restore that old result.
+  const [composingNew, setComposingNew] = useState(false)
+  const [cronNotice, setCronNotice] = useState<string | null>(null)
+  // A just-submitted custom run is `queued` until a worker claims it. Until
+  // then the progress endpoint still returns the previous run's snapshot.
+  const [pendingRun, setPendingRun] = useState<{
+    topic: string
+    previousLogCount: number
+    startedAt: number
+  } | null>(null)
+  const lastProgressRef = useRef<CustomIngestionProgress | null>(null)
 
   const consoleEndRef = useRef<HTMLDivElement | null>(null)
 
@@ -84,6 +97,23 @@ export function IngestionStatus({ externalOpen, onExternalClose }: IngestionStat
     const fetchProgress = async () => {
       try {
         const progress = await getIngestionProgress()
+
+        if (pendingRun) {
+          const isTerminal = !progress.running
+          const isSameTopic = progress.topic === pendingRun.topic
+          const logsGrew = progress.logs.length > pendingRun.previousLogCount
+          const timedOut = Date.now() - pendingRun.startedAt > 60_000
+          // Ignore the previous run's terminal snapshot while the new job is
+          // still queued. Accept it once the new run reports progress, or
+          // after a minute so a failed-to-start job cannot hide forever.
+          if (isTerminal && !(isSameTopic && logsGrew) && !timedOut) {
+            setPollingActive(true)
+            return
+          }
+          setPendingRun(null)
+        }
+
+        lastProgressRef.current = progress
         setCustomProgress(progress)
 
         if (progress.running) {
@@ -94,6 +124,12 @@ export function IngestionStatus({ externalOpen, onExternalClose }: IngestionStat
       } catch (err) {
         console.error('Error fetching custom ingestion progress:', err)
       }
+    }
+
+    // While the user is setting up a fresh run, do not rehydrate the last
+    // completed snapshot — that would undo "Trigger New Ingestion".
+    if (composingNew) {
+      return
     }
 
     // Run once immediately on sheet open or poll toggle
@@ -109,13 +145,16 @@ export function IngestionStatus({ externalOpen, onExternalClose }: IngestionStat
     return () => {
       if (intervalId) clearInterval(intervalId)
     }
-  }, [isOpen, pollingActive, customProgress?.running])
+  }, [isOpen, pollingActive, customProgress?.running, composingNew, pendingRun])
 
   // Auto-scroll terminal log to bottom on updates; user scroll is not stolen
   // because scrollIntoView only runs when new log lines arrive.
   useEffect(() => {
     if (consoleEndRef.current) {
-      consoleEndRef.current.scrollIntoView({ behavior: 'smooth' })
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      consoleEndRef.current.scrollIntoView({
+        behavior: reduceMotion ? 'auto' : 'smooth',
+      })
     }
   }, [customProgress?.logs])
 
@@ -128,7 +167,14 @@ export function IngestionStatus({ externalOpen, onExternalClose }: IngestionStat
 
     try {
       await runCustomIngestion(topic.trim(), limit)
+      setPendingRun({
+        topic: topic.trim(),
+        previousLogCount: lastProgressRef.current?.logs.length ?? 0,
+        startedAt: Date.now(),
+      })
+      setComposingNew(false)
       setPollingActive(true)
+      setCronNotice(null)
       mutateGeneral()
     } catch (err) {
       setTriggerError(err instanceof Error ? err.message : 'Failed to start ingestion pipeline')
@@ -145,6 +191,9 @@ export function IngestionStatus({ externalOpen, onExternalClose }: IngestionStat
       setCustomProgress(null)
       setPollingActive(false)
       setTriggerError(null)
+      setCronNotice(null)
+      setPendingRun(null)
+      setComposingNew(true)
     } catch (e) {
       console.error(e)
     }
@@ -152,11 +201,16 @@ export function IngestionStatus({ externalOpen, onExternalClose }: IngestionStat
 
   const handleTriggerDefaultIngest = async () => {
     setIsTriggering(true)
+    setTriggerError(null)
+    setCronNotice(null)
     try {
       await triggerIngestion()
+      setCronNotice('Background ingestion job queued.')
       mutateGeneral()
     } catch (err) {
-      console.error('Failed to trigger default cron:', err)
+      setTriggerError(
+        err instanceof Error ? err.message : 'Failed to trigger the background ingestion job'
+      )
     } finally {
       setIsTriggering(false)
     }
@@ -176,6 +230,10 @@ export function IngestionStatus({ externalOpen, onExternalClose }: IngestionStat
         return 'Checking Contradictions'
       case 'confidence':
         return 'Propagating Belief updates'
+      case 'completed':
+        return 'Completed'
+      case 'failed':
+        return 'Failed'
       default:
         return progress.status
     }
@@ -193,7 +251,7 @@ export function IngestionStatus({ externalOpen, onExternalClose }: IngestionStat
               <Database className="h-4 w-4" aria-hidden="true" />
             </div>
             <span>Ingestion Pipeline</span>
-            <QrBlock className="ml-auto" />
+            <QrBlock className="ml-auto mr-8" />
           </SheetTitle>
           <SheetDescription className="text-xs text-ink-soft">
             Feed new ArXiv publications into the multi-agent claims graph.
@@ -208,13 +266,13 @@ export function IngestionStatus({ externalOpen, onExternalClose }: IngestionStat
               <div className="space-y-2">
                 <label
                   htmlFor="topic-input"
-                  className="cg-overline block text-ink/70"
+                  className="cg-overline block text-ink-muted"
                 >
                   Research Field / Topic
                 </label>
                 <div className="relative">
                   <Search
-                    className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/40"
+                    className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted"
                     aria-hidden="true"
                   />
                   <Input
@@ -234,7 +292,7 @@ export function IngestionStatus({ externalOpen, onExternalClose }: IngestionStat
                   htmlFor="limit-input"
                   className="flex items-center justify-between"
                 >
-                  <span className="cg-overline block text-ink/70">Target Papers Limit</span>
+                  <span className="cg-overline block text-ink-muted">Target Papers Limit</span>
                   <span className="cg-mono-meta text-xs text-ink">{limit}</span>
                 </label>
                 <Input
@@ -260,15 +318,35 @@ export function IngestionStatus({ externalOpen, onExternalClose }: IngestionStat
 
               <Button
                 type="submit"
-                disabled={isTriggering}
+                disabled={isTriggering || generalStatus?.running || !!pendingRun}
                 className="h-10 w-full gap-2 bg-ink font-medium text-paper hover:bg-ink-soft"
               >
                 <Play className="h-4 w-4" aria-hidden="true" />
-                <span>{isTriggering ? 'Starting Pipeline…' : 'Start Pipeline'}</span>
+                <span>
+                  {pendingRun
+                    ? 'Queued — waiting for a worker…'
+                    : generalStatus?.running
+                      ? 'Background Ingestion Running'
+                      : isTriggering
+                        ? 'Starting Pipeline…'
+                        : 'Start Pipeline'}
+                </span>
               </Button>
+              {pendingRun && (
+                <p role="status" className="text-[11px] leading-relaxed text-ink-muted">
+                  Queued &ldquo;{pendingRun.topic}&rdquo;. The AI worker will start
+                  this run shortly.
+                </p>
+              )}
+              {generalStatus?.running && (
+                <p className="text-[11px] leading-relaxed text-ink-muted">
+                  Wait for the current background ingestion to finish before starting a
+                  custom run.
+                </p>
+              )}
 
               <div className="space-y-2.5 border-t border-ink/25 pt-4">
-                <p className="text-[11px] leading-relaxed text-ink/50">
+                <p className="text-[11px] leading-relaxed text-ink-muted">
                   Alternatively, trigger a quick background incremental search on
                   pre-configured fields:
                 </p>
@@ -282,6 +360,11 @@ export function IngestionStatus({ externalOpen, onExternalClose }: IngestionStat
                   <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
                   <span>Trigger Cron Job Ingest</span>
                 </Button>
+                {cronNotice && (
+                  <p role="status" className="text-[11px] leading-relaxed text-ink-muted">
+                    {cronNotice}
+                  </p>
+                )}
               </div>
             </form>
           ) : (
@@ -291,7 +374,7 @@ export function IngestionStatus({ externalOpen, onExternalClose }: IngestionStat
               <div className="space-y-4 border-[1.5px] border-ink/60 bg-paper p-4" aria-live="polite">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 space-y-1">
-                    <span className="cg-mono-meta block truncate text-[10px] uppercase tracking-wide text-ink/50">
+                    <span className="cg-mono-meta block truncate text-[10px] uppercase tracking-wide text-ink-muted">
                       TOPIC: &ldquo;{customProgress.topic}&rdquo;
                     </span>
                     <h3 className="text-sm font-semibold text-ink">
@@ -317,7 +400,7 @@ export function IngestionStatus({ externalOpen, onExternalClose }: IngestionStat
                 {/* Dynamic Estimates */}
                 {customProgress.running && (
                   <div className="flex items-center justify-between border-t border-ink/20 pt-3 text-xs">
-                    <Overline className="text-ink/50">Est. Remaining</Overline>
+                    <Overline className="text-ink-muted">Est. Remaining</Overline>
                     <span className="cg-mono-meta flex items-center gap-1.5 font-semibold text-ink">
                       <Clock className="h-3.5 w-3.5" aria-hidden="true" />
                       {formatDuration(customProgress.remaining_seconds)}
@@ -329,19 +412,19 @@ export function IngestionStatus({ externalOpen, onExternalClose }: IngestionStat
               {/* Pipeline Stats Summary */}
               <div className="grid grid-cols-3 border border-ink/30 bg-paper text-center">
                 <div className="space-y-1 py-3">
-                  <Overline className="block text-ink/50">Papers</Overline>
+                  <Overline className="block text-ink-muted">Papers</Overline>
                   <span className="cg-mono-meta inline-block text-sm font-semibold text-ink tabular-nums">
                     {customProgress.papers_added}
                   </span>
                 </div>
                 <div className="space-y-1 border-x border-ink/25 py-3">
-                  <Overline className="block text-ink/50">Claims</Overline>
+                  <Overline className="block text-ink-muted">Claims</Overline>
                   <span className="cg-mono-meta inline-block text-sm font-semibold text-ink tabular-nums">
                     {customProgress.claims_added}
                   </span>
                 </div>
                 <div className="space-y-1 py-3">
-                  <Overline className="block text-ink/50">Conflicts</Overline>
+                  <Overline className="block text-ink-muted">Conflicts</Overline>
                   <span className="cg-mono-meta inline-block text-sm font-semibold text-ink tabular-nums">
                     {customProgress.contradictions_found}
                   </span>
@@ -371,7 +454,7 @@ export function IngestionStatus({ externalOpen, onExternalClose }: IngestionStat
               <div className="space-y-2">
                 <span className="flex items-center gap-1.5">
                   <Terminal className="h-3.5 w-3.5 text-ink" aria-hidden="true" />
-                  <Overline className="text-ink/70">Real-time Console</Overline>
+                  <Overline className="text-ink-muted">Real-time Console</Overline>
                 </span>
                 <div className="h-60 space-y-1 overflow-y-auto border border-ink/30 bg-paper-secondary p-3 text-[11px] leading-normal text-ink-soft">
                   {customProgress.logs.map((log, idx) => (
@@ -381,7 +464,7 @@ export function IngestionStatus({ externalOpen, onExternalClose }: IngestionStat
                     >
                       <span
                         aria-hidden="true"
-                        className="cg-mono-meta mr-2 select-none text-ink/30"
+                        className="cg-mono-meta mr-2 select-none text-ink-muted"
                       >
                         {String(idx + 1).padStart(3, '0')}
                       </span>
@@ -396,7 +479,7 @@ export function IngestionStatus({ externalOpen, onExternalClose }: IngestionStat
                     />
                   )}
                 </div>
-                <span className="cg-sr-only" aria-live="polite">
+                <span className="sr-only" aria-live="polite">
                   {customProgress.running
                     ? `Ingestion running: ${statusHeadline(customProgress)}`
                     : `Ingestion ${customProgress.status}. ${customProgress.error_message || ''}`}

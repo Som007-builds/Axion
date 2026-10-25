@@ -12,7 +12,7 @@ export default function Loading() {
           priority
           className="h-16 w-auto object-contain"
         />
-        <span className="cg-overline text-ink/70">AXION SYSTEM</span>
+        <span className="cg-overline text-ink-muted">AXION SYSTEM</span>
         <span className="cg-mono-meta animate-pulse text-xs text-ink-soft">
           Loading workspace…
         </span>

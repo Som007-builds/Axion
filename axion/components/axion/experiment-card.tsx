@@ -124,14 +124,14 @@ export function ExperimentCard({ contradictionId, hasExperiment }: ExperimentCar
         <div className="min-w-0 border-t-[1.5px] border-ink bg-paper-secondary/60 p-4">
           <div className="mb-2 flex items-center gap-2">
             <span aria-hidden="true" className="inline-block h-2 w-2 bg-ink" />
-            <Overline className="text-ink/60">Hypothesis A</Overline>
+            <Overline className="text-ink-muted">Hypothesis A</Overline>
           </div>
           <p className="text-sm leading-relaxed text-ink-soft">{experiment.hypothesis_a}</p>
         </div>
         <div className="min-w-0 border-t-[1.5px] border-ink/30 p-4">
           <div className="mb-2 flex items-center gap-2">
             <span aria-hidden="true" className="inline-block h-2 w-2 border border-ink/70" />
-            <Overline className="text-ink/60">Hypothesis B</Overline>
+            <Overline className="text-ink-muted">Hypothesis B</Overline>
           </div>
           <p className="text-sm leading-relaxed text-ink-soft">{experiment.hypothesis_b}</p>
         </div>
@@ -139,7 +139,7 @@ export function ExperimentCard({ contradictionId, hasExperiment }: ExperimentCar
 
       {/* Procedure */}
       <div>
-        <Overline className="text-ink/60">Procedure</Overline>
+        <Overline className="text-ink-muted">Procedure</Overline>
         <div className="mt-2.5 flex flex-col gap-2">
           {experiment.procedure
             .split(/\r?\n/)
@@ -183,7 +183,7 @@ export function ExperimentCard({ contradictionId, hasExperiment }: ExperimentCar
         <div className="border border-ink/30 bg-paper p-4">
           <div className="mb-2 flex items-center gap-2">
             <AlertTriangle className="h-3.5 w-3.5 text-ink" aria-hidden="true" />
-            <Overline className="text-ink/60">Caveats</Overline>
+            <Overline className="text-ink-muted">Caveats</Overline>
           </div>
           <ul className="list-inside list-disc space-y-1 pl-1 text-sm text-ink-soft">
             {experiment.caveats.map((caveat, i) => (

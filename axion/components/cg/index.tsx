@@ -18,7 +18,7 @@ export function Overline({
   as?: 'span' | 'div' | 'h2' | 'h3' | 'h4' | 'p'
 }) {
   return (
-    <Tag className={cn('cg-overline text-ink/70', className)}>{children}</Tag>
+    <Tag className={cn('cg-overline text-ink-muted', className)}>{children}</Tag>
   )
 }
 
@@ -86,7 +86,7 @@ export function ConfidenceTag({
         {Math.round(value * 100)}%
       </span>
       {showLabel && (
-        <span className="cg-overline text-ink/60">
+        <span className="cg-overline text-ink-muted">
           {level.toUpperCase()}
         </span>
       )}
@@ -96,14 +96,23 @@ export function ConfidenceTag({
 
 /**
  * Status chip for fixed, small-vocabulary states (RESOLVED / ONGOING /
- * COMPLETED / FAILED / QUEUED). Filled = terminal/positive, outlined =
- * active/uncertain, hatched = failure. Text always present.
+ * ACTIVE / FADING / COMPLETED / FAILED / QUEUED). Filled = terminal/positive,
+ * outlined = active/uncertain, hatched = failure. Text always present.
  */
 export function StatusChip({
   status,
   className,
 }: {
-  status: 'resolved' | 'ongoing' | 'completed' | 'failed' | 'queued' | 'running'
+  status:
+    | 'resolved'
+    | 'ongoing'
+    | 'completed'
+    | 'failed'
+    | 'queued'
+    | 'running'
+    | 'active'
+    | 'fading'
+    | 'unknown'
   className?: string
 }) {
   const filled = status === 'resolved' || status === 'completed'

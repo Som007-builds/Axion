@@ -18,6 +18,7 @@ import {
   Trash2,
   History,
   MessageSquare,
+  ShieldAlert,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -36,12 +37,12 @@ import {
   ErrorBanner,
   PixelGlitch,
   QrBlock,
-  confidenceLevel,
 } from '@/components/cg'
 
 // ─── Raw report JSON type from the coordinator ──────────────────────────────
 
 interface RawReport {
+  summary?: string
   consensus?: { finding: string; citations?: string[] }[]
   disputed?: {
     topic: string
@@ -56,12 +57,130 @@ interface RawReport {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+const MAX_HISTORY = 20
+
 function parseRaw(rawStr: string): RawReport {
   try {
-    return JSON.parse(rawStr)
+    const parsed = JSON.parse(rawStr)
+    return parsed && typeof parsed === 'object' ? (parsed as RawReport) : {}
   } catch {
     return {}
   }
+}
+
+function safeStorageGet(key: string): string | null {
+  try {
+    return window.localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function safeStorageSet(key: string, value: string) {
+  try {
+    window.localStorage.setItem(key, value)
+  } catch {
+    // Local storage may be unavailable (private mode/quota). History remains
+    // usable for this session only.
+  }
+}
+
+function finiteNumber(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined
+}
+
+function normalizeOutput(value: unknown): CoordinatorOutput | null {
+  if (!value || typeof value !== 'object') return null
+  const output = value as Partial<CoordinatorOutput>
+  const rawValue = output.raw
+  const raw =
+    typeof rawValue === 'string'
+      ? rawValue
+      : rawValue && typeof rawValue === 'object'
+        ? JSON.stringify(rawValue)
+        : '{}'
+
+  return {
+    report: typeof output.report === 'string' ? output.report : '',
+    raw,
+    iterations: finiteNumber(output.iterations) ?? 1,
+    plan: Array.isArray(output.plan)
+      ? output.plan.filter((step): step is string => typeof step === 'string')
+      : [],
+    reflection_log: Array.isArray(output.reflection_log)
+      ? output.reflection_log.filter(
+          (step): step is ReflectionStep =>
+            Boolean(step) && typeof step === 'object' && typeof step.observation === 'string',
+        )
+      : [],
+    confidence: finiteNumber(output.confidence) ?? 0,
+    confidence_label: output.confidence_label,
+    sources: Array.isArray(output.sources)
+      ? output.sources.filter(
+          (source): source is string =>
+            typeof source === 'string' && source.trim() !== '' && source.trim() !== '?',
+        )
+      : [],
+    source_count: finiteNumber(output.source_count),
+    claim_count: finiteNumber(output.claim_count),
+    contradiction_count: finiteNumber(output.contradiction_count),
+    gap_count: finiteNumber(output.gap_count),
+  }
+}
+
+function makeHistoryId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
+}
+
+function normalizeHistory(value: unknown): QueryHistoryItem[] {
+  if (!Array.isArray(value)) return []
+  const items: QueryHistoryItem[] = []
+  for (const rawItem of value) {
+    if (!rawItem || typeof rawItem !== 'object') continue
+    const item = rawItem as Partial<QueryHistoryItem>
+    if (typeof item.question !== 'string' || !item.question.trim()) continue
+    const result = normalizeOutput(item.result)
+    if (!result) continue
+    items.push({
+      id: typeof item.id === 'string' && item.id ? item.id : makeHistoryId(),
+      question: item.question,
+      timestamp:
+        typeof item.timestamp === 'string' && item.timestamp
+          ? item.timestamp
+          : 'Earlier query',
+      result,
+    })
+  }
+  return items.slice(0, MAX_HISTORY)
+}
+
+function deriveReportTitle(question: string): string {
+  let title = question.replace(/\s+/g, ' ').trim().replace(/[?!.]+$/, '')
+  title = title.replace(
+    /^(what|how|why|when|where|which|who)\s+(is|are|was|were|does|do|did|has|have|can|could|should|would)\b\s*/i,
+    '',
+  )
+  title = title.replace(/^(can|could|should|would|do|does|did|is|are)\b\s*/i, '')
+  if (!title) return question.trim()
+  title = title.charAt(0).toUpperCase() + title.slice(1)
+  if (title.length <= 96) return title
+  const clipped = title.slice(0, 93)
+  const lastSpace = clipped.lastIndexOf(' ')
+  return `${clipped.slice(0, lastSpace > 60 ? lastSpace : 93).trimEnd()}…`
+}
+
+function modelConfidence(raw: RawReport): {
+  label: 'HIGH' | 'MEDIUM' | 'LOW' | 'NOT REPORTED'
+  reported: boolean
+} {
+  const value = raw.confidence_in_answer?.trim().toLowerCase()
+  if (value === 'high' || value === 'medium' || value === 'low') {
+    return { label: value.toUpperCase() as 'HIGH' | 'MEDIUM' | 'LOW', reported: true }
+  }
+  return { label: 'NOT REPORTED', reported: false }
 }
 
 function arxivUrl(id: string): string {
@@ -149,7 +268,7 @@ function ReflectionLog({ steps }: { steps: ReflectionStep[] }) {
               <span className="cg-mono-meta flex h-5 w-5 items-center justify-center bg-ink text-[10px] text-paper">
                 {step.step}
               </span>
-              <span className="cg-overline text-ink/50">{step.action}</span>
+              <span className="cg-overline text-ink-muted">{step.action}</span>
             </div>
             <p className="text-sm leading-relaxed text-ink-soft">{step.observation}</p>
             {step.reasoning && (
@@ -194,7 +313,7 @@ function SectionShell({
           {title}
         </Overline>
         {count > 0 && (
-          <span className="cg-mono-meta text-xs text-ink/50">{count}</span>
+          <span className="cg-mono-meta text-xs text-ink-muted">{count}</span>
         )}
       </div>
       {children}
@@ -275,7 +394,7 @@ function DisputesSection({ items }: { items: RawReport['disputed'] }) {
                       aria-hidden="true"
                       className="inline-block h-2 w-2 bg-ink"
                     />
-                    <Overline className="text-ink/60">Position A</Overline>
+                    <Overline className="text-ink-muted">Position A</Overline>
                   </div>
                   <p className="text-sm leading-relaxed text-ink-soft">{pa.claim}</p>
                   {pa.paper && pa.paper !== '?' && (
@@ -287,7 +406,7 @@ function DisputesSection({ items }: { items: RawReport['disputed'] }) {
 
                 {/* VS medallion — grid-column centered (desktop) */}
                 <div className="hidden md:flex md:items-center md:justify-center">
-                  <span className="cg-overline border border-ink/40 px-2 py-1 text-ink/70">
+                  <span className="cg-overline border border-ink/40 px-2 py-1 text-ink-muted">
                     VS
                   </span>
                 </div>
@@ -298,7 +417,7 @@ function DisputesSection({ items }: { items: RawReport['disputed'] }) {
                       aria-hidden="true"
                       className="cg-hatch inline-block h-2 w-2 border border-ink"
                     />
-                    <Overline className="text-ink/60">Position B</Overline>
+                    <Overline className="text-ink-muted">Position B</Overline>
                   </div>
                   <p className="text-sm leading-relaxed text-ink-soft">{pb.claim}</p>
                   {pb.paper && pb.paper !== '?' && (
@@ -311,7 +430,7 @@ function DisputesSection({ items }: { items: RawReport['disputed'] }) {
                 {/* VS for stacked (mobile) layout */}
                 <span
                   aria-hidden="true"
-                  className="cg-overline w-full text-center text-ink/40 md:hidden"
+                  className="cg-overline w-full text-center text-ink-muted md:hidden"
                 >
                   · VS ·
                 </span>
@@ -382,7 +501,7 @@ function SourcesSection({ sources }: { sources: string[] }) {
             >
               <BookOpen className="h-3.5 w-3.5 text-ink" aria-hidden="true" />
               <span className="cg-mono-meta text-ink">{clean}</span>
-              <ExternalLink className="h-3 w-3 text-ink/50" aria-hidden="true" />
+              <ExternalLink className="h-3 w-3 text-ink-muted" aria-hidden="true" />
             </a>
           )
         })}
@@ -391,78 +510,106 @@ function SourcesSection({ sources }: { sources: string[] }) {
   )
 }
 
-function ExecutiveSummarySection({ report }: { report?: string }) {
-  if (!report) return null
+function ReportMarkdown({ report }: { report: string }) {
+  return (
+    <div className="max-w-[var(--cg-reading-max)] text-[15px] leading-[1.7] text-ink">
+      <ReactMarkdown
+        components={{
+          h1: ({ node: _node, ...props }) => (
+            <h1 className="cg-display mt-6 mb-3 text-2xl text-ink" {...props} />
+          ),
+          h2: ({ node: _node, ...props }) => (
+            <h2 className="cg-display mt-5 mb-2.5 text-xl text-ink" {...props} />
+          ),
+          h3: ({ node: _node, ...props }) => (
+            <h3 className="cg-display mt-4 mb-2 text-lg text-ink" {...props} />
+          ),
+          p: ({ node: _node, ...props }) => <p className="mb-4" {...props} />,
+          ul: ({ node: _node, ...props }) => (
+            <ul className="mb-4 list-disc space-y-1.5 pl-5" {...props} />
+          ),
+          ol: ({ node: _node, ...props }) => (
+            <ol className="mb-4 list-decimal space-y-1.5 pl-5" {...props} />
+          ),
+          li: ({ node: _node, ...props }) => (
+            <li className="text-[15px] text-ink" {...props} />
+          ),
+          strong: ({ node: _node, ...props }) => (
+            <strong className="font-semibold text-ink" {...props} />
+          ),
+          blockquote: ({ node: _node, ...props }) => (
+            <blockquote
+              className="mb-4 border-l-2 border-ink/40 pl-4 italic text-ink-soft"
+              {...props}
+            />
+          ),
+          code: ({ node: _node, ...props }) => (
+            <code
+              className="cg-mono-meta bg-ink/5 px-1.5 py-0.5 text-[13px] text-ink"
+              {...props}
+            />
+          ),
+          a: ({ node: _node, ...props }) => {
+            const text = props.children?.toString() || ''
+            if (
+              text.startsWith('arXiv:') ||
+              text.match(/^\d{4}\.\d{4,5}$/) ||
+              text.startsWith('[arXiv:')
+            ) {
+              return <CitationChip id={text} />
+            }
+            return (
+              <a
+                className="text-ink underline underline-offset-2 hover:bg-ink/5"
+                target="_blank"
+                rel="noopener noreferrer"
+                {...props}
+              />
+            )
+          },
+        }}
+      >
+        {report}
+      </ReactMarkdown>
+    </div>
+  )
+}
+
+function SummarySection({ summary }: { summary?: string }) {
+  if (!summary?.trim()) return null
 
   return (
-    <section className="border border-ink/25 bg-paper p-6">
-      <div className="mb-4 flex items-center gap-2.5 border-b border-ink/20 pb-3">
+    <section className="border border-ink/25 bg-paper p-5 sm:p-6">
+      <div className="mb-3 flex items-center gap-2.5 border-b border-ink/20 pb-3">
         <Overline as="h3" className="text-ink">
-          Executive Summary
+          Synthesis summary
         </Overline>
         <QrBlock className="ml-auto" />
       </div>
-      <div className="max-w-[var(--cg-reading-max)] text-[15px] leading-[1.7] text-ink">
-        <ReactMarkdown
-          components={{
-            h1: ({ node: _node, ...props }) => (
-              <h1 className="cg-display mt-6 mb-3 text-2xl text-ink" {...props} />
-            ),
-            h2: ({ node: _node, ...props }) => (
-              <h2 className="cg-display mt-5 mb-2.5 text-xl text-ink" {...props} />
-            ),
-            h3: ({ node: _node, ...props }) => (
-              <h3 className="cg-display mt-4 mb-2 text-lg text-ink" {...props} />
-            ),
-            p: ({ node: _node, ...props }) => <p className="mb-4" {...props} />,
-            ul: ({ node: _node, ...props }) => (
-              <ul className="mb-4 list-disc space-y-1.5 pl-5" {...props} />
-            ),
-            ol: ({ node: _node, ...props }) => (
-              <ol className="mb-4 list-decimal space-y-1.5 pl-5" {...props} />
-            ),
-            li: ({ node: _node, ...props }) => (
-              <li className="text-[15px] text-ink" {...props} />
-            ),
-            strong: ({ node: _node, ...props }) => (
-              <strong className="font-semibold text-ink" {...props} />
-            ),
-            blockquote: ({ node: _node, ...props }) => (
-              <blockquote
-                className="mb-4 border-l-2 border-ink/40 pl-4 italic text-ink-soft"
-                {...props}
-              />
-            ),
-            code: ({ node: _node, ...props }) => (
-              <code
-                className="cg-mono-meta bg-ink/5 px-1.5 py-0.5 text-[13px] text-ink"
-                {...props}
-              />
-            ),
-            a: ({ node: _node, ...props }) => {
-              const text = props.children?.toString() || ''
-              if (
-                text.startsWith('arXiv:') ||
-                text.match(/^\d{4}\.\d{4,5}$/) ||
-                text.startsWith('[arXiv:')
-              ) {
-                return <CitationChip id={text} />
-              }
-              return (
-                <a
-                  className="text-ink underline underline-offset-2 hover:bg-ink/5"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  {...props}
-                />
-              )
-            },
-          }}
-        >
-          {report}
-        </ReactMarkdown>
-      </div>
+      <p className="max-w-[var(--cg-reading-max)] whitespace-pre-wrap text-[15px] leading-[1.7] text-ink">
+        {summary}
+      </p>
     </section>
+  )
+}
+
+function FullReportSection({ report }: { report?: string }) {
+  if (!report?.trim()) return null
+
+  return (
+    <details className="group border border-ink/25 bg-paper">
+      <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-sm text-ink-soft transition-colors hover:text-ink focus-visible:outline-none sm:px-5 [&::-webkit-details-marker]:hidden">
+        <ChevronRight
+          className="h-4 w-4 shrink-0 transition-transform group-open:rotate-90"
+          aria-hidden="true"
+        />
+        <BookOpen className="h-3.5 w-3.5 text-ink" aria-hidden="true" />
+        Full generated report
+      </summary>
+      <div className="border-t border-ink/15 px-4 py-5 sm:px-6">
+        <ReportMarkdown report={report} />
+      </div>
+    </details>
   )
 }
 
@@ -490,6 +637,7 @@ export function QueryPanel({ externalQuery, onQueryClear, onLoadingChange }: Que
   const [result, setResult] = useState<CoordinatorOutput | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [history, setHistory] = useState<QueryHistoryItem[]>([])
+  const [historyLoaded, setHistoryLoaded] = useState(false)
   const [activeHistoryId, setActiveHistoryId] = useState<string | null>(null)
   const isClient = useIsClient()
   const lastExternalQuery = useRef<string | null>(null)
@@ -507,18 +655,17 @@ export function QueryPanel({ externalQuery, onQueryClear, onLoadingChange }: Que
         const trimmedQ = q.trim()
         // Submitted as a background job; runQuery polls until the report is ready.
         const output = await runQuery(trimmedQ, { onStatus: setJobStage })
-        setResult(output)
+        const normalized = normalizeOutput(output)
+        if (!normalized) throw new Error('The query job returned an empty result.')
+        setResult(normalized)
 
-        // Add to history
         const newItem: QueryHistoryItem = {
-          id: Math.random().toString(36).substring(7),
+          id: makeHistoryId(),
           question: trimmedQ,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          result: output,
+          result: normalized,
         }
-        const updated = [newItem, ...history]
-        setHistory(updated)
-        localStorage.setItem('axion_query_history', JSON.stringify(updated))
+        setHistory((previous) => [newItem, ...previous].slice(0, MAX_HISTORY))
         setActiveHistoryId(newItem.id)
       } catch (err) {
         setError(
@@ -530,35 +677,43 @@ export function QueryPanel({ externalQuery, onQueryClear, onLoadingChange }: Que
         setJobStage(null)
       }
     },
-    [history, isLoading]
+    [isLoading]
   )
 
-  // Load history from localStorage after hydration.
+  // Load and normalize history after hydration. Older records may not contain
+  // sources/plan/reflection fields, so never render raw parsed JSON directly.
   useEffect(() => {
-    const saved = localStorage.getItem('axion_query_history')
+    const saved = safeStorageGet('axion_query_history')
     if (saved) {
       try {
-        const parsed = JSON.parse(saved)
-        if (Array.isArray(parsed)) {
+        const parsed = normalizeHistory(JSON.parse(saved))
+        if (parsed.length > 0) {
+          // One-time hydration from localStorage after mount; a lazy
+          // initializer would render different markup on the server.
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           setHistory(parsed)
-          if (parsed.length > 0) {
-            setActiveHistoryId(parsed[0].id)
-            setResult(parsed[0].result)
-            setQuestion(parsed[0].question)
-          }
+          setActiveHistoryId(parsed[0].id)
+          setResult(parsed[0].result)
+          setQuestion(parsed[0].question)
         }
-      } catch (e) {
-        console.error('Failed to parse query history:', e)
+      } catch (err) {
+        console.warn('Ignoring unreadable query history:', err)
       }
     }
+    setHistoryLoaded(true)
   }, [])
 
-  // Persist history to localStorage for the command bar's recent-query list.
+  // Persist after the initial read, so an empty first render cannot erase the
+  // saved ledger. The command bar listens for the custom event and refreshes.
   useEffect(() => {
-    if (isClient && history.length > 0) {
-      localStorage.setItem('axion-query-history', JSON.stringify(history))
-    }
-  }, [history, isClient])
+    if (!historyLoaded) return
+    safeStorageSet('axion_query_history', JSON.stringify(history))
+    safeStorageSet(
+      'axion-query-history',
+      JSON.stringify(history.slice(0, 10).map(({ question, timestamp }) => ({ question, timestamp }))),
+    )
+    window.dispatchEvent(new Event('axion:query-history'))
+  }, [history, historyLoaded])
 
   // Handle a query handed over from the Command Bar (auto-submit once per query).
   useEffect(() => {
@@ -594,7 +749,6 @@ export function QueryPanel({ externalQuery, onQueryClear, onLoadingChange }: Que
     e.stopPropagation()
     const updated = history.filter((item) => item.id !== id)
     setHistory(updated)
-    localStorage.setItem('axion_query_history', JSON.stringify(updated))
     if (activeHistoryId === id) {
       if (updated.length > 0) {
         setActiveHistoryId(updated[0].id)
@@ -616,7 +770,47 @@ export function QueryPanel({ externalQuery, onQueryClear, onLoadingChange }: Que
   }
 
   const raw: RawReport = result?.raw ? parseRaw(result.raw) : {}
-  const confidenceLevelValue = result ? confidenceLevel(result.confidence) : null
+  const confidence = modelConfidence(raw)
+  const reportQuestion =
+    question || history.find((item) => item.id === activeHistoryId)?.question || ''
+  const reportTitle = reportQuestion ? deriveReportTitle(reportQuestion) : 'Research synthesis'
+  const sourceCount = result ? (result.source_count ?? result.sources.length) : 0
+  const coverageItems = result
+    ? [
+        {
+          label: `iteration${result.iterations !== 1 ? 's' : ''}`,
+          value: result.iterations,
+        },
+        {
+          label: `source${sourceCount !== 1 ? 's' : ''} cited`,
+          value: sourceCount,
+        },
+        ...(typeof result.claim_count === 'number'
+          ? [
+              {
+                label: `claim${result.claim_count !== 1 ? 's' : ''} retrieved`,
+                value: result.claim_count,
+              },
+            ]
+          : []),
+        ...(typeof result.contradiction_count === 'number'
+          ? [
+              {
+                label: `candidate conflict${result.contradiction_count !== 1 ? 's' : ''}`,
+                value: result.contradiction_count,
+              },
+            ]
+          : []),
+        ...(typeof result.gap_count === 'number'
+          ? [
+              {
+                label: `gap${result.gap_count !== 1 ? 's' : ''} in context`,
+                value: result.gap_count,
+              },
+            ]
+          : []),
+      ]
+    : []
 
   if (!isClient) {
     return (
@@ -633,7 +827,7 @@ export function QueryPanel({ externalQuery, onQueryClear, onLoadingChange }: Que
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
       {/* ── Sidebar: query history ledger ─────────────────────────────────── */}
-      <aside className="flex max-h-[780px] min-h-[380px] flex-col gap-4 border border-ink/30 bg-paper p-4 lg:col-span-4">
+      <aside className="order-2 flex max-h-64 flex-col gap-4 border border-ink/30 bg-paper p-4 lg:order-1 lg:col-span-4 lg:max-h-[780px] lg:min-h-[380px]">
         <div className="flex items-center justify-between border-b border-ink/25 pb-3">
           <div className="flex items-center gap-2">
             <History className="h-4 w-4 text-ink" aria-hidden="true" />
@@ -656,7 +850,7 @@ export function QueryPanel({ externalQuery, onQueryClear, onLoadingChange }: Que
         <div className="flex-1 overflow-y-auto pr-1">
           {history.length === 0 ? (
             <div className="flex flex-col items-start gap-4 py-8 text-left">
-              <span className="cg-mono-meta text-xs leading-relaxed text-ink/50">
+              <span className="cg-mono-meta text-xs leading-relaxed text-ink-muted">
                 No queries yet. Use the command bar above or the input below.
               </span>
               <PixelGlitch width="w-16" className="opacity-60" />
@@ -682,7 +876,7 @@ export function QueryPanel({ externalQuery, onQueryClear, onLoadingChange }: Que
                       <MessageSquare
                         className={cn(
                           'h-3.5 w-3.5 mt-0.5 flex-shrink-0',
-                          isActive ? 'text-ink' : 'text-ink/40',
+                          isActive ? 'text-ink' : 'text-ink-muted',
                         )}
                         aria-hidden="true"
                       />
@@ -695,7 +889,7 @@ export function QueryPanel({ externalQuery, onQueryClear, onLoadingChange }: Que
                         >
                           {item.question}
                         </span>
-                        <span className="cg-mono-meta mt-0.5 block text-[10px] text-ink/40">
+                        <span className="cg-mono-meta mt-0.5 block text-[10px] text-ink-muted">
                           {item.timestamp}
                         </span>
                       </span>
@@ -703,7 +897,7 @@ export function QueryPanel({ externalQuery, onQueryClear, onLoadingChange }: Que
                     <button
                       aria-label={`Delete query: ${item.question}`}
                       onClick={(e) => handleDeleteHistory(item.id, e)}
-                      className="absolute right-2 top-3 p-1.5 text-ink/40 opacity-0 transition-opacity duration-150 hover:bg-ink/10 hover:text-ink focus-visible:opacity-100 focus-visible:outline-none group-hover:opacity-100"
+                      className="absolute right-2 top-3 p-1.5 text-ink-muted opacity-100 transition-opacity duration-150 hover:bg-ink/10 hover:text-ink focus-visible:outline-none sm:text-ink-muted sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
                     >
                       <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>
@@ -716,7 +910,7 @@ export function QueryPanel({ externalQuery, onQueryClear, onLoadingChange }: Que
       </aside>
 
       {/* ── Main content: input + report ──────────────────────────────────── */}
-      <div className="min-w-0 space-y-6 lg:col-span-8">
+      <div className="order-1 min-w-0 space-y-6 lg:order-2 lg:col-span-8">
         {/* Question input */}
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="relative">
@@ -725,12 +919,12 @@ export function QueryPanel({ externalQuery, onQueryClear, onLoadingChange }: Que
               onChange={(e) => setQuestion(e.target.value)}
               placeholder="Ask a research question… e.g., What is the current consensus on transformer scaling laws?"
               aria-label="Research question"
-              className="min-h-[110px] w-full resize-none border border-ink/40 bg-paper px-4 py-3.5 text-[15px] leading-relaxed text-ink placeholder:text-ink/35 transition-colors duration-150 hover:border-ink/60 focus:border-ink focus:ring-[3px] focus:ring-ink/15 focus:outline-none disabled:opacity-60"
+              className="min-h-[110px] w-full resize-none border border-ink/40 bg-paper px-4 py-3.5 text-[15px] leading-relaxed text-ink placeholder:text-ink-muted transition-colors duration-150 hover:border-ink/60 focus:border-ink focus:ring-[3px] focus:ring-ink/15 focus:outline-none disabled:opacity-60"
               disabled={isLoading}
             />
           </div>
           <div className="flex items-center justify-between gap-4">
-            <p className="text-xs text-ink/50">
+            <p className="text-xs text-ink-muted">
               Multi-agent synthesis across your knowledge graph
             </p>
             <Button
@@ -755,7 +949,11 @@ export function QueryPanel({ externalQuery, onQueryClear, onLoadingChange }: Que
 
         {/* Loading state */}
         {isLoading && (
-          <div className="animate-fade-up border border-ink/40 bg-paper p-6">
+          <div
+            role="status"
+            aria-live="polite"
+            className="animate-fade-up border border-ink/40 bg-paper p-6"
+          >
             <div className="flex items-start gap-8">
               <div className="min-w-0 flex-1 space-y-3">
                 <div className="flex items-center gap-3">
@@ -785,7 +983,7 @@ export function QueryPanel({ externalQuery, onQueryClear, onLoadingChange }: Que
                     </div>
                   ))}
                 </div>
-                <p className="ml-[18px] cg-mono-meta text-[10px] text-ink/40">
+                <p className="ml-[18px] cg-mono-meta text-[10px] text-ink-muted">
                   This can take up to a minute — the coordinator may iterate a few times.
                 </p>
               </div>
@@ -812,103 +1010,105 @@ export function QueryPanel({ externalQuery, onQueryClear, onLoadingChange }: Que
         {result && !isLoading && (
           <div className="animate-fade-up space-y-4">
             {/* Report header */}
-            <section className="border-[1.5px] border-ink/60 bg-paper p-6">
+            <section className="min-w-0 border-[1.5px] border-ink/60 bg-paper p-5 sm:p-6">
               <div className="flex items-start justify-between gap-6">
                 <div className="min-w-0 flex-1 space-y-2.5">
                   <Overline>Research Report</Overline>
-                  <p className="cg-display text-2xl leading-snug text-ink sm:text-3xl">
-                    {question}
-                  </p>
+                  <h2 className="cg-display break-words text-2xl leading-snug text-ink sm:text-3xl">
+                    {reportTitle}
+                  </h2>
+                  {reportQuestion && reportQuestion !== reportTitle && (
+                    <p className="max-w-[var(--cg-reading-max)] break-words text-xs leading-relaxed text-ink-soft">
+                      <span className="cg-overline mr-2 text-ink-muted">Original question</span>
+                      {reportQuestion}
+                    </p>
+                  )}
                 </div>
                 <div className="hidden shrink-0 items-start gap-6 sm:flex">
                   <QrBlock />
-                  <div className="border border-ink/40 px-4 py-3 text-right">
-                    <Overline className="text-ink/60">
-                      {confidenceLevelValue?.toUpperCase()}
-                    </Overline>
-                    <p className="cg-mono-meta mt-1 text-2xl font-medium text-ink tabular-nums">
-                      {Math.round(result.confidence * 100)}%
+                  <div className="max-w-[190px] border border-ink/40 px-4 py-3 text-right">
+                    <Overline className="text-ink-muted">Model self-assessment</Overline>
+                    <p className="cg-mono-meta mt-1 text-xl font-medium text-ink">
+                      {confidence.label}
                     </p>
-                    <Overline className="mt-1 text-ink/50">
-                      Confidence
-                    </Overline>
+                    <p className="mt-1 text-[10px] leading-snug text-ink-muted">
+                      Uncalibrated; not a probability
+                    </p>
                   </div>
                 </div>
               </div>
 
               {/* Confidence (mobile, stacked) */}
-              {confidenceLevelValue !== null && (
-                <div className="mt-4 flex items-center justify-between border border-ink/40 px-4 py-2.5 sm:hidden">
-                  <span className="cg-mono-meta text-lg text-ink tabular-nums">
-                    {Math.round(result.confidence * 100)}%
-                  </span>
-                  <Overline className="text-ink/60">
-                    {confidenceLevelValue} confidence
-                  </Overline>
+              <div className="mt-4 flex items-center justify-between gap-3 border border-ink/40 px-4 py-2.5 sm:hidden">
+                <div>
+                  <Overline className="text-ink-muted">Model self-assessment</Overline>
+                  <p className="cg-mono-meta mt-0.5 text-sm text-ink">{confidence.label}</p>
                 </div>
-              )}
+                <span className="max-w-[45%] text-right text-[10px] leading-snug text-ink-muted">
+                  Uncalibrated; not a probability
+                </span>
+              </div>
 
               {raw.confidence_reason && (
                 <p className="mt-4 border-t border-ink/20 pt-3 text-xs leading-relaxed text-ink-soft">
+                  <span className="cg-overline mr-2 text-ink-muted">
+                    {confidence.reported ? 'Model-stated reason' : 'Model note'}
+                  </span>
                   {raw.confidence_reason}
                 </p>
               )}
 
               {/* Meta badges */}
               <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-ink/20 pt-4">
-                <Badge
-                  variant="outline"
-                  className="cg-mono-meta text-[11px] font-normal"
-                >
-                  {result.iterations} iteration{result.iterations !== 1 ? 's' : ''}
-                </Badge>
-                {result.sources.length > 0 && (
+                {coverageItems.map((item) => (
                   <Badge
+                    key={item.label}
                     variant="outline"
                     className="cg-mono-meta text-[11px] font-normal"
                   >
-                    <BookOpen className="h-3 w-3" aria-hidden="true" />
-                    {result.sources.length} source{result.sources.length !== 1 ? 's' : ''}
+                    <span className="tabular-nums text-ink">{item.value.toLocaleString()}</span>
+                    <span className="text-ink-muted">{item.label}</span>
                   </Badge>
-                )}
-                {raw.consensus && (
-                  <Badge
-                    variant="outline"
-                    className="cg-mono-meta text-[11px] font-normal"
-                  >
-                    {raw.consensus.length} consensus point{raw.consensus.length !== 1 ? 's' : ''}
-                  </Badge>
-                )}
-                {raw.disputed && raw.disputed.length > 0 && (
-                  <Badge
-                    variant="outline"
-                    className="cg-mono-meta text-[11px] font-normal"
-                  >
-                    {raw.disputed.length} dispute{raw.disputed.length !== 1 ? 's' : ''}
-                  </Badge>
-                )}
+                ))}
+              </div>
+
+              <div className="mt-4 flex items-start gap-2 border-t border-ink/15 pt-3">
+                <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink-muted" aria-hidden="true" />
+                <p className="text-[11px] leading-relaxed text-ink-soft">
+                  <span className="font-medium text-ink">Scope.</span> The synthesizer
+                  sees only the retrieved context counted above and may miss relevant
+                  work outside this corpus sample. Missing evidence is not evidence of
+                  absence, and model labels are not calibrated confidence scores.
+                </p>
               </div>
             </section>
 
             {/* Collapsible reasoning */}
-            <div className="border border-ink/25 bg-paper p-4 sm:px-5">
-              <div className="divide-y divide-ink/10">
-                <div>
-                  <PlanSteps plan={result.plan} />
-                </div>
-                <div>
-                  <ReflectionLog steps={result.reflection_log} />
+            {(result.plan.length > 0 || result.reflection_log.length > 0) && (
+              <div className="border border-ink/25 bg-paper p-4 sm:px-5">
+                <div className="divide-y divide-ink/10">
+                  {result.plan.length > 0 && (
+                    <div>
+                      <PlanSteps plan={result.plan} />
+                    </div>
+                  )}
+                  {result.reflection_log.length > 0 && (
+                    <div>
+                      <ReflectionLog steps={result.reflection_log} />
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Structured report sections */}
-            <ExecutiveSummarySection report={result.report} />
+            <SummarySection summary={raw.summary} />
             <ConsensusSection items={raw.consensus} />
             <DisputesSection items={raw.disputed} />
             <GapsSection items={raw.missing ?? []} />
             <ExperimentsSection items={raw.recommended_experiments ?? []} />
             <SourcesSection sources={result.sources} />
+            <FullReportSection report={result.report} />
           </div>
         )}
       </div>

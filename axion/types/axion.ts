@@ -16,6 +16,13 @@ export interface Claim {
   arxiv_id: string
   paper_year: number
   paper_title?: string
+  evidence_span?: string
+  subject?: string
+  predicate?: string
+  object_val?: string
+  metric?: string
+  direction?: string
+  conditions?: string
 }
 
 export interface ClaimsResponse {
@@ -36,6 +43,8 @@ export interface Contradiction {
 
 export interface ContradictionsResponse {
   total: number
+  corpus_total: number
+  shown: number
   contradictions: Contradiction[]
 }
 
@@ -54,16 +63,37 @@ export interface Experiment {
   metric?: string
 }
 
+export type GapSource =
+  | 'cluster'
+  | 'future_work'
+  | 'legacy_import'
+  | 'unknown'
+
+export interface GapClaimRef {
+  id: string
+  text: string
+  section?: string | null
+  confidence?: number | null
+  arxiv_id?: string | null
+  paper_title?: string | null
+}
+
 export interface Gap {
   id: string
   text: string
-  source: 'semantic' | 'llm_synthesized'
+  source: GapSource
+  source_raw?: string | null
+  source_label: string
+  source_description: string
   related_claims: string[]
+  related_claim_details: GapClaimRef[]
   confidence?: number | null
 }
 
 export interface GapsResponse {
   total: number
+  corpus_total: number
+  source_counts: Record<GapSource | 'all', number>
   gaps: Gap[]
 }
 
@@ -80,8 +110,14 @@ export interface CoordinatorOutput {
   iterations: number
   plan: string[]
   reflection_log: ReflectionStep[]
+  /** @deprecated Coarse display bucket; use the raw model-reported label. */
   confidence: number
+  confidence_label?: 'high' | 'medium' | 'low' | 'unknown'
   sources: string[]
+  source_count?: number
+  claim_count?: number
+  contradiction_count?: number
+  gap_count?: number
 }
 
 // ─── Background jobs ──────────────────────────────────────────────────────────
@@ -132,6 +168,10 @@ export interface ChangedClaim {
   current_confidence: number
   delta: number
   reason: string
+  supports: number
+  contradictions: number
+  arxiv_id?: string | null
+  paper_title?: string | null
 }
 
 export interface YearlyPosition {
@@ -154,6 +194,7 @@ export interface Dispute {
   start_year: number | null
   end_year: number | null
   resolved: boolean
+  status: 'active' | 'resolved' | 'fading' | 'unknown'
   resolution?: string
   key_claims: string[]
 }
@@ -161,20 +202,30 @@ export interface Dispute {
 export interface DisputeTimeline {
   topic: string
   disputes: Dispute[]
+  summary?: string
+  candidate_claim_count?: number
+  contradiction_count?: number
+  year_start?: number
+  year_end?: number
 }
 
 export interface GraphNode {
   id: string
   type: 'paper' | 'claim' | 'gap'
   label: string
+  text?: string
   confidence?: number
   year?: number
+  arxiv_id?: string
+  paper_title?: string
+  section?: string
+  source?: string
 }
 
 export interface GraphEdge {
   source: string
   target: string
-  type: 'EXTRACTED_FROM' | 'CONTRADICTS' | 'SUPPORTS' | 'RELATES_TO'
+  type: 'EXTRACTED_FROM' | 'CONTRADICTS' | 'SUPPORTS' | 'RELATED_TO'
 }
 
 export interface GraphData {

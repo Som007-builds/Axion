@@ -1,0 +1,12 @@
+{
+  "errors": [],
+  "badResponses": [],
+  "badge": "142 nodes · 194 edges",
+  "badge200": "248 nodes · 368 edges",
+  "selected": {
+    "x": 0.5,
+    "y": 0.7
+  },
+  "selectedCard": "CLAIM\n\nWe identify a loss basin in the training process of Pretraining, indicating that scaling model size or token count beyond a critical threshold leads to performance degradation.\n\n2026\nIntroduction\n84% claim score\n\nLLMs as Noisy Channels: A Shannon Perspective on Model Capacity and Scaling Laws\n\n2605.23901v1\nopens on arXiv in a new tab",
+  "sliderValue": "200"
+}

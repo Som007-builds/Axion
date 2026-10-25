@@ -1,0 +1,150 @@
+{
+  "errors": [],
+  "badResponses": [],
+  "queryJobReused": "5c4c16ddcce74518ae36ba359d75af1a",
+  "initial": {
+    "stored": null,
+    "dataTheme": "system",
+    "dark": false,
+    "fcp": {
+      "at": 200,
+      "theme": "system",
+      "dark": false,
+      "bodyBackground": "rgb(240, 235, 222)"
+    },
+    "lightPressed": "false"
+  },
+  "afterDarkClick": {
+    "stored": "dark",
+    "dataTheme": "dark",
+    "dark": true,
+    "bodyBackground": "rgb(16, 19, 28)",
+    "pressed": "true"
+  },
+  "afterDarkReload": {
+    "stored": "dark",
+    "dataTheme": "dark",
+    "dark": true,
+    "fcp": {
+      "at": 60,
+      "theme": "dark",
+      "dark": true,
+      "bodyBackground": "rgb(16, 19, 28)"
+    },
+    "pressed": "true"
+  },
+  "systemDark": {
+    "stored": "system",
+    "dataTheme": "system",
+    "dark": true,
+    "systemPressed": "true"
+  },
+  "systemLightAfterMediaChange": {
+    "dataTheme": "system",
+    "dark": false,
+    "bodyBackground": "rgb(240, 235, 222)"
+  },
+  "shortcut3": "Contradictions",
+  "shortcut1": "Research Intelligence",
+  "firstTabFocus": {
+    "tag": "BUTTON",
+    "label": "Light theme",
+    "outline": "solid 2px oklab(0.445392 -0.0117557 -0.259538 / 0.602057)"
+  },
+  "commandShortcut": {
+    "tag": "INPUT",
+    "label": "Ask a research question"
+  },
+  "sheet": {
+    "lightAxe": [],
+    "title": [
+      "Ingestion Pipeline",
+      "",
+      "Feed new ArXiv publications into the multi-agent claims graph."
+    ],
+    "darkAxe": [],
+    "mobileScroll": {
+      "clientWidth": 389,
+      "scrollWidth": 389
+    },
+    "closed": true,
+    "focusAfterClose": {
+      "tag": "BODY",
+      "label": null
+    }
+  },
+  "graph": {
+    "canvasBox": {
+      "x": 57,
+      "y": 156.34375,
+      "width": 1384,
+      "height": 812.65625
+    },
+    "nodeSelected": false,
+    "summary": "Knowledge graph summary: 46 papers, 100 claims (filled by claim score), 18 research gaps. Relationship counts: extracted from 100, related to 5. Select a node on the canvas to inspect it, or use the zoom controls.",
+    "sliderName": "Number of claims shown in graph",
+    "sliderAfterEnd": "200",
+    "limit200Response": 200,
+    "sliderDisplay": ""
+  },
+  "timeline": {
+    "rangeAfterKeyboard": 1,
+    "disputeRequest": "http://localhost:8000/api/temporal/disputes?topic=reasoning&year_start=2019&year_end=2026",
+    "evolutionRequest": "http://localhost:8000/api/temporal/evolution?topic=reasoning&year_start=2019&year_end=2026",
+    "errorVisible": 0,
+    "heading": "Evolution of \"reasoning\"",
+    "disputeCards": 6,
+    "bodyExcerpt": "Search\nYEAR RANGE\n2019 — 2026\n\nPublication window 2019—2026\n\n40 retrieved claims · 12 candidate contradiction pairs\n\nEvolution of \"reasoning\"\n\nYearly positions, key papers, and position scores are model interpretations of the retrieved claim sample. Scores are not calibrated probabilities and the list is not a complete history.\n\nNARRATIVE SUMMARY\n\nFrom 2022 to 2023, the field moved from viewing prompting as a broad strategy to refining it with faithfulness constraints, then in 2026 it broadened the scope to multimodal, multi‑stage, and instruction‑centric reasoning, reflecting a maturation of methods beyond simple prompting.\n\nCURRENT STATUS\n\nActive debate\n\n2022\n70%\nMEDIUM\nmodel position score · not calibrated\n\nThe field viewed prompting—especially least-to-most and chain-of-thought methods—as the primary vehicle for enabling large language models to perform reasoning, with debate over which prompting style was optimal.\n\n2205.10625\n2201.11903\n2023\n75%\nMEDIUM\nmodel position score · not calibrated\n\nResearchers refined the chain-of-thought approach by introducing Faithful CoT, emphasizing faithful, deterministic reasoning chains that improved accuracy and prevented misleading explanations.\n\n2301.13379\n2026\n80%\nHIGH\nmodel position score · not calibrated\n\nThe consensus expanded beyond prompting, integrating visual‑semantic knowledge, multi‑stage reasoning pipelines, and instruction‑driven models to capture richer, more human‑like reasoning capabilities across domains.\n\n2607.28624v1\n2605.23897v1\n2605.26102v1\n2607.28601v1\nContradiction timeline\n\nThe primary disputes in this topic revolve around which prompting strategy—chain‑of‑thought or least‑to‑most—delivers superior performance on arithmetic, commonsense, and symbolic reasoning tasks. Multiple papers released in 2022 presen"
+  },
+  "query": {
+    "loadingTextVisible": 0,
+    "elapsedSeconds": 1.6,
+    "errorVisible": 0,
+    "reportVisible": 1,
+    "reportHeader": "RESEARCH REPORT\nThe effect of chain-of-thought prompting on arithmetic reasoning performance\n\nORIGINAL QUESTIONWhat is the effect of chain-of-thought prompting on arithmetic reasoning performance?\n\nMODEL SELF-ASSESSMENT\n\nHIGH\n\nUncalibrated; not a probability\n\nMODEL-STATED REASONAll cited claims are directly supported by the provided arXiv IDs with no detected contradictions.\n\n2\niterations\n3\nsources cited\n12\nclaims retrieved\n0\ncandidate conflicts\n0\ngaps in context\n\nScope. The synthesizer sees only the retrieved context counted above and may miss relevant work outside this corpus sample. Missing evidence is not evidence of absence, and model labels are not calibrated confidence scores.",
+    "hasUncalibrated": true,
+    "hasModelAssessment": false,
+    "question": "QUERY HISTORY",
+    "historyStored": {
+      "full": 1,
+      "recent": [
+        {
+          "question": "What is the effect of chain-of-thought prompting on arithmetic reasoning performance?",
+          "timestamp": "05:21 pm"
+        }
+      ]
+    }
+  },
+  "afterQueryReload": {
+    "reportVisible": 1,
+    "theme": "dark"
+  },
+  "commandRecents": {
+    "open": 1,
+    "active": {
+      "role": "option",
+      "text": "What is the effect of chain-of-thought prompting on arithmetic reasoning performance?"
+    },
+    "afterEscape": {
+      "role": "combobox",
+      "label": "Ask a research question",
+      "listOpen": false
+    }
+  },
+  "mobileOverflow": {
+    "document": [
+      390,
+      390
+    ],
+    "main": [
+      334,
+      334
+    ]
+  },
+  "reducedMotion": {
+    "prefers": true,
+    "animated": "1e-05s",
+    "blinking": null,
+    "transition": "1e-05s"
+  }
+}

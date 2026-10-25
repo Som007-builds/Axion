@@ -1,0 +1,8 @@
+{
+  "formVisible": true,
+  "resetStillThere": 0,
+  "completedTextGone": true,
+  "fetchesAfterReset": 2,
+  "cronNotice": true,
+  "errors": []
+}

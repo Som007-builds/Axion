@@ -1,0 +1,54 @@
+{
+  "cmdKChip": 0,
+  "metrics": {
+    "rule": {
+      "x": 68,
+      "y": 10,
+      "width": 1360,
+      "height": 2,
+      "top": 10,
+      "right": 1428,
+      "bottom": 12,
+      "left": 68
+    },
+    "nav": {
+      "x": 0,
+      "y": 0,
+      "width": 56,
+      "height": 1000,
+      "top": 0,
+      "right": 56,
+      "bottom": 1000,
+      "left": 0
+    },
+    "toggle": {
+      "x": 80,
+      "y": 32,
+      "width": 78,
+      "height": 30,
+      "top": 32,
+      "right": 158,
+      "bottom": 62,
+      "left": 80
+    },
+    "header": {
+      "x": 56,
+      "y": 0,
+      "width": 1384,
+      "height": 155.34375,
+      "top": 0,
+      "right": 1440,
+      "bottom": 155.34375,
+      "left": 56
+    }
+  },
+  "resetVisibleBefore": 0,
+  "formVisibleAfterReset": true,
+  "submitStatus": null,
+  "queuedLabelSeen": false,
+  "progressPanelVisible": false,
+  "mentionsQueued": false,
+  "overflow": 0,
+  "errors": [],
+  "badResponses": []
+}

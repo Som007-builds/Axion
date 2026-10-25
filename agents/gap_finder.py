@@ -59,19 +59,82 @@ Return ONLY valid JSON, no other text:
 """
 
 
-def _resolve_similar_claim_ids(query_text: str, n: int = 5) -> list:
+def _build_claim_index(claims: list[dict]) -> dict:
+    """Index Neo4j claims by id and by exact normalised text (+ arXiv id)."""
+    by_id = {str(c.get("id")) for c in claims if c.get("id") is not None}
+    by_text: dict[str, list[str]] = {}
+    by_text_arxiv: dict[tuple[str, str], list[str]] = {}
+    for c in claims:
+        cid = str(c.get("id"))
+        text_key = " ".join(str(c.get("text", "")).split()).lower()
+        if not text_key:
+            continue
+        by_text.setdefault(text_key, []).append(cid)
+        arxiv = str(c.get("arxiv_id") or "").strip()
+        if arxiv:
+            by_text_arxiv.setdefault((text_key, arxiv), []).append(cid)
+    return {
+        "by_id": by_id,
+        "by_text": by_text,
+        "by_text_arxiv": by_text_arxiv,
+    }
+
+
+def _resolve_matches(matches: list[dict], index: dict) -> list[str]:
+    """Map Chroma matches to current Neo4j claim IDs.
+
+    Chroma records can still carry old SQLite numeric IDs. Resolve only by an
+    exact normalised text match (preferring the same arXiv ID); never guess.
+    """
+    ids: list[str] = []
+    seen: set[str] = set()
+    by_id = index.get("by_id", set())
+    by_text = index.get("by_text", {})
+    by_text_arxiv = index.get("by_text_arxiv", {})
+
+    for match in matches:
+        raw_id = str(match.get("doc_id", "")).replace("claim_", "").strip()
+        candidates: list[str] = []
+        if raw_id in by_id:
+            candidates = [raw_id]
+        else:
+            text_key = " ".join(str(match.get("text", "")).split()).lower()
+            arxiv = str((match.get("metadata") or {}).get("arxiv_id") or "").strip()
+            if arxiv:
+                candidates = by_text_arxiv.get((text_key, arxiv), [])
+            if not candidates:
+                candidates = by_text.get(text_key, [])
+        unique = list(dict.fromkeys(candidates))
+        if len(unique) == 1 and unique[0] not in seen:
+            seen.add(unique[0])
+            ids.append(unique[0])
+    return ids
+
+
+def _resolve_similar_claim_ids(query_text: str, n: int = 5,
+                               index: dict | None = None) -> list:
     """
     Find n semantically similar claims for a query text.
-    Returns a list of Neo4j element IDs (strings).
+    Returns a list of current Neo4j element IDs (strings). If the graph cannot
+    be read, the raw Chroma IDs are returned as a degraded fallback.
     """
     similar = find_similar_claims(query_text, n_results=n)
-    ids = []
-    for s in similar:
-        doc_id = s.get("doc_id", "")
-        raw_id = doc_id.replace("claim_", "")
-        if raw_id:
-            ids.append(raw_id)
-    return ids
+    if not similar:
+        return []
+    if index is None:
+        try:
+            index = _build_claim_index(get_all_claims())
+        except Exception as e:
+            logger.warning(f"  [gap_finder] claim ID resolution unavailable: {e}")
+            index = {}
+    resolved = _resolve_matches(similar, index)
+    if resolved:
+        return resolved[:n]
+    return [
+        str(s.get("doc_id", "")).replace("claim_", "")
+        for s in similar[:n]
+        if s.get("doc_id")
+    ]
 
 
 def extract_future_work_gaps(section_text: str) -> list:
@@ -123,6 +186,7 @@ def find_cluster_gaps(n_clusters: int = 10) -> list:
         logger.warning("  Not enough claims in DB. Run ingestion first.")
         return []
 
+    claim_index = _build_claim_index(all_claims)
     step = max(1, len(all_claims) // n_clusters)
     seed_claims = all_claims[::step][:n_clusters]
 
@@ -135,12 +199,9 @@ def find_cluster_gaps(n_clusters: int = 10) -> list:
             continue
 
         claims_text = ""
-        cluster_claim_ids = []
+        cluster_claim_ids = _resolve_matches(neighbors, claim_index)
         for i, n in enumerate(neighbors):
             claims_text += f"{i+1}. [{n['metadata'].get('arxiv_id', '?')}] {n['text']}\n"
-            raw_id = n["doc_id"].replace("claim_", "")
-            if raw_id:
-                cluster_claim_ids.append(raw_id)
 
         prompt = CLUSTER_GAP_PROMPT.format(claims=claims_text)
         raw = call_llm(prompt, max_tokens=500, context="gap_finder.cluster")
@@ -161,7 +222,8 @@ def find_cluster_gaps(n_clusters: int = 10) -> list:
             gap_id = insert_gap(
                 text=gap_text,
                 source="cluster",
-                related_claim_ids=cluster_claim_ids
+                related_claim_ids=cluster_claim_ids,
+                confidence=float(confidence),
             )
             gap_ids.append(gap_id)
             logger.info(f"  Gap (cluster, {len(cluster_claim_ids)} links): {gap_text[:70]}")

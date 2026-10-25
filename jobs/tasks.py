@@ -36,8 +36,12 @@ def format_query_output(output: dict) -> dict:
     produces exactly the same response the client used to receive inline.
     """
     raw_result = output.get("raw", {}) or {}
+    context = output.get("context", {}) or {}
 
-    conf_str = str(raw_result.get("confidence_in_answer", "medium")).strip().lower()
+    conf_str = str(raw_result.get("confidence_in_answer", "unknown")).strip().lower()
+    # Kept for backwards compatibility with stored history. This is a coarse
+    # display bucket, not a calibrated probability; the UI shows raw_result's
+    # model-reported label instead.
     confidence_num = _CONFIDENCE_MAP.get(conf_str, 0.6)
 
     sources: set[str] = set()
@@ -52,8 +56,10 @@ def format_query_output(output: dict) -> dict:
             continue
         for key in ("position_a", "position_b"):
             position = item.get(key, {})
-            if isinstance(position, dict) and position.get("paper"):
-                sources.add(str(position["paper"]))
+            if isinstance(position, dict):
+                paper = position.get("paper")
+                if paper and paper != "?":
+                    sources.add(str(paper))
 
     sub_queries = (output.get("plan", {}) or {}).get("sub_queries", []) or []
 
@@ -79,7 +85,12 @@ def format_query_output(output: dict) -> dict:
         "plan": sub_queries,
         "reflection_log": reflection_log,
         "confidence": confidence_num,
+        "confidence_label": conf_str if conf_str in {"high", "medium", "low"} else "unknown",
         "sources": sorted(sources),
+        "source_count": len(sources),
+        "claim_count": len(context.get("claims", []) or []),
+        "contradiction_count": len(context.get("contradictions", []) or []),
+        "gap_count": len(context.get("gaps", []) or []),
     }
 
 

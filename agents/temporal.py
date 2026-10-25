@@ -178,28 +178,88 @@ Return ONLY valid JSON, no other text:
 """
 
 
-def get_contradiction_timeline(topic: str) -> dict:
+def get_contradiction_timeline(topic: str, year_start: int = 2019,
+                               year_end: int = 2026) -> dict:
     """
     Finds contradictions related to a topic and analyzes when they appeared
     and whether they have been resolved.
     """
-    relevant_claims = get_claims_by_year_range(topic, 2019, 2026, n_results=20)
-    relevant_ids = {c["id"] for c in relevant_claims}
+    relevant_claims = get_claims_by_year_range(
+        topic, year_start, year_end, n_results=40
+    )
+    if not relevant_claims:
+        return {
+            "disputes": [],
+            "summary": (
+                f"No contradictions or matching claims found for '{topic}' "
+                f"in {year_start}-{year_end}. An empty result does not "
+                "establish that the topic is undisputed."
+            ),
+            "candidate_claim_count": 0,
+            "contradiction_count": 0,
+            "year_start": year_start,
+            "year_end": year_end,
+        }
 
     all_contradictions = get_contradictions()
+
+    # Some migrated Chroma records still carry their old SQLite numeric IDs.
+    # Resolve them to the current Neo4j element IDs by claim text (and arXiv ID
+    # where possible); no fuzzy topic matching is used here.
+    all_claims = []
+    try:
+        all_claims = get_all_claims()
+    except Exception:
+        all_claims = []
+
+    all_ids = {str(c.get("id")) for c in all_claims if c.get("id") is not None}
+    by_text: dict[str, list[str]] = defaultdict(list)
+    by_text_arxiv: dict[tuple[str, str], list[str]] = defaultdict(list)
+    for c in all_claims:
+        cid = str(c.get("id"))
+        text_key = " ".join(str(c.get("text", "")).split()).lower()
+        if text_key:
+            by_text[text_key].append(cid)
+            arxiv = str(c.get("arxiv_id") or "").strip()
+            if arxiv:
+                by_text_arxiv[(text_key, arxiv)].append(cid)
+
+    resolved_ids: set[str] = set()
+    for claim in relevant_claims:
+        raw_id = str(claim.get("id"))
+        if raw_id in all_ids:
+            resolved_ids.add(raw_id)
+            continue
+        text_key = " ".join(str(claim.get("text", "")).split()).lower()
+        arxiv = str(claim.get("arxiv_id") or "").strip()
+        candidates = by_text_arxiv.get((text_key, arxiv)) if arxiv else None
+        if not candidates:
+            candidates = by_text.get(text_key)
+        if candidates and len(set(candidates)) == 1:
+            resolved_ids.add(candidates[0])
+
+    relevant_ids = resolved_ids or {str(c.get("id")) for c in relevant_claims}
     topic_contradictions = [
         c for c in all_contradictions
-        if c.get("claim_a_id") in relevant_ids or c.get("claim_b_id") in relevant_ids
+        if str(c.get("claim_a_id")) in relevant_ids
+        or str(c.get("claim_b_id")) in relevant_ids
     ]
 
     if not topic_contradictions:
         return {
             "disputes": [],
-            "summary": f"No contradictions found related to '{topic}' in the current graph."
+            "summary": (
+                f"No contradictions found related to '{topic}' in the current "
+                f"graph for publication years {year_start}-{year_end}. This "
+                "does not establish that the topic is undisputed."
+            ),
+            "candidate_claim_count": len(relevant_claims),
+            "contradiction_count": 0,
+            "year_start": year_start,
+            "year_end": year_end,
         }
 
     year_by_id = {c["id"]: c["paper_year"] for c in relevant_claims}
-    all_claims = get_all_claims()
     for c in all_claims:
         if c["id"] not in year_by_id and c["paper_year"]:
             year_by_id[c["id"]] = c["paper_year"]
@@ -252,5 +312,16 @@ def get_contradiction_timeline(topic: str) -> dict:
     # Provide claim-id -> text lookup so the API can render readable
     # key-claim chips without a second graph round trip.
     result["claim_text_by_id"] = claim_text_by_id
+    result["candidate_claim_count"] = len(relevant_claims)
+    result["contradiction_count"] = len(topic_contradictions)
+    result["year_start"] = year_start
+    result["year_end"] = year_end
+    if not result.get("summary"):
+        result["summary"] = (
+            f"Compared {len(relevant_claims)} retrieved claims with "
+            f"{len(topic_contradictions)} candidate contradiction pairs in the "
+            f"{year_start}-{year_end} publication window. The timeline is a "
+            "model interpretation of this sample, not a verified history."
+        )
 
     return result

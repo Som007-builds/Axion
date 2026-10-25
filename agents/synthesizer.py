@@ -29,6 +29,7 @@ Write a structured research synthesis report. Rules:
 
 Return ONLY valid JSON, no other text:
 {{
+  "summary": "2-3 sentence executive synthesis of what the retrieved evidence supports and where it is thin; do not claim more than the cited claims support",
   "consensus": [
     {{
       "finding": "specific finding",
@@ -99,6 +100,7 @@ def synthesize(question: str, context: dict) -> dict:
     if result is None or not isinstance(result, dict):
         logger.warning("[synthesizer] JSON parse failed; returning empty synthesis.")
         result = {
+            "summary": "",
             "consensus": [],
             "disputed": [],
             "missing": [],
@@ -115,12 +117,15 @@ def format_report(question: str, result: dict, iterations_taken: int) -> str:
         "# Axion Research Report",
         f"**Question:** {question}",
         f"**Coordinator iterations:** {iterations_taken}",
-        f"**Answer confidence:** {result.get('confidence_in_answer', 'unknown')} — {result.get('confidence_reason', '')}",
+        f"**Synthesizer-reported confidence:** {result.get('confidence_in_answer', 'unknown')} — {result.get('confidence_reason', '')}",
         "",
         "---",
-        "",
-        "## Consensus",
     ]
+
+    if result.get("summary"):
+        lines += ["", str(result["summary"]), ""]
+
+    lines += ["", "## Consensus"]
 
     for item in result.get("consensus", []):
         citations = ", ".join(f"[{c}]" for c in item.get("citations", []))

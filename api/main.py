@@ -34,6 +34,13 @@ from api.models import (
     ExperimentModel, GapsResponse, IngestionSummary,
     ConfidenceDistribution, ChangedClaim, TemporalEvolution, DisputeTimeline
 )
+from api.gap_sources import (
+    FILTER_SOURCES,
+    count_gap_sources,
+    normalize_gap_source,
+    source_description,
+    source_label,
+)
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
@@ -305,11 +312,11 @@ def get_contradictions(min_confidence: float = 0.0, limit: int = 50):
     from agents.experiment_recommender import get_experiment_for_contradiction
     all_c = get_contradictions()
     filtered = [c for c in all_c if c.get("confidence", 0) >= min_confidence]
-    
+
     formatted = []
     for c in filtered[:limit]:
         exp = get_experiment_for_contradiction(c["id"])
-        
+
         formatted.append({
             "id": str(c["id"]),
             "claim_a": {
@@ -317,14 +324,30 @@ def get_contradictions(min_confidence: float = 0.0, limit: int = 50):
                 "text": c.get("claim_a", ""),
                 "section": c.get("claim_a_section") or "Unknown",
                 "confidence": c.get("claim_a_confidence", 0.0) or 0.0,
-                "arxiv_id": c.get("paper_a_arxiv_id") or ""
+                "arxiv_id": c.get("paper_a_arxiv_id") or "",
+                "paper_title": c.get("paper_a"),
+                "evidence_span": c.get("claim_a_evidence_span"),
+                "subject": c.get("claim_a_subject"),
+                "predicate": c.get("claim_a_predicate"),
+                "object_val": c.get("claim_a_object_val"),
+                "metric": c.get("claim_a_metric"),
+                "direction": c.get("claim_a_direction"),
+                "conditions": c.get("claim_a_conditions"),
             },
             "claim_b": {
                 "id": str(c.get("claim_b_id", "")),
                 "text": c.get("claim_b", ""),
                 "section": c.get("claim_b_section") or "Unknown",
                 "confidence": c.get("claim_b_confidence", 0.0) or 0.0,
-                "arxiv_id": c.get("paper_b_arxiv_id") or ""
+                "arxiv_id": c.get("paper_b_arxiv_id") or "",
+                "paper_title": c.get("paper_b"),
+                "evidence_span": c.get("claim_b_evidence_span"),
+                "subject": c.get("claim_b_subject"),
+                "predicate": c.get("claim_b_predicate"),
+                "object_val": c.get("claim_b_object_val"),
+                "metric": c.get("claim_b_metric"),
+                "direction": c.get("claim_b_direction"),
+                "conditions": c.get("claim_b_conditions"),
             },
             "paper_a": c.get("paper_a", ""),
             "paper_b": c.get("paper_b", ""),
@@ -332,9 +355,11 @@ def get_contradictions(min_confidence: float = 0.0, limit: int = 50):
             "confidence": c.get("confidence", 0.0),
             "has_experiment": exp is not None
         })
-        
+
     return {
         "total": len(filtered),
+        "corpus_total": len(all_c),
+        "shown": len(formatted),
         "contradictions": formatted
     }
 
@@ -374,22 +399,86 @@ def design_experiment(contradiction_id: str, request: Request, _auth: None = Dep
 
 @app.get("/api/gaps", response_model=GapsResponse)
 def get_gaps(source: Optional[str] = None):
-    from graph.neo4j_queries import get_gaps
-    gaps = get_gaps()
-    if source:
-        gaps = [g for g in gaps if g.get("source") == source]
-        
+    """
+    Research gaps with a canonical source taxonomy.
+
+    Stored sources are normalised at this boundary. ``sqlite_migration`` records
+    are surfaced as ``legacy_import`` rather than guessed to be cluster or
+    future-work gaps. ``source_counts`` always describes the whole corpus, so a
+    filtered empty state can explain what else is available.
+    """
+    from graph.neo4j_queries import get_gaps, get_claim_references
+
+    all_gaps = get_gaps()
+    source_counts = count_gap_sources(all_gaps)
+
+    requested_source: Optional[str] = None
+    if source is not None and str(source).strip():
+        candidate = str(source).strip().lower()
+        if candidate not in FILTER_SOURCES:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Unsupported gap source filter. Use one of: "
+                    + ", ".join(FILTER_SOURCES)
+                ),
+            )
+        requested_source = candidate
+
+    selected = [
+        gap for gap in all_gaps
+        if requested_source is None
+        or normalize_gap_source(gap.get("source")) == requested_source
+    ]
+
+    # Resolve related claim IDs to readable text + paper provenance in one query.
+    all_claim_ids = []
+    for gap in selected:
+        all_claim_ids.extend(str(cid) for cid in (gap.get("related_claims") or []) if cid)
+    claim_refs: dict[str, dict] = {}
+    if all_claim_ids:
+        try:
+            claim_refs = get_claim_references(list(dict.fromkeys(all_claim_ids)))
+        except Exception as exc:  # never fail the whole list for enrichment
+            logger.warning("Gap claim enrichment failed: %s", exc)
+
     formatted = []
-    for g in gaps:
+    for gap in selected:
+        raw_source = gap.get("source")
+        canonical_source = normalize_gap_source(raw_source)
+        related_ids = [str(cid) for cid in (gap.get("related_claims") or []) if cid]
+        details = []
+        for cid in related_ids:
+            ref = claim_refs.get(cid)
+            if not ref:
+                continue
+            details.append({
+                "id": cid,
+                "text": ref.get("text") or "",
+                "section": ref.get("section"),
+                "confidence": ref.get("confidence"),
+                "arxiv_id": ref.get("arxiv_id"),
+                "paper_title": ref.get("paper_title"),
+            })
+
         formatted.append({
-            "id": str(g.get("id")),
-            "text": g.get("text", ""),
-            "source": g.get("source", "llm_synthesized"),
-            "related_claims": [str(cid) for cid in g.get("related_claims", [])],
-            "confidence": g.get("confidence")
+            "id": str(gap.get("id")),
+            "text": gap.get("text", ""),
+            "source": canonical_source,
+            "source_raw": str(raw_source) if raw_source is not None else None,
+            "source_label": source_label(canonical_source),
+            "source_description": source_description(canonical_source),
+            "related_claims": related_ids,
+            "related_claim_details": details,
+            "confidence": gap.get("confidence"),
         })
-        
-    return {"total": len(formatted), "gaps": formatted}
+
+    return {
+        "total": len(formatted),
+        "corpus_total": source_counts["all"],
+        "source_counts": source_counts,
+        "gaps": formatted,
+    }
 
 
 # ─── Coordinator ──────────────────────────────────────────────────────────────
@@ -492,9 +581,9 @@ def get_evolution(
 
 
 @app.get("/api/temporal/disputes", response_model=DisputeTimeline)
-def get_disputes(topic: str):
+def get_disputes(topic: str, year_start: int = 2019, year_end: int = 2026):
     from agents.temporal import get_contradiction_timeline
-    res = get_contradiction_timeline(topic)
+    res = get_contradiction_timeline(topic, year_start, year_end)
 
     claim_text_by_id = res.get("claim_text_by_id", {}) or {}
     disputes = []
@@ -502,17 +591,25 @@ def get_disputes(topic: str):
         if not isinstance(d, dict):
             continue
 
-        status = str(d.get("status", "")).lower()
+        status_raw = str(d.get("status", "")).strip().lower()
+        status = status_raw if status_raw in {"active", "resolved", "fading"} else "unknown"
         first = d.get("first_appeared")
         resolution_year = d.get("resolution_year")
 
         raw_ids = d.get("related_claim_ids") or []
         key_claims = []
+        seen_claims = set()
         for cid in raw_ids:
-            cid = str(cid)
-            text = claim_text_by_id.get(cid) or cid
-            if isinstance(text, str) and len(text) > 90:
-                text = text[:87].rstrip() + "..."
+            text = claim_text_by_id.get(str(cid))
+            if not isinstance(text, str) or not text.strip():
+                # Never surface an opaque graph ID as if it were claim text.
+                continue
+            text = text.strip()
+            if len(text) > 120:
+                text = text[:117].rstrip() + "..."
+            if text in seen_claims:
+                continue
+            seen_claims.add(text)
             key_claims.append(text)
 
         disputes.append({
@@ -521,13 +618,19 @@ def get_disputes(topic: str):
             "start_year": int(first) if isinstance(first, (int, float)) else None,
             "end_year": int(resolution_year) if isinstance(resolution_year, (int, float)) else None,
             "resolved": status == "resolved",
+            "status": status,
             "resolution": d.get("resolution"),
             "key_claims": key_claims
         })
 
     return {
         "topic": topic,
-        "disputes": disputes
+        "disputes": disputes,
+        "summary": res.get("summary", "") or "",
+        "candidate_claim_count": int(res.get("candidate_claim_count", 0) or 0),
+        "contradiction_count": int(res.get("contradiction_count", 0) or 0),
+        "year_start": int(res.get("year_start", year_start) or year_start),
+        "year_end": int(res.get("year_end", year_end) or year_end),
     }
 
 
@@ -563,7 +666,11 @@ def most_changed(limit: int = 10):
             "base_confidence": c.get("base", 0.0),
             "current_confidence": c.get("current", 0.0),
             "delta": c.get("delta", 0.0),
-            "reason": reason
+            "reason": reason,
+            "supports": supports,
+            "contradictions": contradictions,
+            "arxiv_id": c.get("arxiv_id"),
+            "paper_title": c.get("paper_title"),
         })
     return results
 
@@ -721,40 +828,67 @@ def get_custom_ingestion_progress():
 def get_graph_data(limit_claims: int = 100):
     from graph.neo4j_client import run_query
 
+    # Bound the request so the round-robin claim query cannot be used to pull
+    # an unbounded slice into memory.
+    limit_claims = max(1, min(limit_claims, 500))
+
     nodes = []
     edges = []
 
-    # Papers
-    papers = run_query("MATCH (p:Paper) RETURN p.arxiv_id AS id, p.title AS title, p.year AS year LIMIT 50")
-    for p in papers:
-        nodes.append({
-            "id": f"paper_{p['id']}",
-            "label": p["title"][:30] if p["title"] else p["id"],
-            "type": "paper",
-            "year": p.get("year")
-        })
-
-    # Claims
+    # Relationship-bearing claims come first: the graph exists to expose
+    # contradiction/support structure, and a purely arbitrary slice can hide
+    # every relationship in the corpus. Remaining slots (at higher limits) are
+    # filled by confidence.
     claims = run_query(f"""
         MATCH (c:Claim)-[:EXTRACTED_FROM]->(p:Paper)
-        RETURN elementId(c) AS id, c.text AS text,
-               c.confidence AS confidence, p.arxiv_id AS arxiv_id
+        OPTIONAL MATCH (c)-[rel:CONTRADICTS|SUPPORTS]-()
+        WITH c, p, count(rel) AS relationship_count
+        ORDER BY relationship_count DESC, c.confidence DESC, p.arxiv_id ASC
         LIMIT {limit_claims}
+        RETURN elementId(c) AS id, c.text AS text,
+               c.section AS section,
+               c.confidence AS confidence,
+               p.arxiv_id AS arxiv_id,
+               p.title AS paper_title,
+               p.year AS year
     """)
+    paper_nodes = {}
     for c in claims:
+        arxiv_id = c.get("arxiv_id")
+        if arxiv_id and arxiv_id not in paper_nodes:
+            paper_nodes[arxiv_id] = {
+                "id": f"paper_{arxiv_id}",
+                "label": c.get("paper_title") or arxiv_id,
+                "text": c.get("paper_title") or arxiv_id,
+                "type": "paper",
+                "year": c.get("year"),
+                "arxiv_id": arxiv_id,
+            }
+
+    for c in claims:
+        text = c["text"] or ""
         nodes.append({
             "id": f"claim_{c['id']}",
-            "label": c["text"][:30],
+            "label": text[:100],
+            "text": text,
             "type": "claim",
-            "confidence": c["confidence"]
+            "confidence": c["confidence"],
+            "section": c.get("section"),
+            "arxiv_id": c.get("arxiv_id"),
+            "paper_title": c.get("paper_title"),
+            "year": c.get("year")
         })
-        edges.append({
-            "source": f"claim_{c['id']}",
-            "target": f"paper_{c['arxiv_id']}",
-            "type": "EXTRACTED_FROM"
-        })
+        if c.get("arxiv_id"):
+            edges.append({
+                "source": f"claim_{c['id']}",
+                "target": f"paper_{c['arxiv_id']}",
+                "type": "EXTRACTED_FROM"
+            })
 
-    # Contradictions
+    nodes.extend(paper_nodes.values())
+
+    # Contradictions. The frontend drops edges whose endpoints are outside the
+    # selected claim limit, so no orphan links are drawn.
     contras = run_query("""
         MATCH (a:Claim)-[r:CONTRADICTS]->(b:Claim)
         RETURN elementId(a) AS a_id, elementId(b) AS b_id,
@@ -768,18 +902,44 @@ def get_graph_data(limit_claims: int = 100):
             "type": "CONTRADICTS"
         })
 
-    # Gaps
+    supports = run_query("""
+        MATCH (a:Claim)-[:SUPPORTS]->(b:Claim)
+        RETURN elementId(a) AS a_id, elementId(b) AS b_id
+        LIMIT 100
+    """)
+    for r in supports:
+        edges.append({
+            "source": f"claim_{r['a_id']}",
+            "target": f"claim_{r['b_id']}",
+            "type": "SUPPORTS"
+        })
+
+    # Gaps and their related claims
     gaps = run_query("""
         MATCH (g:Gap)
-        RETURN elementId(g) AS id, g.text AS text
+        OPTIONAL MATCH (g)-[:RELATED_TO]->(c:Claim)
+        RETURN elementId(g) AS id, g.text AS text, g.source AS source,
+               g.confidence AS confidence,
+               collect(elementId(c)) AS related_claim_ids
         LIMIT 30
     """)
     for g in gaps:
+        text = g["text"] or ""
         nodes.append({
             "id": f"gap_{g['id']}",
-            "label": g["text"][:30],
-            "type": "gap"
+            "label": text[:100],
+            "text": text,
+            "type": "gap",
+            "source": normalize_gap_source(g.get("source")),
+            "confidence": g.get("confidence")
         })
+        for claim_id in g.get("related_claim_ids") or []:
+            if claim_id:
+                edges.append({
+                    "source": f"gap_{g['id']}",
+                    "target": f"claim_{claim_id}",
+                    "type": "RELATED_TO"
+                })
 
     return {"nodes": nodes, "edges": edges}
 

@@ -204,11 +204,25 @@ def get_contradictions() -> list[dict]:
                a.text AS claim_a,
                a.section AS claim_a_section,
                a.confidence AS claim_a_confidence,
+               a.evidence_span AS claim_a_evidence_span,
+               a.subject AS claim_a_subject,
+               a.predicate AS claim_a_predicate,
+               a.object_val AS claim_a_object_val,
+               a.metric AS claim_a_metric,
+               a.direction AS claim_a_direction,
+               a.conditions AS claim_a_conditions,
                pa.title AS paper_a,
                pa.arxiv_id AS paper_a_arxiv_id,
                b.text AS claim_b,
                b.section AS claim_b_section,
                b.confidence AS claim_b_confidence,
+               b.evidence_span AS claim_b_evidence_span,
+               b.subject AS claim_b_subject,
+               b.predicate AS claim_b_predicate,
+               b.object_val AS claim_b_object_val,
+               b.metric AS claim_b_metric,
+               b.direction AS claim_b_direction,
+               b.conditions AS claim_b_conditions,
                pb.title AS paper_b,
                pb.arxiv_id AS paper_b_arxiv_id,
                elementId(a) AS claim_a_id,
@@ -239,16 +253,21 @@ def get_supports() -> list[dict]:
 # Gaps
 # ─────────────────────────────────────────────────────────────
 
-def insert_gap(text: str, source: str, related_claim_ids: list[int]) -> int:
+def insert_gap(text: str, source: str, related_claim_ids: list[str],
+               confidence: float | None = None) -> str | None:
     """
     Insert a research gap and link it to related claims.
-    Returns Neo4j internal id.
+
+    ``confidence`` is the generating model's self-reported score, stored so the
+    UI can show it as a model score rather than an uncalibrated fact. It is
+    optional because the future-work prompt does not ask for one.
+    Returns the Neo4j element id.
     """
     result = run_write("""
-        CREATE (g:Gap {text: $text, source: $source})
+        CREATE (g:Gap {text: $text, source: $source, confidence: $confidence})
         SET g.gap_id = elementId(g)
         RETURN elementId(g) AS gap_id
-    """, {"text": text, "source": source})
+    """, {"text": text, "source": source, "confidence": confidence})
 
     gap_id = result[0]["gap_id"] if result else None
 
@@ -265,15 +284,39 @@ def insert_gap(text: str, source: str, related_claim_ids: list[int]) -> int:
 
 def get_gaps() -> list[dict]:
     """
-    Returns all gaps with their related claim IDs.
+    Returns all gaps with their related claim IDs and stored model score.
     """
     results = run_query("""
         MATCH (g:Gap)
         OPTIONAL MATCH (g)-[:RELATED_TO]->(c:Claim)
         RETURN elementId(g) AS id, g.text AS text, g.source AS source,
+               g.confidence AS confidence,
                collect(elementId(c)) AS related_claims
     """)
     return results
+
+
+def get_claim_references(claim_ids: list[str]) -> dict[str, dict]:
+    """Look up display/provenance data for related-claim IDs in one query.
+
+    Missing or stale IDs simply do not appear in the returned mapping; callers
+    must keep the raw ID as a fallback instead of inventing claim text.
+    """
+    ids = [str(cid) for cid in claim_ids if cid]
+    if not ids:
+        return {}
+
+    rows = run_query("""
+        MATCH (c:Claim)-[:EXTRACTED_FROM]->(p:Paper)
+        WHERE elementId(c) IN $claim_ids
+        RETURN elementId(c) AS id,
+               c.text AS text,
+               c.section AS section,
+               c.confidence AS confidence,
+               p.arxiv_id AS arxiv_id,
+               p.title AS paper_title
+    """, {"claim_ids": ids})
+    return {str(row["id"]): row for row in rows if row.get("id")}
 
 
 # ─────────────────────────────────────────────────────────────

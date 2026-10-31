@@ -144,12 +144,11 @@ def get_weighted_confidence(claim_id: str, base_confidence: float) -> float:
     return round(min(1.0, max(0.0, weighted)), 4)
 
 
-# ─── UI helper ────────────────────────────────────────────────
+# ─── Read helper ──────────────────────────────────────────────
 
 def get_papers_with_citations() -> list[dict]:
     """
     Returns all papers with citation counts, sorted descending.
-    Used by the Streamlit UI.
     """
     return run_query("""
         MATCH (p:Paper)

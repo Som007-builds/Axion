@@ -10,7 +10,7 @@ configured the work is enqueued for the `axion-worker` process, otherwise it
 runs inline here. That keeps a single ingestion path whether the scheduler is
 enabled or not.
 
-Usage — embedded in Streamlit / main.py:
+Usage — embedded in the API process / main.py:
     from ingestion.scheduler import start_scheduler, stop_scheduler, trigger_now
     start_scheduler()
 

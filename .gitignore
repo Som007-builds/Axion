@@ -48,3 +48,7 @@ htmlcov/
 # Lint artifacts
 lint-output.txt
 axion/lint-output.txt
+
+# Generated candidate dumps (regenerate with eval/Data/export_candidate_pairs.py)
+eval/Data/candidate_pairs.csv
+eval/Data/candidate_pairs_v2.csv

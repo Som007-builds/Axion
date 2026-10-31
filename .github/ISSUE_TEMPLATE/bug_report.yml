@@ -1,0 +1,52 @@
+name: Bug report
+description: Something is broken or behaves differently from the documentation.
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Do not include API keys, `.env` contents, or private data.
+        For vulnerabilities, use SECURITY.md instead of this form.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you expect, and what did you see instead?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Start the stack with ...
+        2. Open ...
+        3. Submit ...
+    validations:
+      required: true
+  - type: input
+    id: commit
+    attributes:
+      label: Commit or version
+      placeholder: "e.g. eae2849"
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Ingestion
+        - Claim extraction
+        - Contradiction detection
+        - Query / coordinator
+        - API
+        - Frontend
+        - Evaluation
+        - Deployment
+        - Documentation
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Paste the smallest useful excerpt. Remove secrets first.
+      render: shell

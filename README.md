@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-  <img alt="AXION — Scientific Intelligence System" src="Blueprint%20AXION%20Scientific%20Logo.png" width="400">
+  <img alt="AXION — Scientific Intelligence System" src="axion/public/axion-logo.png" width="420">
   <br>
 </h1>
 
@@ -32,8 +32,8 @@ data rather than as an opaque document summary.
 > end-to-end loop (ingest → graph → reason → API → UI) runs on a real corpus, but
 > several capabilities are experimental and the project is **not production
 > ready**. See [Limitations and known issues](#limitations-and-known-issues) and
-> [Security considerations](#security-considerations). The full engineering
-> inventory lives in [`PROJECT_INFO.md`](./PROJECT_INFO.md).
+> [Security considerations](#security-considerations). For the operational state
+> of the system, see [`docs/OPERATIONS.md`](./docs/OPERATIONS.md).
 
 ---
 
@@ -56,6 +56,7 @@ data rather than as an opaque document summary.
 - [Security considerations](#security-considerations)
 - [Roadmap](#roadmap)
 - [Contributing](#contributing)
+- [Citation](#citation)
 - [License and acknowledgments](#license-and-acknowledgments)
 
 ---
@@ -104,6 +105,14 @@ Axion is a self-hosted application and pipeline that:
 9. **Visualises** the graph, contradictions, gaps, timelines, and confidence
    drift in an interactive workspace.
 
+**Research contributions.** Beyond the application itself, the repository
+contains (1) a claim-level graph schema that keeps paper, section, and evidence
+span attached to every assertion; (2) a human-audited cross-paper pair benchmark
+(286 pairs, of which 224 were audited row by row) with a documented annotation
+rubric; and (3) a pre-registered four-variant ablation of the relationship judge,
+including the retrieval-gate measurement. All three are small and reported with
+their limitations — see [Evaluation and testing](#evaluation-and-testing).
+
 ### Document-level Q&A vs. a claim-level graph
 
 This distinction is the core of the project, so it is worth being precise.
@@ -142,7 +151,7 @@ Maturity legend: **✅ Implemented** · **🟡 Works with caveats** · **🧪 Ex
 | 11 | **Multi-step question answering** | 🟡 | Coordinator v2 runs plan → retrieve → reflect (≤3 iterations) → synthesize and returns a cited report (`agents/coordinator_v2.py`, `planner.py`, `reflector.py`, `synthesizer.py`). Runs synchronously in the request; see limitations. |
 | 12 | **Temporal analysis & dispute timelines** | 🟡 | Year-filtered retrieval plus LLM narratives for consensus evolution and dispute status (`agents/temporal.py`). Quality depends on having enough claims spread across years. |
 | 13 | **Interactive research workspace** | ✅ | A six-view Next.js workspace rendered in the **Cobalt Grid** design language — force-directed graph, contradiction and gap ledgers, timeline, and confidence-evolution views (`axion/`). See [Product interface](#product-interface). |
-| 14 | **API & command-line workflows** | ✅ | A FastAPI service (21 routes) plus a `main.py` CLI for batch ingestion and analysis jobs. |
+| 14 | **API & command-line workflows** | ✅ | A FastAPI service (22 `/api` routes + `/healthz`) plus a `main.py` CLI for batch ingestion and analysis jobs. |
 
 ---
 
@@ -187,7 +196,7 @@ flowchart TD
 
     subgraph Serve["Serving"]
         L["Coordinator v2<br/>plan, retrieve, reflect, synthesize"]
-        M["FastAPI backend<br/>api/main.py, 21 routes"]
+        M["FastAPI backend<br/>api/main.py, 22 routes"]
         N["Next.js workspace<br/>axion/, 6 views"]
     end
 
@@ -204,6 +213,9 @@ flowchart TD
     J -.-> O
     L -.-> O
 ```
+
+A standalone, theme-aware version of this diagram is in
+[`artifacts/axion-architecture.html`](./artifacts/axion-architecture.html).
 
 ### Components and responsibilities
 
@@ -341,6 +353,19 @@ Additional surfaces: a **dashboard stats** panel fed by `/api/stats`, a global
 **ingestion sheet** for topic-based custom ingestion with live progress and
 logs.
 
+### Screenshots
+
+Captured from the Cobalt Grid build against the live 48-paper corpus:
+
+| Research report | Knowledge graph |
+| :---: | :---: |
+| ![Research view with a synthesized report](artifacts/demo-07-query-result.png) | ![Force-directed knowledge graph](artifacts/demo-02-graph.png) |
+| **Contradictions** | **Research gaps** |
+| ![Contradiction ledger](artifacts/demo-03-contradictions.png) | ![Research gap ledger](artifacts/demo-04-gaps.png) |
+
+The full set (desktop, laptop, and mobile in both themes) lives in
+[`artifacts/`](./artifacts).
+
 Because the whole palette is monochrome, meaning is never carried by color
 alone:
 
@@ -370,8 +395,8 @@ Honest notes on current UI behaviour:
 - Query history is stored in **browser `localStorage` only** — it is not saved
   server-side and is lost across devices.
 - There is **no export** (PDF/Markdown/CSV) and **no streaming** of responses.
-- There are **no screenshots** committed to this repository, so none are shown
-  here. The architecture diagram above is the authoritative visual reference.
+- Screenshots above are from a review build and may lag the current UI by small
+  visual details.
 
 ---
 
@@ -404,9 +429,9 @@ axion/
   `app/api/backend/[...path]/route.ts`, which attaches `AXION_API_KEY`; the key
   never reaches the browser. Read-only calls go straight to
   `NEXT_PUBLIC_API_URL`.
-- **Brand assets** are derived from `Blueprint AXION Scientific Logo.png` at the
-  repository root: the rail shows the cropped mark, and the boot/loading screens
-  show the full lockup.
+- **Brand assets** are the committed files in `axion/public/`: the rail shows the
+  cropped mark (`axion-logo-mark.png`), and the boot/loading screens show the
+  full lockup (`axion-logo.png`).
 
 ### Running and checking the frontend
 
@@ -427,10 +452,14 @@ state, not a broken screen.
 
 Deeper documentation:
 
-- [`FRONTEND_DESIGN_REQUIREMENTS.md`](./FRONTEND_DESIGN_REQUIREMENTS.md) — the
-  designer-facing requirements document (tokens, views, states, accessibility).
-- [`FRONTEND_HANDOVER.md`](./FRONTEND_HANDOVER.md) — the 18-endpoint API
-  contract the frontend talks to.
+- [`docs/OPERATIONS.md`](./docs/OPERATIONS.md) — run, verify, and troubleshoot
+  the current system.
+- [`eval/README.md`](./eval/README.md) — evaluation harness, dataset caveats, and
+  targets.
+- [`CONTRIBUTING.md`](./CONTRIBUTING.md) — development workflow and pull-request
+  expectations.
+- [`SECURITY.md`](./SECURITY.md) — threat model, reporting, and deployment
+  guidance.
 
 ---
 
@@ -452,20 +481,14 @@ configuration.
 | LLM provider key | Groq (primary) and/or Google Gemini (fallback) |
 | Disk / network | ~300 MB Python deps + local embedding model download on first run |
 
-> ⚠️ **Known packaging gap:** `ingestion/arxiv_client.py` imports the `arxiv`
-> package, but `arxiv` is **not currently listed in `requirements.txt`**. A fresh
-> install will fail at import until you add it manually with
-> `pip install arxiv`. This is tracked as a documentation/dependency fix, not a
-> behaviour change.
+> **Note:** `requirements.txt` pins every runtime dependency, including `arxiv`.
+> A fresh install needs no manual additions.
 
 ### 1. Get the repository
 
-The GitHub remote and local folder still carry the project's legacy name
-(`AetherGraph` / `schimesh`) pending a rename; the project itself is Axion.
-
 ```bash
-git clone https://github.com/Som007-builds/AetherGraph.git axion-repo
-cd axion-repo
+git clone https://github.com/Som007-builds/Axion.git axion
+cd axion
 ```
 
 ### 2. Create a Python environment and install
@@ -476,7 +499,6 @@ cd axion-repo
 python -m venv venv
 .\venv\Scripts\Activate.ps1
 pip install -r requirements-dev.txt   # includes runtime + test/eval deps
-pip install arxiv                     # see packaging-gap note above
 ```
 
 **macOS / Linux**
@@ -485,7 +507,6 @@ pip install arxiv                     # see packaging-gap note above
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements-dev.txt
-pip install arxiv
 ```
 
 Use `pip install -r requirements.txt` instead if you only want runtime
@@ -902,7 +923,7 @@ are lost on restart.
 
 | Item | State |
 | :--- | :--- |
-| Offline suite | **229 passed, 12 deselected** (as of the last recorded full run; CI re-runs it on every push) |
+| Offline suite | **252 passed, 12 deselected** (as of the last recorded full run; CI re-runs it on every push) |
 | Integration tests | `tests/test_neo4j.py`, `tests/test_claims.py` need a live Neo4j/ChromaDB; marked `integration` and excluded by default |
 | CI | `.github/workflows/ci.yml` runs the offline backend suite and a frontend production build on every push/PR to `main` |
 | Coverage | Not measured |
@@ -986,6 +1007,36 @@ than accuracy), always print the class mix and `warnings`, and never cite a sing
 run as proof of quality. Proposed (currently unverified) targets are documented in
 `eval/README.md`: macro F1 ≥ 0.55 and `CONTRADICTS` recall ≥ 0.60.
 
+### Data and reproducibility
+
+Everything needed to check the reported numbers is committed:
+
+| Artifact | Path | Contents |
+| :--- | :--- | :--- |
+| Reference set | `eval/Data/axion_pairs.csv` | 286 cross-paper pairs with reviewed labels |
+| Human audit | `eval/Data/contradicts_review_labeled.csv` | 224 audited rows (4 confirmed contradictions) |
+| Extra negatives | `eval/Data/labeled_pairs_cleaned.csv` | 62 unverified cross-paper negatives, tagged by source |
+| Pre-registered protocol | `eval/results/judge_ablation.md` | Variants, primary metric, and results |
+| Machine-readable results | `eval/results/judge_ablation.json` | Per-pair verdicts and metrics |
+| Run cache | `eval/results/ablation_cache.jsonl` | 1,144 resumable rows keyed by variant/pair/signature |
+
+The full candidate pool (~35 MB) and the live Neo4j/Chroma database are not
+committed. Regeneration steps are in [`eval/README.md`](./eval/README.md). To
+recompute the published ablation tables from the committed cache without any
+provider calls:
+
+```bash
+python eval/judge_ablation.py --report-only
+python eval/build_ablation_summary.py
+```
+
+The offline test suite and the majority-baseline smoke run need no services:
+
+```bash
+pytest
+python eval/run_eval.py --predictor majority
+```
+
 ---
 
 ## Limitations and known issues
@@ -1040,20 +1091,18 @@ deliberately not hidden.
   `graph/fix_*.py` scripts with no migration framework or log.
 - **Ingestion source limits.** arXiv only; no non-English handling and no
   cross-source deduplication (papers are merged by `arxiv_id`).
-- **Packaging gaps.** `arxiv` is missing from `requirements.txt`; a fresh install
-  needs it added manually. There is no Python version marker and dependencies are
-  pinned by version but not by hash.
+- **Packaging gaps.** There is no Python version marker (`pyproject.toml`) and
+  dependencies are pinned by version but not by hash.
 
 ### Frontend and documentation
 
 - Query history is browser-local only; there is no export, no streaming, and no
   live per-stage progress during a query.
-- There is no view-level automated testing, and no screenshots are committed.
-- Legacy Streamlit/pyvis/plotly dependencies remain in `requirements.txt` even
-  though the Streamlit UI was retired.
-- Documentation and branding have historically been inconsistent (legacy names
-  SciMesh/AetherGraph) and some side documents lag the code; `PROJECT_INFO.md` is
-  the authoritative inventory.
+- There is no view-level automated testing. The committed screenshots in
+  [`artifacts/`](./artifacts) are review evidence, not a regression suite.
+- Documentation is split between this README, [`docs/OPERATIONS.md`](./docs/OPERATIONS.md),
+  and [`eval/README.md`](./eval/README.md); there is no generated API reference
+  beyond `/docs` and `/openapi.json`.
 
 ---
 
@@ -1114,7 +1163,7 @@ new features.
 - [x] Confidence propagation and temporal analysis
 - [x] Coordinator v2 (plan → retrieve → reflect → synthesize)
 - [x] Six-view Next.js workspace with keyboard navigation, rebuilt on the Cobalt Grid design system
-- [x] Offline test suite (229 passing) and CI for backend tests + frontend build
+- [x] Offline test suite (252 passing) and CI for backend tests + frontend build
 - [x] Dockerfiles, full-stack Compose, healthchecks, `/healthz` liveness
 - [x] Shared-key auth on write/compute routes; job polling is key-guarded too
 - [x] Durable job queue (RQ + Redis) with `202` + `GET /api/jobs/{id}` polling
@@ -1135,42 +1184,46 @@ new features.
    quotas to replace the single shared `AXION_API_KEY`.
 5. **Observability, backups, and migration discipline** — persistent metrics,
    tracing, alerting; scheduled backups; a real migration framework.
-6. **Frontend correctness** — the workspace is redesigned and lint/type/build
-   clean; what remains is view-level test coverage and committed screenshots.
+6. **Frontend correctness** — the workspace is lint/type/build clean and the
+   review screenshots are committed; what remains is view-level test coverage.
 
 ---
 
 ## Contributing
 
-Contributions are welcome. There is **no formal governance process, code of
-conduct, or contributor policy** in this repository yet, so the workflow is kept
-deliberately lightweight:
+Contributions are welcome. The full workflow — environment setup, test commands,
+frontend conventions, and pull-request expectations — is in
+[`CONTRIBUTING.md`](./CONTRIBUTING.md).
 
-1. **Fork and branch.** Create a focused branch from `main`
-   (e.g. `fix/confidence-clamp`, `docs/readme`).
-2. **Install dependencies** as in [Installation and quick start](#installation-and-quick-start)
-   (use `requirements-dev.txt`, and add `arxiv` if needed).
-3. **Run the tests** before and after your change:
-   ```bash
-   pytest                 # offline suite must stay green
-   ```
-4. **For frontend changes:** work inside `axion/` and keep edits consistent with
-   the Cobalt Grid token system in `app/globals.css` — square corners, the
-   two-color rule (`#F0EBDE` paper / `#1F2BE0` ink), no shadows/gradients, and
-   monochrome status encodings. Verify with
-   ```bash
-   cd axion && pnpm lint && pnpm exec tsc --noEmit && pnpm build
-   ```
-5. **Make a focused change.** Keep pull requests scoped to one concern and
-   consistent with the existing structure, naming, and style.
-6. **Include tests where applicable**, especially for backend logic.
-7. **Open a pull request** with a clear description of what changed, why, and how
-   you verified it. Note any behaviour change and any new configuration.
+Before opening a pull request:
 
-Good first areas: adding the missing evaluation dataset, improving structured
-claim extraction, wiring the provenance and metrics endpoints into the UI, and
-documentation accuracy. If you plan a large change, please open an issue first to
-discuss the approach.
+```bash
+pytest
+cd axion && pnpm lint && pnpm exec tsc --noEmit && pnpm build
+```
+
+The most valuable contributions right now are a larger reviewed contradiction
+set, evidence-grounded claim extraction, provenance in the UI, and operational
+hardening. Open an issue before a large change so the approach can be agreed
+first.
+
+---
+
+## Citation
+
+If you use Axion or its benchmark in academic work, cite the repository:
+
+```bibtex
+@software{singh_axion_2026,
+  author  = {Singh, Soham},
+  title   = {Axion: A Claim-Level Knowledge Graph for Contradiction-First Literature Review},
+  year    = {2026},
+  url     = {https://github.com/Som007-builds/Axion},
+  license = {MIT}
+}
+```
+
+Machine-readable metadata is in [`CITATION.cff`](./CITATION.cff).
 
 ---
 

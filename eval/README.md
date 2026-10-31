@@ -49,8 +49,15 @@ The dataset to report on is **`eval/Data/axion_pairs.csv`** — 286 cross-paper
 pairs with reviewed labels. Rebuild it with:
 
 ```bash
+# 1. Export candidate pairs from a live graph (writes eval/Data/candidate_pairs.csv;
+#    this file is generated and intentionally not committed — ~35 MB)
+python eval/Data/export_candidate_pairs.py
+# 2. Build the reviewed reference set from the exported dumps
 python eval/Data/build_reference_set.py
 ```
+
+The two candidate dumps (`candidate_pairs.csv`, `candidate_pairs_v2.csv`) are
+ignored by git because they are large, graph-derived, and reproducible.
 
 Provenance (the only genuinely reviewed labels in the repo):
 
@@ -176,7 +183,7 @@ result carries a `predictor_diagnostics` block, e.g.:
 A parse failure is a *model failure*, not a negative — the harness emits a
 warning whenever any occur.
 
-## Stale results
+## Superseded results
 
 `eval/results/baseline_llm.json` (generated 2026-08-02, self-labelled
 "OLD CONTAMINATED"; accuracy 0.489 / macro F1 0.219) was produced by the old
@@ -184,8 +191,8 @@ script that conflated same-paper pairs, UNRELATED verdicts and parse failures,
 so its denominator is wrong. It is kept only for history — the current LLM
 baseline is `eval/results/llm_axion_pairs.json`.
 
-`eval/results/majority_test.json` / `random_test.json` are old, same-paper-
-collapsed baselines for the old `test.csv`. The current reference baselines are
+`eval/results/majority_test.json` is an old, same-paper-collapsed baseline for
+the old `test.csv`. The current reference baselines are
 `eval/results/{majority,random,llm}_axion_pairs.json`.
 
 ## Metric targets
@@ -226,5 +233,4 @@ eval/
     contradicts_review_labeled.csv # 224-row human audit
     build_reference_set.py   # rebuilds axion_pairs.csv from reviewed labels
     ...                      # raw exports / prep scripts
-  models/                # empty (planned, unused)
 ```

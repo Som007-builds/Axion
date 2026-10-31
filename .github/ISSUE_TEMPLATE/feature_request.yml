@@ -1,0 +1,33 @@
+name: Feature request
+description: Propose a capability, dataset, or evaluation change.
+title: "[feature] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What research or engineering problem would this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: Describe the smallest useful version of the change.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: How would we know it works?
+      description: A test, a metric, or an evaluation result that would validate it.
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Affected areas
+      options:
+        - label: Data model or storage
+        - label: Evaluation protocol or benchmark
+        - label: API contract
+        - label: Frontend

@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+message: "If you use Axion or its evaluation benchmark in academic work, please cite this repository."
+title: "Axion: A Claim-Level Knowledge Graph for Contradiction-First Literature Review"
+abstract: >-
+  Axion turns a corpus of research papers into an inspectable graph of atomic
+  claims, supporting evidence, contradictions, and open questions. It extracts
+  claims with section-level provenance, stores them in Neo4j and ChromaDB,
+  adjudicates cross-paper relationships with an LLM, and derives research gaps,
+  resolving experiments, temporal consensus, and citation-weighted confidence.
+  The repository includes a human-audited claim-pair benchmark and a
+  pre-registered judge ablation.
+type: software
+authors:
+  - family-names: Singh
+    given-names: Soham
+repository-code: "https://github.com/Som007-builds/Axion"
+url: "https://github.com/Som007-builds/Axion"
+license: MIT
+version: 0.1.0
+date-released: "2026-11-01"
+keywords:
+  - scientific knowledge graph
+  - claim extraction
+  - contradiction detection
+  - literature review
+  - retrieval-augmented generation
+  - Neo4j
+  - ChromaDB

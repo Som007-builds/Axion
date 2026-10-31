@@ -1,6 +1,6 @@
 # Axion — Full System Guide (right now)
 
-**Snapshot:** 2026-10-24 · `main` @ `a273b5d` · eval complete; demo-ready with
+**Snapshot:** content verified 2026-10-24. Eval complete; demo-ready with
 caveats. This file replaces the previous point-in-time status report.
 
 This is the operational guide to Axion **as it exists today**: what the system
@@ -12,10 +12,9 @@ Companion documents:
 
 | Document | Authoritative for |
 | :--- | :--- |
-| `PROJECT_INFO.md` | Full capability inventory, data model, product/technical limitations |
 | `README.md` | User-facing overview, install steps, API and configuration reference |
-| `progress.md` | Remediation tracker — every done/todo item with evidence |
 | `eval/README.md` | Evaluation harness usage, dataset caveats, targets |
+| `CONTRIBUTING.md` / `SECURITY.md` | Development workflow / security posture |
 | **this file** | The system *right now*: run it, verify it, operate it |
 
 ---
@@ -53,7 +52,7 @@ and the system remains a self-hosted prototype, not a multi-tenant product
 | **Auth** | Shared `AXION_API_KEY` on every write/compute route **and** job polling; fail-closed |
 | **Background work** | Durable RQ + Redis queue, separate `worker` process; `202` + `GET /api/jobs/{id}`; cross-process verified |
 | **LLM chain** | `groq` (`openai/gpt-oss-20b`) → `gemini` (`gemini-3.8-flash`, thinking disabled); Claude available, not in the chain. Keys are present; live quota is not guaranteed |
-| **Tests** | **229 passed / 12 deselected** offline; **15** judge-ablation tests; integration suite needs live services; CI on every push |
+| **Tests** | **252 passed / 12 deselected** offline; **15** judge-ablation tests; integration suite needs live services; CI on every push |
 | **Frontend** | Next.js 16.2.6 (standalone), React 19, TS 5.7, Tailwind v4; `pnpm lint` 0 errors (2 known warnings); `pnpm build` passes |
 | **Eval** | **Complete**: four-variant judge ablation on 286 reviewed pairs + 224-row audit; pre-registered report, summary, chart data and 1,144-line cache under `eval/results/` |
 | **Demo posture** | Ready for a controlled, scripted demo; not a hands-off live demo or production launch (§2.1) |
@@ -141,7 +140,7 @@ python scripts/queue_smoke.py     # auth on job routes + submits a query, report
                                   # whether the worker claims it (queued -> running)
 python eval/measure_gate.py       # offline: replays the retrieval gate over the
                                   # live vector index; no LLM, no writes
-pytest                            # the offline suite (229 tests)
+pytest                            # the offline suite (252 tests)
 ```
 
 The smoke script needs the API key (reads `AXION_API_KEY` or the repo-root
@@ -392,7 +391,7 @@ Non-env constants in `config.py`: embedding model `all-MiniLM-L6-v2`,
 ## 10. Testing and CI
 
 ```bash
-pytest                  # offline suite: 229 passed, 12 deselected (no services needed)
+pytest                  # offline suite: 252 passed, 12 deselected (no services needed)
 pytest eval/tests/test_judge_ablation.py -q   # 15 offline ablation tests
 pytest -m integration   # opt-in: needs live Neo4j + ChromaDB (and sometimes LLM)
 pytest tests/test_jobs.py -q          # queue + worker policy
@@ -490,10 +489,9 @@ Artifacts: `eval/results/judge_ablation.md` (pre-registered report),
   in any served JS chunk.
 - **Datastores are loopback-bound** (Neo4j, Redis). The API and web UI are not.
 - **Errors are generic** to clients and detailed in logs.
-- **Rotations done:** `AXION_API_KEY`, `TRIGGER_SECRET`, Neo4j password.
-  **Current LLM keys:** present and used for the completed ablation. Rotate
-  `GROQ_API_KEY` / `GEMINI_API_KEY` before exposing this checkout or its config
-  to anyone else; the earlier config dump exposed them.
+- **Secrets are environment-only.** `.env` is gitignored and keys are never
+  committed or bundled into the client. Rotate any credential that has been
+  shared outside its deployment.
 - **Not present:** TLS/reverse proxy, per-user identity, quotas, secret manager,
   scheduled backups, APOC restriction.
 
@@ -547,12 +545,11 @@ Do not expose this stack to an untrusted network as-is.
 ## 15. Ownership of facts
 
 If this file and another doc disagree, trust them in this order:
-`PROJECT_INFO.md` (inventory) → `README.md` (usage) → this file (current
-operation) → `progress.md` (history/checklist). Anything about evaluation
-results lives in `eval/results/judge_ablation.md`; harness semantics and targets
-live in `eval/README.md`.
+`README.md` (usage) → this file (current operation) → `CONTRIBUTING.md`
+(workflow). Anything about evaluation results lives in
+`eval/results/judge_ablation.md`; harness semantics and targets live in
+`eval/README.md`.
 
-Finally: the on-disk folder is still named `schimesh` while the project, the
-GitHub repository and every artefact are **Axion**; the old
-`scimesh_neo4j_data` volume still exists with data under the retired password
-and should not be deleted without a decision.
+**Repository naming.** The project is **Axion**. Only the local checkout folder
+may still be named `schimesh`; a legacy Docker volume named
+`scimesh_neo4j_data` is no longer referenced by `docker-compose.yml`.

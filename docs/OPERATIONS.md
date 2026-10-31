@@ -1,7 +1,8 @@
 # Axion — Full System Guide (right now)
 
-**Snapshot:** content verified 2026-10-24. Eval complete; demo-ready with
-caveats. This file replaces the previous point-in-time status report.
+**Snapshot:** content verified 2026-10-24. Eval complete; ready for a controlled
+walkthrough with caveats. This file replaces the previous point-in-time status
+report.
 
 This is the operational guide to Axion **as it exists today**: what the system
 is, what is in it, how to start it, verify it and troubleshoot it — and what is
@@ -51,13 +52,13 @@ and the system remains a self-hosted prototype, not a multi-tenant product
 | **API** | 23 routes (22 under `/api` + `/healthz`), OpenAPI at `/docs`; `/api/health` returned `200` with Neo4j + Chroma connected and 2,389 claims |
 | **Auth** | Shared `AXION_API_KEY` on every write/compute route **and** job polling; fail-closed |
 | **Background work** | Durable RQ + Redis queue, separate `worker` process; `202` + `GET /api/jobs/{id}`; cross-process verified |
-| **LLM chain** | `groq` (`openai/gpt-oss-20b`) → `gemini` (`gemini-3.8-flash`, thinking disabled); Claude available, not in the chain. Keys are present; live quota is not guaranteed |
+| **LLM chain** | `groq` (`openai/gpt-oss-20b`) → `gemini` (`gemini-3.8-flash`, thinking disabled); Claude available, not in the chain. Credentials are configured through the environment; live quota is not guaranteed |
 | **Tests** | **252 passed / 12 deselected** offline; **15** judge-ablation tests; integration suite needs live services; CI on every push |
 | **Frontend** | Next.js 16.2.6 (standalone), React 19, TS 5.7, Tailwind v4; `pnpm lint` 0 errors (2 known warnings); `pnpm build` passes |
 | **Eval** | **Complete**: four-variant judge ablation on 286 reviewed pairs + 224-row audit; pre-registered report, summary, chart data and 1,144-line cache under `eval/results/` |
-| **Demo posture** | Ready for a controlled, scripted demo; not a hands-off live demo or production launch (§2.1) |
+| **Walkthrough posture** | Ready for a controlled, scripted walkthrough; not a hands-off live run or production launch (§2.1) |
 
-### 2.1 Demo readiness (2026-10-24)
+### 2.1 Walkthrough readiness (2026-10-24)
 
 **Ready:** offline eval walkthrough, graph/UI browsing on the existing corpus,
 API health, frontend production build.
@@ -65,10 +66,11 @@ API health, frontend production build.
 **Not ready without a runbook:** the Compose stack is stopped; live LLM calls
 depend on provider quota; only 4 confirmed contradictions exist in the audit.
 
-**Minimum demo path:** start Docker Desktop → `docker compose up -d --build` →
+**Minimum verification path:** start Docker Desktop → `docker compose up -d --build` →
 wait for health → open `http://localhost:3000` → run one known query → show the
 contradiction view and `eval/results/ablation_summary.md`. Do not ingest papers
-or run a fresh multi-paper query on stage unless quota and latency are known.
+or run a fresh multi-paper query during a live walkthrough unless quota and
+latency are known.
 
 ---
 
@@ -355,8 +357,8 @@ curl http://localhost:8000/api/jobs/<job_id> -H "X-API-Key: $AXION_API_KEY"
 If **every** provider is unavailable the chain raises
 `All LLM providers exhausted after retries. Chain tried: [...]` → the job fails
 cleanly and the error is logged. This happened during the 2026-10-17
-quota-blocked run. The keys are present now and the ablation completed, but live
-quota is not guaranteed; keep a cached/scripted demo path.
+quota-blocked run. The credentials are configured now and the ablation completed,
+but live quota is not guaranteed; keep a cached path for offline review.
 
 ---
 
@@ -474,7 +476,7 @@ Read this as **pilot evidence, not a production estimate**:
 
 Artifacts: `eval/results/judge_ablation.md` (pre-registered report),
 `eval/results/judge_ablation.json` (machine-readable),
-`eval/results/ablation_summary.md` (launch summary),
+`eval/results/ablation_summary.md` (summary),
 `eval/results/ablation_chart_data.json` (chart aggregates), and
 `eval/results/ablation_cache.jsonl` (1,144 rows; resumable).
 
@@ -520,7 +522,8 @@ Do not expose this stack to an untrusted network as-is.
 8. **Coverage is ML/LLM-flavoured** (the default scheduler topics are all
    LLM-related); no domain guarantees.
 9. **No migration framework** — schema changes are ad-hoc scripts.
-10. **Live LLM features depend on provider quota.** The keys are present, but a
+10. **Live LLM features depend on provider quota.** Provider credentials are
+    configured, but a
     fresh multi-paper run can still hit free-tier limits.
 
 ---

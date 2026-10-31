@@ -35,6 +35,10 @@ data rather than as an opaque document summary.
 > [Security considerations](#security-considerations). For the operational state
 > of the system, see [`docs/OPERATIONS.md`](./docs/OPERATIONS.md).
 
+**Documentation:** [Operations guide](docs/OPERATIONS.md) ·
+[Evaluation harness](eval/README.md) · [Contributing](CONTRIBUTING.md) ·
+[Security policy](SECURITY.md)
+
 ---
 
 ## Table of contents
@@ -449,17 +453,6 @@ view renders an explicit offline/empty state ("Graph unavailable",
 "Contradictions unavailable", …), the status bar shows `SYSTEM OFFLINE`, and
 dashboard stats show `STATUS: API OFFLINE`. This is an intentional, designed
 state, not a broken screen.
-
-Deeper documentation:
-
-- [`docs/OPERATIONS.md`](./docs/OPERATIONS.md) — run, verify, and troubleshoot
-  the current system.
-- [`eval/README.md`](./eval/README.md) — evaluation harness, dataset caveats, and
-  targets.
-- [`CONTRIBUTING.md`](./CONTRIBUTING.md) — development workflow and pull-request
-  expectations.
-- [`SECURITY.md`](./SECURITY.md) — threat model, reporting, and deployment
-  guidance.
 
 ---
 

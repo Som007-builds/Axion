@@ -19,7 +19,7 @@ Neo4j and ChromaDB are required only for integration tests and live runs.
 ## Before opening a pull request
 
 ```bash
-pytest                            # 252 offline tests; must stay green
+pytest                            # offline suite; must stay green
 pytest -m integration             # only if you have live Neo4j + ChromaDB
 cd axion && pnpm lint && pnpm exec tsc --noEmit && pnpm build
 ```

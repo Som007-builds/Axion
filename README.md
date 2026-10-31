@@ -593,7 +593,6 @@ workspace still runs and shows its designed offline states — see
 
 | Symptom | Likely cause / fix |
 | :--- | :--- |
-| `ModuleNotFoundError: No module named 'arxiv'` | The `arxiv` package is not in `requirements.txt`; run `pip install arxiv`. |
 | `ServiceUnavailable` / Neo4j connection errors | Neo4j is not up or the password is wrong. Check `docker compose ps`, the `NEO4J_PASSWORD` value, and that the host port is `7887`. |
 | UI shows `SYSTEM OFFLINE` / `API OFFLINE` badges | Expected when the backend is not running (or `NEXT_PUBLIC_API_URL` is wrong). Start the API on port 8000 and confirm `/api/health` returns `200`. |
 | `/api/health` returns `503` | Neo4j and/or ChromaDB is unreachable. `/healthz` returning `200` is expected even when degraded. |
@@ -778,7 +777,7 @@ record, hands it to the queue, and returns immediately with `202 Accepted`.
 | :--- | :--- | :--- | :--: | :--- |
 | GET | `/api/contradictions` | All contradictions (`min_confidence`, `limit`) | — | — |
 | GET | `/api/experiments/{contradiction_id}` | Retrieve a stored experiment design | — | — |
-| POST | `/api/experiments/{contradiction_id}/design` | Design and store an experiment on demand | — | 5/min |
+| POST | `/api/experiments/{contradiction_id}/design` | Design and store an experiment on demand | 🔑 | 5/min |
 
 ### Research gaps
 
@@ -799,7 +798,7 @@ record, hands it to the queue, and returns immediately with `202 Accepted`.
 | :--- | :--- | :--- | :--: | :--- |
 | GET | `/api/confidence/distribution` | Confidence histogram (high/medium/low) | — | — |
 | GET | `/api/confidence/most-changed` | Claims whose confidence moved most (`limit`) | — | — |
-| POST | `/api/confidence/recalculate` | Recompute confidence for all claims | — | 2/min |
+| POST | `/api/confidence/recalculate` | Recompute confidence for all claims | 🔑 | 2/min |
 
 ### Ingestion
 
